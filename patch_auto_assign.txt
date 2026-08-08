@@ -1,0 +1,14 @@
+  // Determine suggested players based on comfort picks
+  const suggestedAssignments = React.useMemo(() => {
+    const assignments: Record<string, string> = {};
+    const assigned = new Set<string>();
+
+    tbkPicks.forEach(bId => {
+      const p = tbkPlayers.find(pl => pl.comfortBrawlers.includes(bId) && !assigned.has(pl.id));
+      if (p) {
+        assignments[bId] = p.id;
+        assigned.add(p.id);
+      }
+    });
+    return assignments;
+  }, [tbkPicks, tbkPlayers]);

@@ -1,0 +1,6 @@
+  };
+
+  const cancelLogout = () => {
+    setLogoutTimer(null);
+  };
+

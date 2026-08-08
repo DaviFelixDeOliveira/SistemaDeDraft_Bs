@@ -1,0 +1,11 @@
+  useEffect(() => {
+    if (map) {
+      setFormData(map);
+    } else {
+      setFormData({
+        name: '',
+        mode: 'Pique-Gema',
+        terrain: 'Aberto'
+      });
+    }
+  }, [map]);

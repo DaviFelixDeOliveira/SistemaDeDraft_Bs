@@ -1,0 +1,23 @@
+            <div className="p-6 border-b border-slate-200 dark:border-[#2A2A2A] flex justify-between items-center bg-slate-50 dark:bg-[#0A0A0A]">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Crosshair className="w-5 h-5 text-fuchsia-500" />
+                  Relatório Completo de Banimentos
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">Análise detalhada de restrições de brawlers ({activeTimeFilter})</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex bg-slate-200 dark:bg-zinc-800 p-1 rounded-lg">
+                   <button onClick={() => setBansSortOrder('mais')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-colors", bansSortOrder === 'mais' ? "bg-white dark:bg-[#1A1A1A] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-zinc-400")}>Mais Banidos</button>
+                   <button onClick={() => setBansSortOrder('menos')} className={cn("px-3 py-1 text-xs font-bold rounded-md transition-colors", bansSortOrder === 'menos' ? "bg-white dark:bg-[#1A1A1A] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-zinc-400")}>Menos Banidos</button>
+                </div>
+                <button 
+                  onClick={() => setIsBansModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-zinc-800 p-2 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-sm transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 overflow-y-auto bg-white dark:bg-[#121212] flex-1 space-y-4">
+               {[...brawlerStats].sort((a,b) => bansSortOrder === 'mais' ? b.ban - a.ban : a.ban - b.ban).map((b, i) => (

@@ -1,0 +1,43 @@
+                  <div className="flex-1 w-full relative">
+                    <label className="block text-xs text-slate-500 dark:text-zinc-400 mb-1">Brawler que saiu</label>
+                    <div className="relative group">
+                       <select 
+                         value={brawlerOut} 
+                         onChange={(e) => setBrawlerOut(e.target.value)}
+                         className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
+                       >
+                         <option value="">Selecionar...</option>
+                         {tbkPicks.map(id => (
+                           <option key={id} value={id}>{mockBrawlers.find(b => b.id === id)?.name}</option>
+                         ))}
+                       </select>
+                       <div className="absolute left-2 top-1.5 w-6 h-6 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden pointer-events-none">
+                         {brawlerOut && mockBrawlers.find(b => b.id === brawlerOut)?.iconUrl && (
+                            <img src={mockBrawlers.find(b => b.id === brawlerOut)?.iconUrl} className="w-full h-full object-cover" />
+                         )}
+                       </div>
+                    </div>
+                  </div>
+                    
+                  <div className="text-slate-500 dark:text-zinc-500 mt-5 hidden sm:block"><ArrowRight className="w-5 h-5" /></div>
+                    
+                  <div className="flex-1 w-full relative">
+                    <label className="block text-xs text-slate-500 dark:text-zinc-400 mb-1">Brawler que entrou</label>
+                    <div className="relative group">
+                       <select 
+                         value={brawlerIn} 
+                         onChange={(e) => setBrawlerIn(e.target.value)}
+                         className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
+                       >
+                         <option value="">Selecionar...</option>
+                         {mockBrawlers.map(b => (
+                           <option key={b.id} value={b.id}>{b.name}</option>
+                         ))}
+                       </select>
+                       <div className="absolute left-2 top-1.5 w-6 h-6 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden pointer-events-none">
+                         {brawlerIn && mockBrawlers.find(b => b.id === brawlerIn)?.iconUrl && (
+                            <img src={mockBrawlers.find(b => b.id === brawlerIn)?.iconUrl} className="w-full h-full object-cover" />
+                         )}
+                       </div>
+                    </div>
+                  </div>

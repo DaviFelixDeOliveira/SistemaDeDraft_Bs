@@ -1,0 +1,49 @@
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="w-full max-w-md bg-[#111111] p-8 rounded-2xl border border-zinc-800 shadow-2xl relative z-10 transition-all duration-500">
+          <div className="flex justify-end mb-4">
+            <ThemeToggle />
+          </div>
+          
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+               <Zap className="w-8 h-8 text-black" />
+            </div>
+          </div>
+          
+          <h1 className="text-3xl font-black text-white mb-2 text-center tracking-tight">TBK Hub</h1>
+          
+          <div className="space-y-5 mt-8">
+            <div className="relative group">
+              <input 
+                type="password" 
+                placeholder="Código de Acesso"
+                disabled={isAuthenticating}
+                className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3.5 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white transition-all disabled:opacity-50"
+              />
+            </div>
+            
+            {!isAuthenticating ? (
+              <button 
+                onClick={handleLogin}
+                className="w-full bg-white hover:bg-[#FF3366] text-black hover:text-white font-bold rounded-xl px-4 py-3.5 transition-all cursor-pointer"
+              >
+                Acessar
+              </button>
+            ) : (
+              <div className="w-full pt-2">
+                 <div className="h-3 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+                   <div 
+                     className="h-full bg-white transition-all duration-100 ease-out"
+                     style={{ width: `${authProgress}%` }}
+                   />
+                 </div>
+                 <p className="text-center text-xs text-zinc-500 mt-3 font-medium animate-pulse">Carregando...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }

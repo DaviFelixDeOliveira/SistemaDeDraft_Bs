@@ -1,0 +1,18 @@
+  const handleSaveMap = (mapData: Partial<GameMap>) => {
+    const isEditing = !!mapData.id;
+    setConfirmConfig({
+      isOpen: true,
+      title: isEditing ? 'Editar Mapa' : 'Adicionar Mapa',
+      message: isEditing ? 'Deseja salvar as alterações neste mapa?' : 'Deseja confirmar a adição deste mapa?',
+      action: () => {
+        if (isEditing) {
+          setMaps(prev => prev.map(m => m.id === mapData.id ? { ...m, ...mapData } : m));
+        } else {
+          setMaps(prev => [...prev, { id: Date.now().toString(), isActive: true, ...mapData } as GameMap]);
+        }
+        setIsAddModalOpen(false);
+        setEditingMap(null);
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };

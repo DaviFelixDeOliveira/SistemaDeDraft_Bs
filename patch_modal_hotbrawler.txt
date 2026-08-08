@@ -1,0 +1,62 @@
+      {selectedHotBrawler && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-slate-200 dark:border-[#2A2A2A] flex justify-between items-center bg-slate-50 dark:bg-[#0A0A0A]">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-500" />
+                  Estatísticas: {selectedHotBrawler.name}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedHotBrawler(null)}
+                className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-zinc-800 p-2 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-sm transition-colors"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto bg-white dark:bg-[#121212] flex-1 space-y-6">
+              <div className="flex gap-4 items-center justify-center bg-slate-50 dark:bg-[#0A0A0A] p-4 rounded-xl border border-slate-200 dark:border-[#2A2A2A]">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-16 h-16 rounded-xl bg-slate-200 dark:bg-zinc-800 overflow-hidden border-2 border-emerald-500">
+                        {selectedHotBrawler.iconUrl && <img src={selectedHotBrawler.iconUrl} alt="" className="w-full h-full object-cover" />}
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{selectedHotBrawler.name}</span>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 text-center">
+                    <div className="text-xs font-bold text-slate-500 uppercase mb-1">Partidas Jogadas</div>
+                    <div className="text-2xl font-black text-slate-900 dark:text-white">15</div>
+                 </div>
+                 <div className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 text-center">
+                    <div className="text-xs font-bold text-slate-500 uppercase mb-1">Taxa de Vitória</div>
+                    <div className="text-2xl font-black text-emerald-500">75%</div>
+                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">Melhores Mapas para Picks</label>
+                <div className="flex flex-wrap gap-2">
+                   {['Mina Rochosa', 'Tiroteio Estelar'].map((ban, i) => (
+                     <span key={i} className="bg-blue-500/10 text-blue-500 text-xs font-bold px-3 py-1.5 rounded-full border border-blue-500/20">
+                       {ban}
+                     </span>
+                   ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2">Melhores Composições</label>
+                <div className="space-y-2">
+                   <div className="bg-slate-50 dark:bg-[#0A0A0A] p-2 rounded-lg border border-slate-200 dark:border-[#2A2A2A] text-sm text-slate-700 dark:text-zinc-300 font-medium flex items-center justify-between">
+                     <span>Brawler 1 + Brawler 2 + {selectedHotBrawler.name}</span>
+                     <span className="text-emerald-500 font-bold">80% WR</span>
+                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}

@@ -1,0 +1,67 @@
+export function DetailsModal({ player, isOpen, onClose, stats }: DetailsModalProps) {
+  const [showWinrateDetails, setShowWinrateDetails] = useState(false);
+  
+  if (!isOpen || !player) return null;
+
+  const comfortBrawlers = player.comfortBrawlers.map(id => mockBrawlers.find(b => b.id === id)).filter(Boolean);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-2xl w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-zinc-100 dark:border-[#2A2A2A] flex justify-between items-start">
+          <div>
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white leading-tight">{player.nickname}</h3>
+            <div className="text-zinc-500 dark:text-zinc-400">{player.name}</div>
+          </div>
+          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div 
+               className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-[#2A2A2A] text-center cursor-pointer hover:border-emerald-500/50 transition-colors"
+               onClick={() => setShowWinrateDetails(!showWinrateDetails)}
+            >
+              <div className="text-xs text-zinc-500 dark:text-zinc-400 font-bold mb-1 uppercase tracking-wider">Winrate Global</div>
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.winrate}%</div>
+              <div className="text-[10px] text-zinc-400 mt-1">Ver Detalhes</div>
+            </div>
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-[#2A2A2A] text-center">
+              <div className="text-xs text-zinc-500 dark:text-zinc-400 font-bold mb-1 uppercase tracking-wider">Partidas</div>
+              <div className="text-2xl font-bold text-zinc-900 dark:text-white">{stats.matches}</div>
+            </div>
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-[#2A2A2A] text-center col-span-2 md:col-span-2">
+              <div className="text-xs text-zinc-500 dark:text-zinc-400 font-bold mb-2 uppercase tracking-wider">Últimas 5 Scrims</div>
+              <div className="flex justify-center gap-2">
+                {stats.recentMatches.map((isWin, i) => (
+                  <div key={i} className={cn("w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold text-white", isWin ? "bg-emerald-500" : "bg-red-500")}>
+                    {isWin ? 'V' : 'D'}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {showWinrateDetails && (
+            <div className="bg-zinc-50 dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-4 animate-in slide-in-from-top-2">
+               <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3">Detalhamento de Winrate</h4>
+               <div className="space-y-2">
+                  {[
+                     { mode: 'Pique-Gema', wr: 75, matches: 12 },
+                     { mode: 'Fute-Brawl', wr: 60, matches: 10 },
+                     { mode: 'Nocaute', wr: 80, matches: 5 },
+                     { mode: 'Caça-Estrelas', wr: 40, matches: 5 }
+                  ].map(m => (
+                     <div key={m.mode} className="flex justify-between items-center bg-white dark:bg-[#121212] p-2 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{m.mode}</span>
+                        <div className="flex items-center gap-4">
+                           <span className="text-xs text-zinc-500">{m.matches} partidas</span>
+                           <span className={cn("text-sm font-bold", m.wr >= 60 ? "text-emerald-500" : "text-amber-500")}>{m.wr}%</span>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </div>
+          )}

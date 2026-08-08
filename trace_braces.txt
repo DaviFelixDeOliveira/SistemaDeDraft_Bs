@@ -1,0 +1,367 @@
+  1 [ 0] import React from "react";
+  2 [ 0] import { useState } from 'react';
+  3 [ 0] import { DraftState } from './DraftWizard';
+  4 [ 0] import { mockBrawlers, mockPlayers, mockMaps } from '../../data/mockData';
+  5 [ 0] import { ConfirmModal } from "../ui/ConfirmModal";
+  6 [ 0] import { cn } from '../../lib/utils';
+  7 [ 0] import { Trophy, XCircle, ArrowRight, User } from 'lucide-react';
+  8 [ 0] 
+  9 [ 1] interface StepPostMatchProps {
+ 10 [ 1]   draftState: DraftState;
+ 11 [ 1]   setDraftState: React.Dispatch<React.SetStateAction<DraftState>>;
+ 12 [ 1]   onFinish: () => void;
+ 13 [ 1]   onPrev?: () => void;
+ 14 [ 1]   onRestartPicks?: () => void;
+ 15 [ 0] }
+ 16 [ 0] 
+ 17 [ 1] export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onRestartPicks }: StepPostMatchProps) {
+ 18 [ 1]   const [result, setResult] = useState<'victory' | 'defeat' | null>(null);
+ 19 [ 1]   const [isTestingVariation, setIsTestingVariation] = useState(false);
+ 20 [ 1]   const [brawlerOut, setBrawlerOut] = useState<string>('');
+ 21 [ 1]   const [brawlerIn, setBrawlerIn] = useState<string>('');
+ 22 [ 1]   
+ 23 [ 1]   const map = mockMaps.find(m => m.id === draftState.mapId);
+ 24 [ 1]   const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean, action: (() => void) | null, title: string, message: string}>({ isOpen: false, action: null, title: '', message: '' });
+ 25 [ 1]   const tbkPicks = draftState.picks.filter(p => p.team === 'tbk').map(p => p.brawlerId);
+ 26 [ 1]   const enemyPicks = draftState.picks.filter(p => p.team === 'enemy').map(p => p.brawlerId);
+ 27 [ 1] 
+ 28 [ 1]   const tbkPlayers = mockPlayers;
+ 29 [ 1] 
+ 30 [ 1]   // Determine suggested players based on comfort picks
+ 31 [ 2]   const suggestedAssignments = React.useMemo(() => {
+ 32 [ 2]     const assignments: Record<string, string> = {};
+ 33 [ 2]     const assigned = new Set<string>();
+ 34 [ 2] 
+ 35 [ 3]     tbkPicks.forEach(bId => {
+ 36 [ 3]       const p = tbkPlayers.find(pl => pl.comfortBrawlers.includes(bId) && !assigned.has(pl.id));
+ 37 [ 4]       if (p) {
+ 38 [ 4]         assignments[bId] = p.id;
+ 39 [ 4]         assigned.add(p.id);
+ 40 [ 3]       }
+ 41 [ 2]     });
+ 42 [ 2]     return assignments;
+ 43 [ 1]   }, [tbkPicks, tbkPlayers]);
+ 44 [ 2]     setDraftState(prev => ({
+ 45 [ 2]       ...prev,
+ 46 [ 3]       playerAssignments: {
+ 47 [ 3]         ...prev.playerAssignments,
+ 48 [ 3]         [brawlerId]: playerId
+ 49 [ 2]       }
+ 50 [ 1]     }));
+ 51 [ 0]   };
+ 52 [ 0] 
+ 53 [ 1]   const handleSaveResult = () => {
+ 54 [ 2]     setConfirmConfig({
+ 55 [ 2]       isOpen: true,
+ 56 [ 2]       title: 'Salvar Resultado da Partida',
+ 57 [ 2]       message: 'Confirmar os dados da partida e registrar no histórico da equipe?',
+ 58 [ 3]       action: () => {
+ 59 [ 4]         console.log("Saving Match Record:", {
+ 60 [ 4]           map: map?.name,
+ 61 [ 4]           tbkPicks,
+ 62 [ 4]           enemyPicks,
+ 63 [ 4]           result,
+ 64 [ 4]           variation: isTestingVariation ? { out: brawlerOut, in: brawlerIn } : null
+ 65 [ 3]         });
+ 66 [ 3]         onFinish();
+ 67 [ 3]         setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+ 68 [ 2]       }
+ 69 [ 1]     });
+ 70 [ 0]   };
+ 71 [ 0]   const allPlayersAssigned = tbkPicks.every(id => draftState.playerAssignments[id]);
+ 72 [ 0] 
+ 73 [ 0]   return (
+ 74 [ 0]     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+ 75 [ 0]       
+ 76 [ 0]       {/* Header Info */}
+ 77 [ 0]       <div className="flex justify-between items-center bg-white dark:bg-[#1A1A1A] p-4 rounded-xl border border-slate-200 dark:border-[#2A2A2A]">
+ 78 [ 0]         <div>
+ 79 [ 0]            <div className="text-sm text-slate-500 dark:text-zinc-400">Mapa Jogado</div>
+ 80 [ 0]            <div className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
+ 81 [ 0]              {map?.name}
+ 82 [ 1]              {onRestartPicks && (
+ 83 [ 1]                <button onClick={onRestartPicks} className="text-xs font-normal text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:text-white underline px-2 py-1 bg-slate-200 dark:bg-zinc-800 rounded-md">
+ 84 [ 1]                  Mudar Composição
+ 85 [ 1]                </button>
+ 86 [ 0]              )}
+ 87 [ 0]            </div>
+ 88 [ 0]         </div>
+ 89 [ 0]         <div className="text-right">
+ 90 [ 0]            <div className="text-sm text-slate-500 dark:text-zinc-400">Modo</div>
+ 91 [ 0]            <div className="text-lg font-medium text-slate-700 dark:text-zinc-300">{map?.mode}</div>
+ 92 [ 0]         </div>
+ 93 [ 0]       </div>
+ 94 [ 0] 
+ 95 [ 0]       {/* Compositions & Player Assignment */}
+ 96 [ 0]       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+ 97 [ 0]         {/* TBK Team */}
+ 98 [ 0]         <div className="space-y-4">
+ 99 [ 0]            <h3 className="text-lg font-bold text-emerald-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Composição TBK</h3>
+100 [ 0]            <div className="space-y-3">
+101 [ 2]              {tbkPicks.map(brawlerId => {
+102 [ 2]                const brawler = mockBrawlers.find(b => b.id === brawlerId);
+103 [ 2]                return (
+104 [ 2]                  <div key={brawlerId} className="bg-white dark:bg-[#1A1A1A] border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
+105 [ 2]                    <div className="flex items-center gap-3">
+106 [ 2]                       <div className="w-10 h-10 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
+107 [ 2]                         {brawler?.imageUrl && <img src={brawler.imageUrl} alt="" className="w-full h-full object-cover" />}
+108 [ 2]                       </div>
+109 [ 2]                       <span className="font-medium text-slate-900 dark:text-white">{brawler?.name}</span>
+110 [ 2]                    </div>
+111 [ 2]                    
+112 [ 2]                    <div className="w-56 relative">
+113 [ 2]                      <select 
+114 [ 2]                        value={draftState.playerAssignments[brawlerId] || ''}
+115 [ 2]                        onChange={(e) => handlePlayerAssign(brawlerId, e.target.value)}
+116 [ 3]                        className={cn(
+117 [ 3]                          "w-full bg-slate-50 dark:bg-[#0A0A0A] border rounded-md px-3 py-2 text-sm appearance-none focus:outline-none focus:border-emerald-500",
+118 [ 3]                          !draftState.playerAssignments[brawlerId] && suggestedAssignments[brawlerId] ? "border-[#FFCC00] text-[#FFCC00]" : "border-slate-200 dark:border-[#2A2A2A] text-slate-900 dark:text-white"
+119 [ 2]                        )}
+120 [ 2]                      >
+121 [ 2]                        <option value="" disabled>Vincular jogador...</option>
+122 [ 4]                        {tbkPlayers.map(player => {
+123 [ 4]                          const isAssignedToOther = Object.entries(draftState.playerAssignments).some(([bId, pId]) => pId === player.id && bId !== brawlerId);
+124 [ 4]                          const isSuggested = suggestedAssignments[brawlerId] === player.id;
+125 [ 4]                          return (
+126 [ 4]                            <option key={player.id} value={player.id} disabled={isAssignedToOther}>
+127 [ 4]                              {player.nickname} {isAssignedToOther ? '(Já alocado)' : isSuggested ? '⭐ Sugerido' : ''}
+128 [ 4]                            </option>
+129 [ 4]                          );
+130 [ 2]                        })}
+131 [ 2]                      </select>
+132 [ 2]                      <User className="w-4 h-4 absolute right-3 top-2.5 text-slate-500 dark:text-zinc-500 pointer-events-none" />
+133 [ 2]                    </div>
+134 [ 2]                  </div>
+135 [ 2]                );
+136 [ 0]              })}
+137 [ 0]            </div>
+138 [ 0]            
+139 [ 0]            <div className="mt-4 bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] p-3 rounded-lg">
+140 [ 0]              <div className="text-xs text-slate-500 dark:text-zinc-500 mb-2 uppercase tracking-wider font-semibold">Bans da TBK</div>
+141 [ 0]              <div className="flex gap-2">
+142 [ 2]                {draftState.tbkBans.map((bId, i) => {
+143 [ 2]                  if (!bId) return null;
+144 [ 2]                  const b = mockBrawlers.find(b => b.id === bId);
+145 [ 2]                  return (
+146 [ 2]                    <div key={i} className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+147 [ 2]                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
+148 [ 2]                        {b?.iconUrl && <img src={b?.iconUrl} alt="" className="w-full h-full object-cover" />}
+149 [ 2]                      </div>
+150 [ 2]                      {b?.name}
+151 [ 2]                    </div>
+152 [ 2]                  )
+153 [ 0]                })}
+154 [ 0]              </div>
+155 [ 0]            </div>
+156 [ 0]         </div>
+157 [ 0] 
+158 [ 0]         {/* Enemy Team */}
+159 [ 0]         <div className="space-y-4">
+160 [ 0]            <h3 className="text-lg font-bold text-red-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Composição Inimiga</h3>
+161 [ 0]            <div className="flex gap-4">
+162 [ 2]              {enemyPicks.map(brawlerId => {
+163 [ 2]                const brawler = mockBrawlers.find(b => b.id === brawlerId);
+164 [ 2]                return (
+165 [ 2]                  <div key={brawlerId} className="bg-white dark:bg-[#1A1A1A] border border-red-500/20 rounded-lg p-3 flex flex-col items-center gap-2 flex-1">
+166 [ 2]                     <div className="w-12 h-12 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
+167 [ 2]                       {brawler?.imageUrl && <img src={brawler.imageUrl} alt="" className="w-full h-full object-cover" />}
+168 [ 2]                     </div>
+169 [ 2]                     <span className="font-medium text-slate-900 dark:text-white">{brawler?.name}</span>
+170 [ 2]                  </div>
+171 [ 2]                );
+172 [ 0]              })}
+173 [ 0]            </div>
+174 [ 0]            
+175 [ 0]            <div className="mt-4 bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] p-3 rounded-lg">
+176 [ 0]              <div className="text-xs text-slate-500 dark:text-zinc-500 mb-2 uppercase tracking-wider font-semibold">Bans do Inimigo</div>
+177 [ 0]              <div className="flex gap-2">
+178 [ 2]                {draftState.enemyBans.map((bId, i) => {
+179 [ 2]                  if (!bId) return null;
+180 [ 2]                  const b = mockBrawlers.find(b => b.id === bId);
+181 [ 2]                  return (
+182 [ 2]                    <div key={i} className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+183 [ 2]                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
+184 [ 2]                        {b?.iconUrl && <img src={b?.iconUrl} alt="" className="w-full h-full object-cover" />}
+185 [ 2]                      </div>
+186 [ 2]                      {b?.name}
+187 [ 2]                    </div>
+188 [ 2]                  )
+189 [ 0]                })}
+190 [ 0]              </div>
+191 [ 0]            </div>
+192 [ 0]         </div>
+193 [ 0]       </div>
+194 [ 0] 
+195 [ 0]       {/* Result Selection */}
+196 [ 0]       <div className="pt-6 border-t border-slate-200 dark:border-[#2A2A2A]">
+197 [ 0]         <h3 className="text-center text-lg font-bold text-slate-900 dark:text-white mb-6">Qual foi o resultado?</h3>
+198 [ 0]         
+199 [ 0]         <div className="flex gap-4 max-w-2xl mx-auto">
+200 [ 0]            <button
+201 [ 0]              onClick={() => { setResult('victory'); setIsTestingVariation(false); }}
+202 [ 1]              className={cn(
+203 [ 1]                "flex-1 py-6 rounded-xl border-2 flex flex-col items-center justify-center gap-3 transition-all duration-300",
+204 [ 1]                result === 'victory' 
+205 [ 1]                  ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)] scale-[1.02]" 
+206 [ 1]                  : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-emerald-500/50 hover:text-emerald-400/80",
+207 [ 1]                result === 'defeat' && "opacity-50 scale-95"
+208 [ 0]              )}
+209 [ 0]            >
+210 [ 0]              <Trophy className="w-8 h-8" />
+211 [ 0]              <span className="text-lg font-bold">Vitória</span>
+212 [ 0]            </button>
+213 [ 0]            
+214 [ 0]            <button
+215 [ 0]              onClick={() => setResult('defeat')}
+216 [ 1]              className={cn(
+217 [ 1]                "flex-1 py-6 rounded-xl border-2 flex flex-col items-center justify-center gap-3 transition-all duration-300",
+218 [ 1]                result === 'defeat' 
+219 [ 1]                  ? "bg-red-500/20 border-red-500 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.2)] scale-[1.02]" 
+220 [ 1]                  : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-red-500/50 hover:text-red-400/80",
+221 [ 1]                result === 'victory' && "opacity-50 scale-95"
+222 [ 0]              )}
+223 [ 0]            >
+224 [ 0]              <XCircle className="w-8 h-8" />
+225 [ 0]              <span className="text-lg font-bold">Derrota</span>
+226 [ 0]            </button>
+227 [ 0]         </div>
+228 [ 0]       </div>
+229 [ 0] 
+230 [ 0]       {/* Test Variation Flow (If Defeat) */}
+231 [ 1]       {result === 'defeat' && (
+232 [ 1]         <div className="mt-8 animate-in fade-in slide-in-from-top-4">
+233 [ 1]           <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-[#2A2A2A] p-4 sm:p-6 max-w-2xl mx-auto">
+234 [ 1]             <h4 className="text-center text-slate-900 dark:text-white font-bold mb-6">Derrota registrada. E agora?</h4>
+235 [ 1]             <div className="flex gap-4">
+236 [ 1]               <button 
+237 [ 1]                 onClick={handleSaveResult}
+238 [ 1]                 disabled={!allPlayersAssigned}
+239 [ 1]                 className="flex-1 p-4 bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] hover:bg-slate-200 dark:bg-zinc-800 rounded-lg text-slate-900 dark:text-white font-medium transition-colors h-auto min-h-[100px] flex flex-col items-center justify-center"
+240 [ 1]               >
+241 [ 1]                 <ArrowRight className="w-5 h-5 text-slate-500 dark:text-zinc-400 mb-2" />
+242 [ 1]                 <span className="text-sm font-bold block mb-1">Salvar Derrota da Scrim</span>
+243 [ 1]                 <span className="text-xs text-slate-500 dark:text-zinc-500 font-normal leading-tight text-center">Registra no histórico e encerra</span>
+244 [ 1]               </button>
+245 [ 1]               
+246 [ 1]               <button 
+247 [ 1]                 onClick={() => setIsTestingVariation(true)}
+248 [ 2]                 className={cn(
+249 [ 2]                   "flex-1 p-4 rounded-lg font-medium transition-colors border h-auto min-h-[100px] flex flex-col items-center justify-center text-center",
+250 [ 2]                   isTestingVariation ? "bg-emerald-500/10 border-emerald-500 text-emerald-400" : "bg-emerald-500/5 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
+251 [ 1]                 )}
+252 [ 1]               >
+253 [ 1]                 <span className="text-sm font-bold block mb-1">Testar Variação</span>
+254 [ 1]                 <span className="text-xs opacity-70 font-normal leading-tight text-center">Troque um brawler e teste a comp</span>
+255 [ 1]               </button>
+256 [ 1]             </div>
+257 [ 1]             
+258 [ 2]             {isTestingVariation && (
+259 [ 2]               <div className="mt-6 p-4 bg-slate-50 dark:bg-[#0A0A0A] rounded-lg border border-slate-200 dark:border-[#2A2A2A] space-y-4">
+260 [ 2]                 <h5 className="text-sm font-bold text-slate-900 dark:text-white text-center">Testar variação da composição TBK</h5>
+261 [ 2]                 
+262 [ 2]                 <div className="flex flex-col sm:flex-row items-center gap-4">
+263 [ 2]                   <div className="flex-1 w-full relative">
+264 [ 2]                     <label className="block text-xs text-slate-500 dark:text-zinc-400 mb-1">Brawler que saiu</label>
+265 [ 2]                     <div className="relative group">
+266 [ 2]                        <select 
+267 [ 2]                          value={brawlerOut} 
+268 [ 2]                          onChange={(e) => setBrawlerOut(e.target.value)}
+269 [ 2]                          className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
+270 [ 2]                        >
+271 [ 2]                          <option value="">Selecionar...</option>
+272 [ 3]                          {tbkPicks.map(id => (
+273 [ 3]                            <option key={id} value={id}>{mockBrawlers.find(b => b.id === id)?.name}</option>
+274 [ 2]                          ))}
+275 [ 2]                        </select>
+276 [ 2]                        <div className="absolute left-2 top-1.5 w-6 h-6 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden pointer-events-none">
+277 [ 3]                          {brawlerOut && mockBrawlers.find(b => b.id === brawlerOut)?.iconUrl && (
+278 [ 3]                             <img src={mockBrawlers.find(b => b.id === brawlerOut)?.iconUrl} className="w-full h-full object-cover" />
+279 [ 2]                          )}
+280 [ 2]                        </div>
+281 [ 2]                     </div>
+282 [ 2]                   </div>
+283 [ 2]                     
+284 [ 2]                   <div className="text-slate-500 dark:text-zinc-500 mt-5 hidden sm:block"><ArrowRight className="w-5 h-5" /></div>
+285 [ 2]                     
+286 [ 2]                   <div className="flex-1 w-full relative">
+287 [ 2]                     <label className="block text-xs text-slate-500 dark:text-zinc-400 mb-1">Brawler que entrou</label>
+288 [ 2]                     <div className="relative group">
+289 [ 2]                        <select 
+290 [ 2]                          value={brawlerIn} 
+291 [ 2]                          onChange={(e) => setBrawlerIn(e.target.value)}
+292 [ 2]                          className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
+293 [ 2]                        >
+294 [ 2]                          <option value="">Selecionar...</option>
+295 [ 3]                          {mockBrawlers.map(b => (
+296 [ 3]                            <option key={b.id} value={b.id}>{b.name}</option>
+297 [ 2]                          ))}
+298 [ 2]                        </select>
+299 [ 2]                        <div className="absolute left-2 top-1.5 w-6 h-6 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden pointer-events-none">
+300 [ 3]                          {brawlerIn && mockBrawlers.find(b => b.id === brawlerIn)?.iconUrl && (
+301 [ 3]                             <img src={mockBrawlers.find(b => b.id === brawlerIn)?.iconUrl} className="w-full h-full object-cover" />
+302 [ 2]                          )}
+303 [ 2]                        </div>
+304 [ 2]                     </div>
+305 [ 2]                   </div>
+306 [ 2]                 </div>
+307 [ 2]                 <div className="pt-4 flex justify-end gap-3">
+308 [ 2]                    <button 
+309 [ 2]                      onClick={() => setIsTestingVariation(false)}
+310 [ 2]                      className="px-4 py-2 text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:text-white"
+311 [ 2]                    >
+312 [ 2]                      Cancelar
+313 [ 2]                    </button>
+314 [ 2]                    <button 
+315 [ 2]                      disabled={!brawlerOut || !brawlerIn || !allPlayersAssigned}
+316 [ 2]                      onClick={handleSaveResult}
+317 [ 2]                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:bg-zinc-800 text-slate-900 dark:text-white text-sm font-medium rounded-md"
+318 [ 2]                    >
+319 [ 2]                      Variação Venceu
+320 [ 2]                    </button>
+321 [ 2]                    <button 
+322 [ 2]                      disabled={!brawlerOut || !brawlerIn || !allPlayersAssigned}
+323 [ 2]                      onClick={() => { setIsTestingVariation(false); handleSaveResult(); }}
+324 [ 2]                      className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-slate-200 dark:bg-zinc-800 text-slate-900 dark:text-white text-sm font-medium rounded-md"
+325 [ 2]                    >
+326 [ 2]                      Variação Perdeu
+327 [ 2]                    </button>
+328 [ 2]                 </div>
+329 [ 2]               </div>
+330 [ 1]             )}
+331 [ 1]           </div>
+332 [ 1]         </div>
+333 [ 0]       )}
+334 [ 0] 
+335 [ 0]       {/* Save Buttons for Victory */}
+336 [ 1]       {result === 'victory' && (
+337 [ 1]         <div className="flex flex-col sm:flex-row justify-center mt-8 gap-4">
+338 [ 1]            <button 
+339 [ 1]              onClick={handleSaveResult}
+340 [ 1]              disabled={!allPlayersAssigned}
+341 [ 1]              className="flex-1 bg-white dark:bg-[#1A1A1A] border border-emerald-500/30 hover:border-emerald-500 disabled:border-slate-200 dark:border-[#2A2A2A] disabled:text-zinc-600 text-emerald-400 p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px]"
+342 [ 1]            >
+343 [ 1]              <span className="font-bold text-[15px] mb-2 block">Salvar Vitória da Scrim</span>
+344 [ 1]              <span className="text-xs text-slate-500 dark:text-zinc-400 font-normal leading-tight block max-w-xs mx-auto">Registra no histórico e atualiza stats no Dashboard</span>
+345 [ 1]            </button>
+346 [ 1]            <button 
+347 [ 1]              onClick={handleSaveResult}
+348 [ 1]              disabled={!allPlayersAssigned}
+349 [ 1]              className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-200 dark:bg-zinc-800 disabled:text-zinc-600 text-slate-900 dark:text-white p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px]"
+350 [ 1]            >
+351 [ 1]              <span className="font-bold text-[15px] mb-2 block">Salvar como Meta do Mapa</span>
+352 [ 1]              <span className="text-xs text-emerald-100 font-normal leading-tight block max-w-xs mx-auto">Define como trio referência na biblioteca de Mapas</span>
+353 [ 1]            </button>
+354 [ 1]         </div>
+355 [ 0]       )}
+356 [ 0] 
+357 [ 0] 
+358 [ 0]       <ConfirmModal
+359 [ 0]         isOpen={confirmConfig.isOpen}
+360 [ 0]         title={confirmConfig.title}
+361 [ 0]         message={confirmConfig.message}
+362 [ 0]         onConfirm={() => confirmConfig.action && confirmConfig.action()}
+363 [ 0]         onCancel={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+364 [ 0]       />
+365 [ 0]     </div>
+366 [ 0]   );
+367 [-1] }

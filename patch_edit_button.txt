@@ -1,0 +1,16 @@
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setEditingMap(map); setIsAddModalOpen(true); }}
+                      className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-blue-500 transition-colors shadow-sm"
+                      title="Editar Mapa"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={(e) => toggleMapStatus(map.id, e)}
+                      className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-[#FF3366] transition-colors shadow-sm"
+                      title={map.isActive ? "Arquivar Mapa" : "Desarquivar Mapa"}
+                    >
+                      {map.isActive ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
+                    </button>
+                  </div>

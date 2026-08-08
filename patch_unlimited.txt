@@ -1,0 +1,8 @@
+  const toggleBrawler = (id: string) => {
+    const current = formData.comfortBrawlers || [];
+    if (current.includes(id)) {
+      setFormData({ ...formData, comfortBrawlers: current.filter(b => b !== id) });
+    } else {
+      setFormData({ ...formData, comfortBrawlers: [...current, id] });
+    }
+  };

@@ -1,0 +1,10 @@
+  getWinrateByMode: async () => {
+    // Mocking mode distribution
+    return [
+       { name: 'Fute-Brawl', value: 30, color: '#3B82F6', winrate: 65 },
+       { name: 'Caça-Estrelas', value: 20, color: '#F59E0B', winrate: 55 },
+       { name: 'Roubo', value: 15, color: '#EF4444', winrate: 70 },
+       { name: 'Pique-Gema', value: 25, color: '#8B5CF6', winrate: 45 },
+       { name: 'Nocaute', value: 10, color: '#10B981', winrate: 80 }
+    ];
+  },

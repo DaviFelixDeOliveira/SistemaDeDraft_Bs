@@ -1,0 +1,11 @@
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+
+  useEffect(() => {
+    if (draftState.mapId) {
+      setIsSuggestionsLoading(true);
+      const timer = setTimeout(() => {
+        setIsSuggestionsLoading(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [draftState.mapId]);

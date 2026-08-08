@@ -1,0 +1,22 @@
+                   <div className="w-56 relative">
+                     <select 
+                       value={draftState.playerAssignments[brawlerId] || ''}
+                       onChange={(e) => handlePlayerAssign(brawlerId, e.target.value)}
+                       className={cn(
+                         "w-full bg-slate-50 dark:bg-[#0A0A0A] border rounded-md px-3 py-2 text-sm appearance-none focus:outline-none focus:border-emerald-500",
+                         !draftState.playerAssignments[brawlerId] && suggestedAssignments[brawlerId] ? "border-[#FFCC00] text-[#FFCC00]" : "border-slate-200 dark:border-[#2A2A2A] text-slate-900 dark:text-white"
+                       )}
+                     >
+                       <option value="" disabled>Vincular jogador...</option>
+                       {tbkPlayers.map(player => {
+                         const isAssignedToOther = Object.entries(draftState.playerAssignments).some(([bId, pId]) => pId === player.id && bId !== brawlerId);
+                         const isSuggested = suggestedAssignments[brawlerId] === player.id;
+                         return (
+                           <option key={player.id} value={player.id} disabled={isAssignedToOther}>
+                             {player.nickname} {isAssignedToOther ? '(Já alocado)' : isSuggested ? '⭐ Sugerido' : ''}
+                           </option>
+                         );
+                       })}
+                     </select>
+                     <User className="w-4 h-4 absolute right-3 top-2.5 text-slate-500 dark:text-zinc-500 pointer-events-none" />
+                   </div>

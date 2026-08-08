@@ -1,0 +1,31 @@
+export const mockMaps: GameMap[] = [
+  // Pique-Gema
+  { id: 'm1', name: 'Mina Rochosa', mode: 'Pique-Gema', terrain: 'Semi-Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Hard-Rock-Mine.png' },
+  { id: 'm2', name: 'Pit Stop', mode: 'Pique-Gema', terrain: 'Fechado', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Pit-Stop.png' },
+  { id: 'm3', name: 'Fliperama de Cristal', mode: 'Pique-Gema', terrain: 'Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Crystal-Arcade.png' },
+  
+  // Fute-Brawl
+  { id: 'm4', name: 'Drible Triplo', mode: 'Fute-Brawl', terrain: 'Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Triple-Dribble.png' },
+  { id: 'm5', name: 'Tiro de Meta', mode: 'Fute-Brawl', terrain: 'Semi-Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Center-Stage.png' },
+  { id: 'm6', name: 'Pintando o Pinball', mode: 'Fute-Brawl', terrain: 'Fechado', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Pinball-Dreams.png' },
+  
+  // Caça-Estrelas
+  { id: 'm7', name: 'Estação Seca', mode: 'Caça-Estrelas', terrain: 'Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Dry-Season.png' },
+  { id: 'm8', name: 'Tocaia', mode: 'Caça-Estrelas', terrain: 'Fechado', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Hideout.png' },
+  { id: 'm9', name: 'Bolo em Camadas', mode: 'Caça-Estrelas', terrain: 'Semi-Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Layer-Cake.png' },
+  
+  // Roubo
+  { id: 'm10', name: 'Pit Stop', mode: 'Roubo', terrain: 'Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Pit-Stop.png' },
+  { id: 'm11', name: 'Zona Segura', mode: 'Roubo', terrain: 'Fechado', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Safe-Zone.png' },
+  { id: 'm12', name: 'Ravina Kabum', mode: 'Roubo', terrain: 'Semi-Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Kaboom-Canyon.png' },
+  
+  // Zona Estratégica
+  { id: 'm13', name: 'Aberto', mode: 'Zona Estratégica', terrain: 'Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Open-Zone.png' },
+  { id: 'm14', name: 'Besouros Brigões', mode: 'Zona Estratégica', terrain: 'Fechado', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Dueling-Beetles.png' },
+  { id: 'm15', name: 'Anel de Fogo', mode: 'Zona Estratégica', terrain: 'Semi-Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Ring-of-Fire.png' },
+  
+  // Nocaute
+  { id: 'm16', name: 'Caverna do Braço Dourado', mode: 'Nocaute', terrain: 'Semi-Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Goldarm-Gulch.png' },
+  { id: 'm17', name: 'Novos Horizontes', mode: 'Nocaute', terrain: 'Aberto', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/New-Perspective.png' },
+  { id: 'm18', name: 'Descampado', mode: 'Nocaute', terrain: 'Fechado', isActive: true, imageUrl: 'https://cdn.brawlify.com/map/Out-in-the-Open.png' }
+];

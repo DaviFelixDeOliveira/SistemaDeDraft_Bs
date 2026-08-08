@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ================================================================
+   Animação de shake para erro de autenticação
+   ================================================================ */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%       { transform: translateX(-8px); }
+  25%       { transform: translateX(8px); }
+  40%       { transform: translateX(-6px); }
+  55%       { transform: translateX(6px); }
+  70%       { transform: translateX(-4px); }
+  85%       { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+

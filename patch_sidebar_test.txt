@@ -1,0 +1,21 @@
+        <div className="p-4 border-t border-zinc-200 dark:border-[#2A2A2A] space-y-2">
+          <button 
+            onClick={() => {
+              if(confirm('Isso preencherá os formulários e simulará dados no sistema. Deseja continuar?')) {
+                // Em um cenário real, isso ativaria um service mock. 
+                // Para este teste, recarregaremos o cache/mock.
+                window.location.reload();
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 transition-all border border-amber-500/20"
+          >
+            🧪 Preencher Dados Aleatórios
+          </button>
+          <button 
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+            Sair do Sistema
+          </button>
+        </div>

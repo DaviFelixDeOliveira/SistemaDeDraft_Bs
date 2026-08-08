@@ -1,0 +1,10 @@
+              <button
+                key={tab}
+                onClick={() => {
+                  setIsLoadingBans(true);
+                  setTimeout(() => {
+                    setActiveBanTab(tab as any);
+                    setIsLoadingBans(false);
+                  }, 400);
+                }}
+                className={cn(

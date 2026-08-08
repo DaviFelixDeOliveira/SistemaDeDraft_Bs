@@ -1,0 +1,5 @@
+            {isLoadingBans ? (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-[#2A2A2A] rounded-t-lg overflow-hidden z-20">
+                 <div className="h-full bg-fuchsia-500 w-1/3 animate-pulse rounded-full" style={{ animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+              </div>
+            ) : null}

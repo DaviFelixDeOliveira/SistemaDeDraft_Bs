@@ -1,0 +1,20 @@
+          <div className="flex bg-slate-100 dark:bg-[#0A0A0A] p-1 rounded-lg mb-4">
+            {['geral', 'tbk', 'enemy'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setIsLoadingBans(true);
+                  setTimeout(() => {
+                    setActiveBanTab(tab as any);
+                    setIsLoadingBans(false);
+                  }, 400);
+                }}
+                className={cn(
+                  "flex-1 text-xs font-bold py-1.5 rounded-md transition-colors",
+                  activeBanTab === tab ? "bg-white dark:bg-[#2A2A2A] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-zinc-300"
+                )}
+              >
+                {tab === 'geral' ? 'Geral' : tab === 'tbk' ? 'Nossos' : 'Inimigos'}
+              </button>
+            ))}
+          </div>

@@ -1,0 +1,6 @@
+            {isLoadingBans ? (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-zinc-800 rounded-t-lg overflow-hidden z-20">
+                 <div className="h-full bg-[#FF3366] animate-pulse w-full" style={{ animationDuration: '0.8s', animationName: 'progress' }} />
+              </div>
+            ) : null}
+            <div className={cn("space-y-3 transition-opacity duration-300", isLoadingBans ? "opacity-30" : "opacity-100")}>
