@@ -547,6 +547,40 @@ export const analyticsService = {
   },
 
   /**
+   * Retorna desempenho real por mapa (vitórias, derrotas, winrate)
+   * Usada pelo Dashboard no bloco "Desempenho por Modo"
+   */
+  getMapPerformance: async () => {
+    const [matches, maps] = await Promise.all([
+      analyticsService.getAllMatches(),
+      mapService.getMaps()
+    ]);
+
+    const mapsMap = new Map<string, GameMap>(maps.map(m => [m.id, m]));
+
+    const mapStats: Record<string, { map: GameMap; wins: number; total: number }> = {};
+
+    matches.forEach(match => {
+      const gameMap = mapsMap.get(match.map_id);
+      if (gameMap) {
+        if (!mapStats[match.map_id]) {
+          mapStats[match.map_id] = { map: gameMap, wins: 0, total: 0 };
+        }
+        mapStats[match.map_id].total++;
+        if (match.result === 'victory') mapStats[match.map_id].wins++;
+      }
+    });
+
+    return Object.values(mapStats).map(({ map, wins, total }) => ({
+      map,
+      wins,
+      total,
+      losses: total - wins,
+      winrate: total > 0 ? Math.round((wins / total) * 100) : 0
+    }));
+  },
+
+  /**
    * Progresso de Winrate Semanal
    */
   getWeeklyWinrate: async () => {

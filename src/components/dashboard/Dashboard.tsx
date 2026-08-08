@@ -6,19 +6,19 @@ import { Trophy, Swords, XCircle, Activity, Map as MapIcon, Flame, Shield, Cross
 import { cn } from '../../lib/utils';
 import { CustomTooltip } from "../ui/CustomTooltip";
 import { AreaChart, LabelList, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
-import { mockBrawlers, mockCompositions, mockMaps } from "../../data/mockData";
 import { Composition } from '../../types';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 function DashboardContent() {
   const CustomXAxisTick = (props: any) => {
     const { x, y, payload } = props;
-    const brawler = mockBrawlers.find(b => b?.name === payload.value);
+    // Usa os dados já carregados do Supabase via brawlerStats
+    const brawler = (brawlerStats || []).find((b: any) => b?.name === payload.value);
 
     return (
       <g transform={`translate(${x},${y})`}>
-        {brawler?.iconUrl ? (
-          <image href={brawler.iconUrl} x={-12} y={0} height={24} width={24} clipPath="inset(0% round 4px)" />
+        {(brawler?.iconUrl || brawler?.imageUrl) ? (
+          <image href={brawler.iconUrl || brawler.imageUrl} x={-12} y={0} height={24} width={24} clipPath="inset(0% round 4px)" />
         ) : (
           <text x={0} y={15} dy={0} textAnchor="middle" fill="#52525B" fontSize={10}>
             {payload.value}
@@ -238,8 +238,8 @@ function DashboardContent() {
                 <div key={b?.name} className="flex items-center gap-3">
                   <span className="w-5 text-center text-xs font-bold text-slate-400 dark:text-zinc-600">#{i + 1}</span>
                   <div className="w-10 h-10 rounded-md bg-slate-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
-                    {mockBrawlers.find(mb => mb?.name === b?.name)?.imageUrl && (
-                      <img src={mockBrawlers.find(mb => mb?.name === b?.name)?.imageUrl} alt={b?.name} className="w-full h-full object-cover" />
+                    {(b?.imageUrl || b?.iconUrl) && (
+                      <img src={b.imageUrl || b.iconUrl} alt={b?.name} className="w-full h-full object-cover" />
                     )}
                   </div>
                   <div className="flex-1 flex flex-col gap-1">
