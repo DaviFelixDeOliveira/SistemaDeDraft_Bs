@@ -1,6 +1,6 @@
 import { getBrawlerBgColor, getBrawlerClassIcon } from "../../lib/utils";
 import React from "react";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DraftState } from './DraftWizard';
 import { brawlerService } from '../../services/brawlerService';
 import { mapService } from '../../services/mapService';
@@ -52,9 +52,6 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
     }
   }, [draftState.mapId]);
 
-  const allBrawlers = brawlers.length > 0 ? brawlers : mockBrawlers;
-  const allMaps = maps.length > 0 ? maps : mockMaps;
-  const allPlayers = players.length > 0 ? players : mockPlayers;
   
   const pickOrder = getPickOrder(draftState.tbkStarts);
   const currentPickIndex = draftState.picks.length;
@@ -117,14 +114,14 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
   const getRecommendedBrawlers = (): (Brawler & { score: number })[] => {
     if (!currentTeamPicking || currentTeamPicking === 'enemy') return [];
     
-    const available = allBrawlers.filter(b => !unavailableBrawlerIds.includes(b.id));
+    const available = brawlers.filter(b => !unavailableBrawlerIds.includes(b.id));
     const enemyTeamIds = draftState.picks.filter(p => p.team === 'enemy').map(p => p.brawlerId);
     const tbkTeamIds = draftState.picks.filter(p => p.team === 'tbk').map(p => p.brawlerId);
     
-    const enemyBrawlers = enemyTeamIds.map(id => allBrawlers.find(b => b.id === id)!).filter(Boolean);
-    const tbkBrawlers = tbkTeamIds.map(id => allBrawlers.find(b => b.id === id)!).filter(Boolean);
+    const enemyBrawlers = enemyTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
+    const tbkBrawlers = tbkTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
     
-    const map = allMaps.find(m => m.id === draftState.mapId);
+    const map = maps.find(m => m.id === draftState.mapId);
 
     const scoredBrawlers = available.map(brawler => {
       let score = 0;
@@ -137,7 +134,7 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
       else if (brawler.tier === 'D') score += 200;
       
       // 2. Comfort Picks do Elenco Ativo
-      const isComfort = allPlayers.some(p => (p.isActive !== false || p.is_active !== false) && p.comfortBrawlers?.includes(brawler.id));
+      const isComfort = players.some(p => (p.isActive !== false || p.is_active !== false) && p.comfortBrawlers?.includes(brawler.id));
       if (isComfort) score += 300;
 
       // 3. Adaptação ao Terreno e Mecânicas Únicas
@@ -204,13 +201,13 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
     return scoredBrawlers.sort((a, b) => b.score - a.score).slice(0, 3);
   };
 
-  const recommendations = useMemo(() => getRecommendedBrawlers(), [draftState, unavailableBrawlerIds]);
+  const recommendations = useMemo(() => getRecommendedBrawlers(), [draftState, unavailableBrawlerIds, brawlers, maps, players]);
   const bestRecommendationId = recommendations[0]?.id;
 
   const unbalancedAlert = useMemo(() => {
     const tbkTeamIds = draftState.picks.filter(p => p.team === 'tbk').map(p => p.brawlerId);
-    const tbkBrawlers = tbkTeamIds.map(id => mockBrawlers.find(b => b.id === id)!).filter(Boolean);
-    const map = mockMaps.find(m => m.id === draftState.mapId);
+    const tbkBrawlers = tbkTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
+    const map = maps.find(m => m.id === draftState.mapId);
 
     const snipers = tbkBrawlers.filter(b => b.type.includes('Tiro preciso')).length;
     const throwers = tbkBrawlers.filter(b => b.type.includes('Lancadores')).length;
@@ -225,30 +222,14 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
     }
 
     return null;
-  }, [draftState.picks, draftState.mapId]);
+  }, [draftState.picks, draftState.mapId, brawlers, maps]);
 
-  const recommendedComp = useMemo(() => {
-    if (!draftState.mapId) return null;
-    const comps = mockCompositions.filter(c => c.mapId === draftState.mapId);
-    if (comps.length === 0) return null;
-    // Get the comp with highest winrate
-    const bestComp = comps.sort((a, b) => b.winrate - a.winrate)[0];
-    
-    // Check if the comp is still fully available or already picked by TBK
-    const brawlers = bestComp.brawlers.map(id => mockBrawlers.find(b => b.id === id)).filter(Boolean) as Brawler[];
-    const isViable = brawlers.every(b => {
-      const isPickedByUs = draftState.picks.some(p => p.team === 'tbk' && p.brawlerId === b.id);
-      const isAvailable = !unavailableBrawlerIds.includes(b.id);
-      return isPickedByUs || isAvailable;
-    });
-
-    if (!isViable) return null;
-    return { ...bestComp, brawlersList: brawlers };
-  }, [draftState.mapId, draftState.picks, unavailableBrawlerIds]);
+  // Composições serão planejadas em sessão futura com tabela dedicada no banco
+  const recommendedComp = null;
 
   const filteredBrawlers = useMemo(() => {
-    return mockBrawlers.filter(b => fuzzySearch(search, b.name));
-  }, [search]);
+    return brawlers.filter(b => fuzzySearch(search, b.name));
+  }, [search, brawlers]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && filteredBrawlers.length > 0) {
@@ -293,7 +274,7 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
           {pickOrder.map((team, index) => {
             if (team !== 'tbk') return null;
             const pick = draftState.picks[index];
-            const brawler = pick ? mockBrawlers.find(b => b.id === pick.brawlerId) : null;
+            const brawler = pick ? brawlers.find(b => b.id === pick.brawlerId) : null;
             const isCurrentPick = currentPickIndex === index;
 
             return (
@@ -338,7 +319,7 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
           {pickOrder.map((team, index) => {
             if (team !== 'enemy') return null;
             const pick = draftState.picks[index];
-            const brawler = pick ? mockBrawlers.find(b => b.id === pick.brawlerId) : null;
+            const brawler = pick ? brawlers.find(b => b.id === pick.brawlerId) : null;
             const isCurrentPick = currentPickIndex === index;
 
             return (
@@ -459,44 +440,7 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
         <>
         <div className="space-y-4">
           
-          {/* Composição Meta do Mapa */}
-          {mockCompositions.filter(c => c.mapId === draftState.mapId).length > 0 && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 sm:p-4 mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                 <Shield className="w-4 h-4 text-emerald-500" />
-                 <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Composição Meta do Mapa</h4>
-              </div>
-              <div className="flex flex-wrap gap-2 sm:gap-4">
-                {mockCompositions.filter(c => c.mapId === draftState.mapId).map((comp, idx) => (
-                  <div key={idx} className="flex gap-2 p-2 bg-white dark:bg-[#1A1A1A] rounded-lg border border-emerald-500/20 shadow-sm cursor-pointer hover:border-emerald-500 transition-colors"
-                       onClick={() => {
-                         const availableBrawlers = comp.brawlers.filter(bId => !unavailableBrawlerIds.includes(bId));
-                         if (availableBrawlers.length > 0 && currentTeamPicking) {
-                           handlePick(availableBrawlers[0]);
-                         }
-                       }}
-                       title="Clique para pickar rápido o próximo brawler disponível"
-                  >
-                    {comp.brawlers.map(bId => {
-                      const b = mockBrawlers.find(br => br.id === bId);
-                      const isPicked = draftState.picks.some(p => p.brawlerId === bId);
-                      const isBanned = draftState.tbkBans.includes(bId) || draftState.enemyBans.includes(bId);
-                      return (
-                         <div key={bId} className={cn("w-10 h-10 rounded overflow-hidden relative border", isPicked ? "border-emerald-500 opacity-50" : isBanned ? "border-red-500 opacity-30 grayscale" : "border-slate-200 dark:border-zinc-700")}>
-                            {b?.iconUrl && <img src={b.iconUrl} alt={b.name} className="w-full h-full object-cover" />}
-                            {isPicked && <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center"><Target className="w-4 h-4 text-emerald-500" /></div>}
-                         </div>
-                      )
-                    })}
-                    <div className="flex flex-col justify-center ml-2">
-                       <span className="text-xs font-bold text-slate-900 dark:text-white">{comp.description}</span>
-                       <span className="text-[10px] text-slate-500 font-medium">WR: {comp.winrate}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           <div className="flex justify-between items-center">
              <div className="relative w-64">
@@ -525,9 +469,8 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
                 const isFirstAvailable = brawler.id === filteredBrawlers.find(b => !unavailableBrawlerIds.includes(b.id))?.id;
                 const isTierS = brawler.tier === 'S';
                 const isTopPick = brawler.id === bestRecommendationId && !isDraftComplete && currentTeamPicking === 'tbk';
-                const isComfort = mockPlayers.some(p => p.isActive !== false && p.comfortBrawlers?.includes(brawler.id));
-                const inComps = mockCompositions.filter(c => c.mapId === draftState.mapId);
-                const isStrong = inComps.some(c => c.brawlers.includes(brawler.id));
+                const isComfort = players.some(p => p.isActive !== false && p.comfortBrawlers?.includes(brawler.id));
+                const isStrong = false; // composições serão implementadas em sessão futura
                 return (
                   <div
                     key={brawler.id}

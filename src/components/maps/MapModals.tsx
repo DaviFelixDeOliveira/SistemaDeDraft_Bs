@@ -1,12 +1,12 @@
 import { getBrawlerBgColor } from "../../lib/utils";
 import React, { useState, useEffect } from 'react';
 import { X, Award, Shield, Target, Plus, Flame } from 'lucide-react';
-import { GameMap, GameMode } from '../../types';
-import { mockBrawlers } from '../../data/mockData';
+import { GameMap, GameMode, Brawler } from '../../types';
 import { cn } from '../../lib/utils';
 import { MapDetailsView } from '../ui/MapDetailsView';
 
 import { analyticsService } from '../../services/analyticsService';
+import { brawlerService } from '../../services/brawlerService';
 
 interface MapDetailsModalProps {
   map: GameMap | null;
@@ -18,6 +18,11 @@ interface MapDetailsModalProps {
 
 export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapDetailsModalProps) {
   const [mapStats, setMapStats] = useState<any>(null);
+  const [allBrawlers, setAllBrawlers] = useState<Brawler[]>([]);
+
+  useEffect(() => {
+    brawlerService.getBrawlers().then(setAllBrawlers);
+  }, []);
 
   useEffect(() => {
     if (map && isOpen) {
@@ -145,7 +150,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
                     </h5>
                     <div className="flex items-center gap-2">
                       {comp.brawlers.map((bId: string) => {
-                        const brawler = mockBrawlers.find(b => b.id === bId);
+                        const brawler = allBrawlers.find(b => b.id === bId);
                         return (
                           <div key={bId} className={cn("w-10 h-10 rounded border border-zinc-200 dark:border-[#2A2A2A] overflow-hidden", getBrawlerBgColor(brawler || {}))} title={brawler?.name}>
                             {brawler?.iconUrl && <img src={brawler.iconUrl} alt={brawler.name} className="w-full h-full object-cover" />}
@@ -361,7 +366,13 @@ export function AddCompModal({ isOpen, onClose, onSave, mapId }: AddCompModalPro
   const [brawlers, setBrawlers] = useState<string[]>([]);
   const [name, setName] = useState('');
   const [brawlerSearch, setBrawlerSearch] = useState("");
-  const filteredBrawlers = mockBrawlers.filter(b => brawlerSearch ? b.name.toLowerCase().includes(brawlerSearch.toLowerCase()) : true);
+  const [allBrawlers, setAllBrawlers] = useState<Brawler[]>([]);
+
+  useEffect(() => {
+    brawlerService.getBrawlers().then(setAllBrawlers);
+  }, []);
+
+  const filteredBrawlers = allBrawlers.filter(b => brawlerSearch ? b.name.toLowerCase().includes(brawlerSearch.toLowerCase()) : true);
 
   if (!isOpen) return null;
 

@@ -2,7 +2,7 @@ import { getBrawlerBgColor } from "../../lib/utils";
 import React from "react";
 import { useState } from 'react';
 import { DraftState } from './DraftWizard';
-import { mockBrawlers, mockPlayers, mockMaps } from '../../data/mockData';
+
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { cn } from '../../lib/utils';
 import { Trophy, XCircle, ArrowRight, User } from 'lucide-react';
@@ -27,9 +27,9 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
   const [brawlerOut, setBrawlerOut] = useState<string>('');
   const [brawlerIn, setBrawlerIn] = useState<string>('');
 
-  const [brawlers, setBrawlers] = useState<Brawler[]>(mockBrawlers);
-  const [maps, setMaps] = useState<GameMap[]>(mockMaps);
-  const [players, setPlayers] = useState<Player[]>(mockPlayers);
+  const [brawlers, setBrawlers] = useState<Brawler[]>([]);
+  const [maps, setMaps] = useState<GameMap[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   
   React.useEffect(() => {
     Promise.all([
@@ -133,7 +133,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
            <h3 className="text-lg font-bold text-emerald-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Composição TBK</h3>
            <div className="space-y-3">
              {tbkPicks.map(brawlerId => {
-               const brawler = mockBrawlers.find(b => b.id === brawlerId);
+               const brawler = brawlers.find(b => b.id === brawlerId);
                return (
                  <div key={brawlerId} className="bg-white dark:bg-[#1A1A1A] border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
                    <div className="flex items-center gap-3">
@@ -175,7 +175,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
              <div className="flex gap-2">
                {draftState.tbkBans.map((bId, i) => {
                  if (!bId) return null;
-                 const b = mockBrawlers.find(b => b.id === bId);
+                 const b = brawlers.find(b => b.id === bId);
                  return (
                    <div key={i} className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1">
                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
@@ -194,7 +194,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
            <h3 className="text-lg font-bold text-red-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Composição Inimiga</h3>
            <div className="flex gap-4">
              {enemyPicks.map(brawlerId => {
-               const brawler = mockBrawlers.find(b => b.id === brawlerId);
+               const brawler = brawlers.find(b => b.id === brawlerId);
                return (
                  <div key={brawlerId} className="bg-white dark:bg-[#1A1A1A] border border-red-500/20 rounded-lg p-3 flex flex-col items-center gap-2 flex-1">
                     <div className="w-12 h-12 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
@@ -211,7 +211,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
              <div className="flex gap-2">
                {draftState.enemyBans.map((bId, i) => {
                  if (!bId) return null;
-                 const b = mockBrawlers.find(b => b.id === bId);
+                 const b = brawlers.find(b => b.id === bId);
                  return (
                    <div key={i} className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1">
                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
@@ -303,13 +303,13 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                          className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
                        >
                          <option value="">Selecionar...</option>
-                         {tbkPicks.map(id => (
-                           <option key={id} value={id}>{mockBrawlers.find(b => b.id === id)?.name}</option>
+                          {tbkPicks.map(id => (
+                            <option key={id} value={id}>{brawlers.find(b => b.id === id)?.name}</option>
                          ))}
                        </select>
-                       <div className={cn("absolute left-2 top-1.5 w-6 h-6 rounded overflow-hidden pointer-events-none", brawlerOut ? getBrawlerBgColor(mockBrawlers.find(b => b.id === brawlerOut) || {}) : "bg-slate-200 dark:bg-zinc-800")}>
-                         {brawlerOut && mockBrawlers.find(b => b.id === brawlerOut)?.iconUrl && (
-                            <img src={mockBrawlers.find(b => b.id === brawlerOut)?.imageUrl || mockBrawlers.find(b => b.id === brawlerOut)?.iconUrl} className="w-full h-full object-cover" />
+                       <div className={cn("absolute left-2 top-1.5 w-6 h-6 rounded overflow-hidden pointer-events-none", brawlerOut ? getBrawlerBgColor(brawlers.find(b => b.id === brawlerOut) || {}) : "bg-slate-200 dark:bg-zinc-800")}>
+                         {brawlerOut && brawlers.find(b => b.id === brawlerOut)?.iconUrl && (
+                            <img src={brawlers.find(b => b.id === brawlerOut)?.imageUrl || brawlers.find(b => b.id === brawlerOut)?.iconUrl} className="w-full h-full object-cover" />
                          )}
                        </div>
                     </div>
@@ -326,13 +326,13 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                          className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
                        >
                          <option value="">Selecionar...</option>
-                         {mockBrawlers.map(b => (
-                           <option key={b.id} value={b.id}>{b.name}</option>
-                         ))}
+                          {brawlers.map(b => (
+                            <option key={b.id} value={b.id}>{b.name}</option>
+                          ))}
                        </select>
-                       <div className={cn("absolute left-2 top-1.5 w-6 h-6 rounded overflow-hidden pointer-events-none", brawlerOut ? getBrawlerBgColor(mockBrawlers.find(b => b.id === brawlerOut) || {}) : "bg-slate-200 dark:bg-zinc-800")}>
-                         {brawlerIn && mockBrawlers.find(b => b.id === brawlerIn)?.iconUrl && (
-                            <img src={mockBrawlers.find(b => b.id === brawlerIn)?.imageUrl || mockBrawlers.find(b => b.id === brawlerIn)?.iconUrl} className="w-full h-full object-cover" />
+                       <div className={cn("absolute left-2 top-1.5 w-6 h-6 rounded overflow-hidden pointer-events-none", brawlerOut ? getBrawlerBgColor(brawlers.find(b => b.id === brawlerOut) || {}) : "bg-slate-200 dark:bg-zinc-800")}>
+                         {brawlerIn && brawlers.find(b => b.id === brawlerIn)?.iconUrl && (
+                            <img src={brawlers.find(b => b.id === brawlerIn)?.imageUrl || brawlers.find(b => b.id === brawlerIn)?.iconUrl} className="w-full h-full object-cover" />
                          )}
                        </div>
                     </div>
