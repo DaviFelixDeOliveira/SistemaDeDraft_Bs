@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { Match, MatchPick, MatchBan, MatchRecordData, Brawler, GameMap, Player } from '../types';
+import { toDbResult, fromDbResult, toDbTeam, fromDbTeam } from '../lib/utils';
 import { brawlerService } from './brawlerService';
 import { mapService } from './mapService';
 import { playerService } from './playerService';
@@ -88,17 +89,22 @@ export const analyticsService = {
     });
 
     // Tenta persistir no Supabase
+    // ATENÇÃO: o banco usa português ('vitoria'/'derrota', 'nos'/'inimigo').
+    // Usamos as funções de mapeamento de utils.ts para converter antes do insert.
     try {
-      const { error: matchError } = await supabase.from('matches').insert([matchRow]);
+      const matchRowDb = { ...matchRow, result: toDbResult(matchRow.result) };
+      const { error: matchError } = await supabase.from('matches').insert([matchRowDb]);
       if (matchError) console.warn('Erro ao inserir partida no Supabase:', matchError);
 
       if (pickRows.length > 0) {
-        const { error: pickError } = await supabase.from('match_picks').insert(pickRows);
+        const pickRowsDb = pickRows.map(p => ({ ...p, team: toDbTeam(p.team as 'tbk' | 'enemy') }));
+        const { error: pickError } = await supabase.from('match_picks').insert(pickRowsDb);
         if (pickError) console.warn('Erro ao inserir picks no Supabase:', pickError);
       }
 
       if (banRows.length > 0) {
-        const { error: banError } = await supabase.from('match_bans').insert(banRows);
+        const banRowsDb = banRows.map(b => ({ ...b, team: toDbTeam(b.team as 'tbk' | 'enemy') }));
+        const { error: banError } = await supabase.from('match_bans').insert(banRowsDb);
         if (banError) console.warn('Erro ao inserir bans no Supabase:', banError);
       }
     } catch (err) {
@@ -124,7 +130,8 @@ export const analyticsService = {
     try {
       const { data, error } = await supabase.from('matches').select('*').order('match_date', { ascending: false });
       if (!error && data && data.length > 0) {
-        return data;
+        // Converter valores do banco (pt) → vocabulário interno (en)
+        return data.map(m => ({ ...m, result: fromDbResult(m.result) }));
       }
     } catch (err) {
       console.warn('Erro ao buscar partidas do Supabase:', err);
@@ -139,7 +146,8 @@ export const analyticsService = {
     try {
       const { data, error } = await supabase.from('match_picks').select('*');
       if (!error && data && data.length > 0) {
-        return data;
+        // Converter team do banco (pt) → vocabulário interno (en)
+        return data.map(p => ({ ...p, team: fromDbTeam(p.team) }));
       }
     } catch (err) {
       console.warn('Erro ao buscar picks do Supabase:', err);
@@ -154,7 +162,8 @@ export const analyticsService = {
     try {
       const { data, error } = await supabase.from('match_bans').select('*');
       if (!error && data && data.length > 0) {
-        return data;
+        // Converter team do banco (pt) → vocabulário interno (en)
+        return data.map(b => ({ ...b, team: fromDbTeam(b.team) }));
       }
     } catch (err) {
       console.warn('Erro ao buscar bans do Supabase:', err);
@@ -196,6 +205,10 @@ export const analyticsService = {
       const bPicks = picks.filter(p => p.brawler_id === b.id);
       const bBans = bans.filter(bn => bn.brawler_id === b.id);
 
+      // Separar bans por time para o filtro Nossos/Inimigos do Dashboard
+      const tbkBans = bBans.filter(bn => bn.team === 'tbk');
+      const enemyBans = bBans.filter(bn => bn.team === 'enemy');
+
       const tbkPicks = bPicks.filter(p => p.team === 'tbk');
       let wins = 0;
       tbkPicks.forEach(p => {
@@ -215,7 +228,9 @@ export const analyticsService = {
         imageUrl: b.imageUrl,
         tier: b.tier,
         pick: totalPicks,
-        ban: bBans.length,
+        ban: bBans.length,       // total (Geral)
+        tbkBan: tbkBans.length,  // apenas nossos bans
+        enemyBan: enemyBans.length, // apenas bans do inimigo
         tbkPickCount: tbkPicks.length,
         winrate
       };

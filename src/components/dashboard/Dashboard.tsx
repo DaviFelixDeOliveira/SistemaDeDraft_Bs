@@ -234,27 +234,41 @@ function DashboardContent() {
               </div>
             ) : null}
             <div className={cn("space-y-3 transition-opacity duration-300", isLoadingBans ? "opacity-30" : "opacity-100")}>
-              {(brawlerStats || []).sort((a, b) => b.ban - a.ban).slice(0, 5).map((b, i) => (
-                <div key={b?.name} className="flex items-center gap-3">
-                  <span className="w-5 text-center text-xs font-bold text-slate-400 dark:text-zinc-600">#{i + 1}</span>
-                  <div className="w-10 h-10 rounded-md bg-slate-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
-                    {(b?.imageUrl || b?.iconUrl) && (
-                      <img src={b.imageUrl || b.iconUrl} alt={b?.name} className="w-full h-full object-cover" />
-                    )}
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-medium text-slate-900 dark:text-white">{b?.name}</span>
-                      <span className="font-bold text-[#FF3366]">{b.ban}</span>
+              {(() => {
+                // Seleciona o campo de ban correto baseado na aba ativa
+                const banField = activeBanTab === 'tbk' ? 'tbkBan' : activeBanTab === 'enemy' ? 'enemyBan' : 'ban';
+                const filtered = (brawlerStats || [])
+                  .filter(b => (b[banField] || 0) > 0)
+                  .sort((a, b) => (b[banField] || 0) - (a[banField] || 0))
+                  .slice(0, 5);
+                const maxBan = filtered.length > 0 ? (filtered[0][banField] || 1) : 1;
+
+                if (filtered.length === 0) {
+                  return <div className="text-center text-slate-500 dark:text-zinc-500 py-8 italic text-sm">Nenhum banimento registrado nesta categoria.</div>;
+                }
+
+                return filtered.map((b, i) => (
+                  <div key={b?.id || b?.name} className="flex items-center gap-3">
+                    <span className="w-5 text-center text-xs font-bold text-slate-400 dark:text-zinc-600">#{i + 1}</span>
+                    <div className="w-10 h-10 rounded-md bg-slate-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
+                      {(b?.imageUrl || b?.iconUrl) && (
+                        <img src={b.imageUrl || b.iconUrl} alt={b?.name} className="w-full h-full object-cover" />
+                      )}
                     </div>
-                    <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#FF3366] to-fuchsia-500 rounded-full"
-                        style={{ width: `${(b.ban / 100) * 100}%` }} />
+                    <div className="flex-1 flex flex-col gap-1">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-medium text-slate-900 dark:text-white">{b?.name}</span>
+                        <span className="font-bold text-[#FF3366]">{b[banField]}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#FF3366] to-fuchsia-500 rounded-full"
+                          style={{ width: `${((b[banField] || 0) / maxBan) * 100}%` }} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
           <button onClick={() => setIsBansModalOpen(true)} className="mt-4 w-full py-2 bg-slate-100 dark:bg-[#1A1A1A] hover:bg-slate-200 dark:hover:bg-[#2A2A2A] rounded-lg text-sm font-bold text-slate-700 dark:text-zinc-300 transition-colors">Ver Relatório Completo</button>

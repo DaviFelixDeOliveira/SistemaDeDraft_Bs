@@ -46,3 +46,42 @@ create table if not exists players (
 alter table brawlers disable row level security;
 alter table maps disable row level security;
 alter table players disable row level security;
+
+-- 4. TABELA DE PARTIDAS (SCRIMS)
+-- ATENÇÃO: os valores aceitos pelo banco são em PORTUGUÊS.
+-- O código interno usa 'victory'/'defeat' e 'tbk'/'enemy' —
+-- a conversão é feita pelas funções toDbResult/toDbTeam em src/lib/utils.ts.
+create table if not exists matches (
+  id uuid primary key default gen_random_uuid(),
+  match_date timestamp without time zone not null default now(),
+  map_id text,
+  result text not null,
+  opponent_name text,
+  notes text,
+  constraint matches_result_check check (result = any (array['vitoria'::text, 'derrota'::text]))
+);
+
+-- 5. TABELA DE PICKS POR PARTIDA
+create table if not exists match_picks (
+  id uuid primary key default gen_random_uuid(),
+  match_id uuid not null,
+  team text not null,
+  player_id text,
+  brawler_id text not null,
+  constraint match_picks_team_check check (team = any (array['nos'::text, 'inimigo'::text]))
+);
+
+-- 6. TABELA DE BANIMENTOS POR PARTIDA
+create table if not exists match_bans (
+  id uuid primary key default gen_random_uuid(),
+  match_id uuid not null,
+  team text not null,
+  brawler_id text not null,
+  constraint match_bans_team_check check (team = any (array['nos'::text, 'inimigo'::text]))
+);
+
+-- Desabilita RLS também para as tabelas de partidas
+alter table matches disable row level security;
+alter table match_picks disable row level security;
+alter table match_bans disable row level security;
+
