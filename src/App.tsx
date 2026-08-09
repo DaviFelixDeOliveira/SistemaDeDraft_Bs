@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { DraftWizard } from './components/draft/DraftWizard';
-import { Menu, Loader2 } from 'lucide-react';
+import { Menu, Loader2, Swords } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { PlayersHub } from './components/players/PlayersHub';
@@ -15,8 +15,15 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => hasActiveSession());
   const [isViewLoading, setIsViewLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [currentView, setCurrentView] = useState('draft');
+  const [currentView, setCurrentView] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Splash screen: mostra apenas na primeira abertura da sessão
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 1800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleViewChange = (view: string) => {
     setIsViewLoading(true);
@@ -29,6 +36,7 @@ export default function App() {
 
   const handleAuthenticated = () => {
     setIsAuthenticated(true);
+    setCurrentView('dashboard');
   };
 
   const requestLogout = () => {
@@ -40,6 +48,35 @@ export default function App() {
     clearSession();
     setIsAuthenticated(false);
   };
+
+  // Splash screen inicial
+  if (showSplash) {
+    return (
+      <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500">
+        <div className="relative">
+          <div className="w-20 h-20 bg-gradient-to-br from-[#FF3366] to-[#cc0033] rounded-2xl flex items-center justify-center shadow-[0_0_60px_rgba(255,51,102,0.4)] animate-pulse">
+            <Swords className="w-10 h-10 text-white" />
+          </div>
+          <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FFCC00] rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-[10px] font-black text-black">T</span>
+          </div>
+        </div>
+        <div className="text-center">
+          <h1 className="text-3xl font-black text-white tracking-tight">TBK <span className="text-[#FFCC00]">Hub</span></h1>
+          <p className="text-zinc-600 text-sm mt-1">Sistema de Draft · Brawl Stars</p>
+        </div>
+        <div className="flex gap-1.5 mt-2">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full bg-[#FF3366]"
+              style={{ animation: `bounce 0.9s ${i * 0.15}s infinite` }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Tela de bloqueio — nenhum recurso acessível sem autenticação
   if (!isAuthenticated) {

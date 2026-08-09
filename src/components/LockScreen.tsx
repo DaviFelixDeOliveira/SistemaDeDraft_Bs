@@ -12,6 +12,7 @@ export const ACCESS_CODE = '1234';
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_SECONDS = 30;
 const SESSION_KEY = 'tbk_hub_session';
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 horas
 
 interface LockScreenProps {
   onAuthenticated: () => void;
@@ -72,8 +73,8 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
     // Pequeno delay para simular verificação
     setTimeout(() => {
       if (code === ACCESS_CODE) {
-        // Sucesso: salva sessão e autentica
-        localStorage.setItem(SESSION_KEY, 'true');
+        // Sucesso: salva sessão com timestamp e autentica
+        localStorage.setItem(SESSION_KEY, String(Date.now()));
         onAuthenticated();
       } else {
         const newAttempts = attempts + 1;
@@ -265,9 +266,22 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
   );
 }
 
-// Helper: verifica se há sessão ativa salva
+// Helper: verifica se há sessão ativa salva e não expirada (24h)
 export function hasActiveSession(): boolean {
-  return localStorage.getItem(SESSION_KEY) === 'true';
+  const ts = localStorage.getItem(SESSION_KEY);
+  if (!ts) return false;
+  const loginTime = Number(ts);
+  if (isNaN(loginTime)) {
+    // Formato antigo ('true') — invalida
+    localStorage.removeItem(SESSION_KEY);
+    return false;
+  }
+  if (Date.now() - loginTime > SESSION_DURATION_MS) {
+    // Sessão expirada — limpa
+    localStorage.removeItem(SESSION_KEY);
+    return false;
+  }
+  return true;
 }
 
 // Helper: encerra a sessão
