@@ -124,13 +124,13 @@ export const analyticsService = {
   },
 
   /**
-   * Retorna todas as partidas registradas (unindo Supabase + fallback local)
+   * Retorna todas as partidas registradas diretamente do Supabase
    */
   getAllMatches: async (): Promise<Match[]> => {
     try {
       const { data, error } = await supabase.from('matches').select('*').order('match_date', { ascending: false });
-      if (!error && data && data.length > 0) {
-        // Converter valores do banco (pt) → vocabulário interno (en)
+      if (!error && data) {
+        // Se a busca no Supabase funcionou (mesmo retornando 0 partidas), retorna os dados reais do banco
         return data.map(m => ({ ...m, result: fromDbResult(m.result) }));
       }
     } catch (err) {
@@ -145,8 +145,7 @@ export const analyticsService = {
   getAllPicks: async (): Promise<MatchPick[]> => {
     try {
       const { data, error } = await supabase.from('match_picks').select('*');
-      if (!error && data && data.length > 0) {
-        // Converter team do banco (pt) → vocabulário interno (en)
+      if (!error && data) {
         return data.map(p => ({ ...p, team: fromDbTeam(p.team) }));
       }
     } catch (err) {
@@ -161,8 +160,7 @@ export const analyticsService = {
   getAllBans: async (): Promise<MatchBan[]> => {
     try {
       const { data, error } = await supabase.from('match_bans').select('*');
-      if (!error && data && data.length > 0) {
-        // Converter team do banco (pt) → vocabulário interno (en)
+      if (!error && data) {
         return data.map(b => ({ ...b, team: fromDbTeam(b.team) }));
       }
     } catch (err) {
