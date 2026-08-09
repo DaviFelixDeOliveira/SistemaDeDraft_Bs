@@ -103,6 +103,8 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
     });
   };
   const allPlayersAssigned = tbkPicks.every(id => draftState.playerAssignments[id]);
+  const anyPlayerAssigned = tbkPicks.some(id => draftState.playerAssignments[id]);
+  const unassignedCount = tbkPicks.filter(id => !draftState.playerAssignments[id]).length;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -266,15 +268,32 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         <div className="mt-8 animate-in fade-in slide-in-from-top-4">
           <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-[#2A2A2A] p-4 sm:p-6 max-w-2xl mx-auto">
             <h4 className="text-center text-slate-900 dark:text-white font-bold mb-6">Derrota registrada. E agora?</h4>
+            {/* Aviso quando jogadores não vinculados */}
+            {!allPlayersAssigned && (
+              <div className="mb-4 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2.5">
+                <span className="text-amber-400 text-sm mt-0.5">⚠</span>
+                <p className="text-amber-400 text-xs leading-snug">
+                  {unassignedCount === tbkPicks.length
+                    ? 'Nenhum jogador vinculado. Vincule pelo menos um atleta acima para registrar quem jogou.'
+                    : `${unassignedCount} brawler${unassignedCount > 1 ? 's' : ''} sem jogador vinculado. A partida será salva sem esses vínculos.`}
+                </p>
+              </div>
+            )}
             <div className="flex gap-4">
               <button 
                 onClick={handleSaveResult}
-                disabled={!allPlayersAssigned}
-                className="flex-1 p-4 bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] hover:bg-slate-200 dark:bg-zinc-800 rounded-lg text-slate-900 dark:text-white font-medium transition-colors h-auto min-h-[100px] flex flex-col items-center justify-center"
+                className={cn(
+                  "flex-1 p-4 border rounded-lg font-medium transition-all duration-200 h-auto min-h-[100px] flex flex-col items-center justify-center",
+                  allPlayersAssigned
+                    ? "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-900 dark:text-white cursor-pointer"
+                    : "bg-slate-50 dark:bg-[#0A0A0A] border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/5 text-slate-900 dark:text-white cursor-pointer"
+                )}
               >
-                <ArrowRight className="w-5 h-5 text-slate-500 dark:text-zinc-400 mb-2" />
+                <ArrowRight className={cn("w-5 h-5 mb-2", allPlayersAssigned ? "text-slate-500 dark:text-zinc-400" : "text-amber-400")} />
                 <span className="text-sm font-bold block mb-1">Salvar Derrota da Scrim</span>
-                <span className="text-xs text-slate-500 dark:text-zinc-500 font-normal leading-tight text-center">Registra no histórico e encerra</span>
+                <span className={cn("text-xs font-normal leading-tight text-center", allPlayersAssigned ? "text-slate-500 dark:text-zinc-500" : "text-amber-400/70")}>
+                  {allPlayersAssigned ? 'Registra no histórico e encerra' : 'Salvará sem vínculos de jogadores'}
+                </span>
               </button>
               
               <button 
@@ -366,21 +385,38 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         </div>
       )}
 
+      {/* Aviso quando jogadores não vinculados (vitória) */}
+      {result === 'victory' && !allPlayersAssigned && (
+        <div className="max-w-2xl mx-auto mt-4 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2.5">
+          <span className="text-amber-400 text-sm mt-0.5">⚠</span>
+          <p className="text-amber-400 text-xs leading-snug">
+            {unassignedCount === tbkPicks.length
+              ? 'Vincule os jogadores acima para registrar quem jogou. A partida pode ser salva sem vínculos.'
+              : `${unassignedCount} brawler${unassignedCount > 1 ? 's' : ''} sem jogador vinculado. A partida será salva sem esses vínculos.`}
+          </p>
+        </div>
+      )}
+
       {/* Save Buttons for Victory */}
       {result === 'victory' && (
-        <div className="flex flex-col sm:flex-row justify-center mt-8 gap-4">
+        <div className="flex flex-col sm:flex-row justify-center mt-4 gap-4">
            <button 
              onClick={handleSaveResult}
-             disabled={!allPlayersAssigned}
-             className="flex-1 bg-white dark:bg-[#1A1A1A] border border-emerald-500/30 hover:border-emerald-500 disabled:border-slate-200 dark:border-[#2A2A2A] disabled:text-zinc-600 text-emerald-400 p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px]"
+             className={cn(
+               "flex-1 border p-4 sm:p-6 rounded-xl transition-all duration-200 flex flex-col items-center justify-center text-center h-auto min-h-[100px]",
+               allPlayersAssigned
+                 ? "bg-white dark:bg-[#1A1A1A] border-emerald-500/30 hover:border-emerald-500 text-emerald-400 cursor-pointer"
+                 : "bg-white dark:bg-[#1A1A1A] border-amber-500/30 hover:border-amber-500 text-emerald-400 cursor-pointer"
+             )}
            >
              <span className="font-bold text-[15px] mb-2 block">Salvar Vitória da Scrim</span>
-             <span className="text-xs text-slate-500 dark:text-zinc-400 font-normal leading-tight block max-w-xs mx-auto">Registra no histórico e atualiza stats no Dashboard</span>
+             <span className={cn("text-xs font-normal leading-tight block max-w-xs mx-auto", allPlayersAssigned ? "text-slate-500 dark:text-zinc-400" : "text-amber-400/70")}>
+               {allPlayersAssigned ? 'Registra no histórico e atualiza stats no Dashboard' : 'Salvará sem vínculos de jogadores'}
+             </span>
            </button>
            <button 
              onClick={handleSaveResult}
-             disabled={!allPlayersAssigned}
-             className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-200 dark:bg-zinc-800 disabled:text-zinc-600 text-slate-900 dark:text-white p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px]"
+             className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 dark:text-white p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px] cursor-pointer"
            >
              <span className="font-bold text-[15px] mb-2 block">Salvar como Meta do Mapa</span>
              <span className="text-xs text-emerald-100 font-normal leading-tight block max-w-xs mx-auto">Define como trio referência na biblioteca de Mapas</span>

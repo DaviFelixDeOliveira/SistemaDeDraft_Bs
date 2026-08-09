@@ -125,6 +125,11 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
 
     const scoredBrawlers = available.map(brawler => {
       let score = 0;
+      let isComfort = false;
+      let comfortPlayerName = '';
+      let isStrongMapComfort = false;
+      let mapWinrate = 50;
+      let mapPicksCount = 0;
 
       // 1. Meta Tier Base (Peso Primário no Dia 0)
       if (brawler.tier === 'S') score += 1000;
@@ -133,9 +138,22 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
       else if (brawler.tier === 'C') score += 400;
       else if (brawler.tier === 'D') score += 200;
       
-      // 2. Comfort Picks do Elenco Ativo
-      const isComfort = players.some(p => (p.isActive !== false || p.is_active !== false) && p.comfortBrawlers?.includes(brawler.id));
-      if (isComfort) score += 300;
+      // 2. Comfort Picks do Elenco Ativo (resiliente por ID, slug ou Nome)
+      const comfortPlayer = players.find(p => {
+        if (p.isActive === false || p.is_active === false) return false;
+        if (!p.comfortBrawlers || !Array.isArray(p.comfortBrawlers)) return false;
+        return p.comfortBrawlers.some(cb => 
+          cb === brawler.id || 
+          cb.toLowerCase() === brawler.id.toLowerCase() || 
+          cb.toLowerCase() === brawler.name.toLowerCase()
+        );
+      });
+
+      if (comfortPlayer) {
+        isComfort = true;
+        comfortPlayerName = comfortPlayer.nickname || comfortPlayer.name;
+        score += 350; // Bônus de conforto
+      }
 
       // 3. Adaptação ao Terreno e Mecânicas Únicas
       if (map) {
@@ -185,17 +203,30 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
 
       // 5. Ponderação Histórica Progressiva (Picks e Winrate no Mapa)
       if (mapDetailStats?.topTbkPicks) {
-        const brawlerMapPick = mapDetailStats.topTbkPicks.find((tp: any) => tp.brawler?.id === brawler.id);
+        const brawlerMapPick = mapDetailStats.topTbkPicks.find((tp: any) => tp.brawler?.id === brawler.id || tp.brawler?.name === brawler.name);
         if (brawlerMapPick) {
-          const mapPicksCount = brawlerMapPick.picks || 0;
-          const mapWinrate = brawlerMapPick.winrate || 50;
-          // No Dia 0 (mapPicksCount === 0), esta fórmula resulta em 0
+          mapPicksCount = brawlerMapPick.picks || 0;
+          mapWinrate = brawlerMapPick.winrate || 50;
           const historicalBonus = (mapWinrate - 50) * Math.min(mapPicksCount, 10) * 10;
           score += historicalBonus;
+
+          // Se for comfort pick E tiver alto winrate no mapa (>= 70% com pelo menos 2 partidas)
+          if (isComfort && mapWinrate >= 70 && mapPicksCount >= 2) {
+            isStrongMapComfort = true;
+            score += 500; // Super bônus
+          }
         }
       }
       
-      return { ...brawler, score };
+      return { 
+        ...brawler, 
+        score, 
+        isComfort, 
+        comfortPlayerName, 
+        isStrongMapComfort, 
+        mapWinrate, 
+        mapPicksCount 
+      };
     });
     
     return scoredBrawlers.sort((a, b) => b.score - a.score).slice(0, 3);
@@ -416,10 +447,22 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
                  <div className="w-10 h-10 rounded bg-slate-200 dark:bg-zinc-800 flex-shrink-0 overflow-hidden">
                    {rec.iconUrl && <img src={rec.iconUrl} alt="" className="w-full h-full object-cover" />}
                  </div>
-                 <div>
-                   <div className="font-medium text-slate-900 dark:text-white">{rec.name}</div>
+                 <div className="flex-1">
+                   <div className="font-medium text-slate-900 dark:text-white flex items-center justify-between gap-1">
+                     <span>{rec.name}</span>
+                     {i === 0 && <span className="text-[10px] text-[#FFCC00] font-bold uppercase tracking-wider bg-[#FFCC00]/20 px-1.5 py-0.5 rounded">Top Pick</span>}
+                   </div>
                    <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Score: <span className={rec.score > 0 ? "text-emerald-400" : "text-red-400"}>{rec.score}</span></div>
-                   {i === 0 && <div className="text-[10px] text-[#FFCC00] font-bold mt-1 uppercase tracking-wider">Top Pick</div>}
+                   {rec.isStrongMapComfort && (
+                     <div className="text-[10px] text-emerald-400 font-semibold mt-1 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded leading-tight">
+                       🔥 Conforto Forte ({rec.mapWinrate}% WR)
+                     </div>
+                   )}
+                   {!rec.isStrongMapComfort && rec.isComfort && (
+                     <div className="text-[10px] text-sky-400 font-semibold mt-1 bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 rounded leading-tight">
+                       ⭐ Conforto de {rec.comfortPlayerName}
+                     </div>
+                   )}
                  </div>
               </div>
             ))}

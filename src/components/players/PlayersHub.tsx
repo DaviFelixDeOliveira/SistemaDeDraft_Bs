@@ -94,6 +94,22 @@ export function PlayersHub() {
     });
   };
 
+  const handleDeletePlayer = (playerId: string, nickname: string) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Excluir Jogador',
+      message: `Tem certeza que deseja excluir o jogador ${nickname}? Esta ação não pode ser desfeita.`,
+      processingText: 'Excluindo...',
+      successText: '✅ Excluído com sucesso!',
+      action: async () => {
+        await playerService.deletePlayer(playerId);
+        setPlayers(prev => prev.filter(p => p.id !== playerId));
+        if (selectedPlayer?.id === playerId) setSelectedPlayer(null);
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
 
 
   return (
@@ -220,12 +236,20 @@ export function PlayersHub() {
                     <Award className="w-4 h-4 text-[#FFCC00]" />
                     Comfort Picks
                   </h4>
-                  <button 
-                    onClick={() => setEditingPlayer(player)}
-                    className="text-xs text-[#FF3366] hover:underline font-medium"
-                  >
-                    Editar
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setEditingPlayer(player)}
+                      className="text-xs text-blue-500 hover:underline font-medium flex items-center gap-1"
+                    >
+                      <Edit2 className="w-3 h-3" /> Editar
+                    </button>
+                    <button 
+                      onClick={() => handleDeletePlayer(player.id, player.nickname)}
+                      className="text-xs text-red-500 hover:underline font-medium flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" /> Excluir
+                    </button>
+                  </div>
                 </div>
                 
                 {comfortBrawlers.length > 0 ? (

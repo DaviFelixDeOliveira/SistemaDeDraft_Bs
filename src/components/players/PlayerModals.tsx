@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { Player } from '../../types';
 import { cn } from '../../lib/utils';
 import { useState, useEffect } from 'react';
+import { brawlerService } from '../../services/brawlerService';
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -163,7 +164,7 @@ export function DetailsModal({ player, isOpen, onClose, stats }: DetailsModalPro
   );
 }
 
-import { brawlerService } from '../../services/brawlerService';
+
 import { Brawler } from '../../types';
 
 interface EditModalProps {

@@ -89,7 +89,16 @@ function DashboardContent() {
     }
   }, [selectedMode, mapPerformance]);
 
-  const activeHotBrawlers = (brawlerStats || []).filter(b => (b.tbkPickCount || b.pick || 0) > 0).sort((a, b) => b.winrate - a.winrate).slice(0, 10);
+  // Ordena por quantidade de picks (TBK) primeiro, e desempata por Winrate (P1-4)
+  const activeHotBrawlers = (brawlerStats || [])
+    .filter(b => (b.tbkPickCount || b.pick || 0) > 0)
+    .sort((a, b) => {
+      const picksA = a.tbkPickCount || a.pick || 0;
+      const picksB = b.tbkPickCount || b.pick || 0;
+      if (picksB !== picksA) return picksB - picksA;
+      return b.winrate - a.winrate;
+    })
+    .slice(0, 10);
 
   if (loading) {
     return (
@@ -155,29 +164,34 @@ function DashboardContent() {
             <Trophy className="w-5 h-5 text-[#FF3366]" /> Desempenho por Modo
           </h3>
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2">
-            {(modeWinrate || []).map((item) => (
-              <div
-                key={item.mode || item?.name}
-                onClick={() => setSelectedMode(item?.name)}
-                className="bg-slate-50 dark:bg-[#0A0A0A] hover:bg-slate-100 dark:hover:bg-[#1A1A1A] p-3 rounded-lg border border-slate-200 dark:border-[#2A2A2A] cursor-pointer transition-colors"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">{item.mode || item?.name}</span>
-                  <span className="text-xs font-bold text-slate-500 dark:text-zinc-400">
-                    {(item.winrate || item.value || 0).toFixed(1)}% <span className="opacity-50">({item.wins || 0}V / {(item.total || 0) - (item.wins || 0)}D)</span>
-                  </span>
-                </div>
-                {/* Progress Bar linear */}
-                <div className="w-full h-2 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden relative">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: `${item.winrate}%` }}
-                  >
-                    <div className="absolute right-0 top-0 bottom-0 w-3 bg-white/50 blur-[2px] rounded-full animate-pulse" />
+            {(modeWinrate || []).map((item) => {
+              const wr = item.winrate || item.value || 0;
+              const textWrColor = wr > 50 ? "text-emerald-500" : wr >= 30 ? "text-amber-500" : "text-red-500 font-black";
+              const barWrColor = wr > 50 ? "bg-emerald-500" : wr >= 30 ? "bg-amber-500" : "bg-red-500";
+              return (
+                <div
+                  key={item.mode || item?.name}
+                  onClick={() => setSelectedMode(item?.name)}
+                  className="bg-slate-50 dark:bg-[#0A0A0A] hover:bg-slate-100 dark:hover:bg-[#1A1A1A] p-3 rounded-lg border border-slate-200 dark:border-[#2A2A2A] cursor-pointer transition-colors"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{item.mode || item?.name}</span>
+                    <span className={cn("text-xs font-bold", textWrColor)}>
+                      {wr.toFixed(1)}% <span className="opacity-50 text-slate-500 font-normal">({item.wins || 0}V / {(item.total || 0) - (item.wins || 0)}D)</span>
+                    </span>
+                  </div>
+                  {/* Progress Bar linear */}
+                  <div className="w-full h-2 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden relative">
+                    <div
+                      className={cn("h-full rounded-full transition-all duration-1000 ease-out", barWrColor)}
+                      style={{ width: `${item.winrate}%` }}
+                    >
+                      <div className="absolute right-0 top-0 bottom-0 w-3 bg-white/50 blur-[2px] rounded-full animate-pulse" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {(modeWinrate || []).length === 0 && (
               <div className="col-span-1 sm:col-span-2 text-sm text-slate-500 dark:text-zinc-400 text-center py-8">Nenhum modo registrado ainda.</div>
             )}
@@ -194,7 +208,7 @@ function DashboardContent() {
               {['Último Treino', 'Última Semana', 'Último Mês', 'Geral'].map((t) => (
                 <button
                   key={t}
-                  onClick={() => { setIsLoadingBans(true); setTimeout(() => { setActiveTimeFilter(t as any); setIsLoadingBans(false); }, 400); }}
+                  onClick={() => setActiveTimeFilter(t as any)}
                   className={cn(
                     "text-[10px] font-bold px-2 py-1 rounded-md transition-colors",
                     activeTimeFilter === t ? "bg-fuchsia-500/10 text-fuchsia-500" : "text-slate-500 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-[#1A1A1A]"
@@ -210,15 +224,9 @@ function DashboardContent() {
             {['geral', 'tbk', 'enemy'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => {
-                  setIsLoadingBans(true);
-                  setTimeout(() => {
-                    setActiveBanTab(tab as any);
-                    setIsLoadingBans(false);
-                  }, 400);
-                }}
+                onClick={() => setActiveBanTab(tab as any)}
                 className={cn(
-                  "flex-1 text-xs font-bold py-1.5 rounded-md transition-colors",
+                  "flex-1 text-xs font-bold py-1.5 rounded-md transition-all duration-200",
                   activeBanTab === tab ? "bg-white dark:bg-[#2A2A2A] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-zinc-300"
                 )}
               >
@@ -357,32 +365,40 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* C) Brawlers Quentes da Semana */}
+      {/* C) Brawlers mais escolhidos da semana */}
       <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 sm:p-6 shadow-sm">
         <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Flame className="w-5 h-5 text-orange-500" /> Brawlers Quentes da Semana
+          <Flame className="w-5 h-5 text-orange-500" /> Brawlers mais escolhidos da semana
         </h3>
         {activeHotBrawlers.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {activeHotBrawlers.map((b, i) => (
-              <div
-                key={b.id}
-                onClick={() => setSelectedHotBrawler(b)}
-                className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-[#FF3366]/50 transition-colors relative"
-              >
-                <span className="text-[10px] font-bold text-slate-400 absolute top-2 left-2">#{i + 1}</span>
-                <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-zinc-800 overflow-hidden mt-1">
-                  {(b.iconUrl || b.imageUrl) && <img src={b.iconUrl || b.imageUrl} alt={b?.name} className="w-full h-full object-cover" />}
-                </div>
-                <div className="text-center">
-                  <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{b?.name}</div>
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <span className="text-xs font-bold text-emerald-500">{b.winrate}% WR</span>
-                    <span className="text-[10px] text-slate-500 font-bold">{b.tbkPickCount} picks</span>
+            {activeHotBrawlers.map((b, i) => {
+              const wr = b.winrate || 0;
+              const wrColor = wr > 50 
+                ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" 
+                : wr >= 30 
+                  ? "text-amber-500 bg-amber-500/10 border-amber-500/20" 
+                  : "text-red-500 bg-red-500/20 border-red-500/40 font-black animate-pulse";
+              return (
+                <div
+                  key={b.id}
+                  onClick={() => setSelectedHotBrawler(b)}
+                  className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-[#FF3366]/50 transition-colors relative"
+                >
+                  <span className="text-[10px] font-bold text-slate-400 absolute top-2 left-2">#{i + 1}</span>
+                  <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-zinc-800 overflow-hidden mt-1">
+                    {(b.iconUrl || b.imageUrl) && <img src={b.iconUrl || b.imageUrl} alt={b?.name} className="w-full h-full object-cover" />}
+                  </div>
+                  <div className="text-center w-full">
+                    <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{b?.name}</div>
+                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                      <span className={cn("text-xs px-1.5 py-0.5 rounded border font-bold", wrColor)}>{wr}% WR</span>
+                      <span className="text-[10px] text-slate-500 font-bold">{b.tbkPickCount || b.pick} picks</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="p-8 text-center text-slate-500 dark:text-zinc-500 text-sm italic border border-dashed border-slate-200 dark:border-[#2A2A2A] rounded-xl">
