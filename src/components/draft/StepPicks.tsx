@@ -16,7 +16,7 @@ import {
 
 import { Brawler, GameMap, Player } from '../../types';
 import { cn, fuzzySearch } from '../../lib/utils';
-import { Search, Shield, Target, Swords, Flame, AlertTriangle } from 'lucide-react';
+import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2 } from 'lucide-react';
 
 interface StepPicksProps {
   draftState: DraftState;
@@ -340,12 +340,17 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
     }
   };
 
+  const selectedMap = useMemo(
+    () => maps.find(m => m.id === draftState.mapId),
+    [maps, draftState.mapId]
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Pick Progress & Current Turn */}
       <div className="flex justify-between items-center mb-6">
-        <button onClick={onPrev} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:text-white px-4 py-2">Voltar</button>
+        <button onClick={onPrev} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:text-white px-4 py-2 cursor-pointer">Voltar</button>
         <div className="text-center">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             {isDraftComplete ? "Draft Concluído" : `Vez da ${currentTeamPicking === 'tbk' ? 'TBK' : 'Inimigo'} escolher`}
@@ -357,11 +362,45 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
         <button 
           onClick={onNext} 
           disabled={!isDraftComplete}
-          className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:bg-zinc-800 disabled:text-zinc-600 text-slate-900 dark:text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:bg-zinc-800 disabled:text-zinc-600 text-slate-900 dark:text-white px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
         >
           Avançar
         </button>
       </div>
+
+      {/* Selected Map & Mode Display Banner */}
+      {selectedMap && (
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-xl shadow-sm">
+          <div className="flex items-center gap-3">
+            {selectedMap.imageUrl ? (
+              <img src={selectedMap.imageUrl} alt={selectedMap.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-zinc-800" />
+            ) : (
+              <div className="w-10 h-10 rounded-lg bg-[#FF3366]/10 flex items-center justify-center text-[#FF3366]">
+                <MapPin className="w-5 h-5" />
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+                  <Gamepad2 className="w-3.5 h-3.5 text-[#FF3366]" /> Mapa & Modo Selecionados
+                </span>
+                <span className="text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 px-2 py-0.5 rounded-full font-medium border border-slate-200 dark:border-zinc-700">
+                  {selectedMap.terrain}
+                </span>
+              </div>
+              <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>{selectedMap.name}</span>
+                <span className="text-slate-400 dark:text-zinc-600">•</span>
+                <span className="text-[#FFCC00] font-semibold">{selectedMap.mode}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs bg-slate-50 dark:bg-[#1A1A1A] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#2A2A2A] text-slate-600 dark:text-zinc-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>First Pick: <strong className="text-slate-900 dark:text-white">{draftState.tbkStarts ? 'TBK (Nosso)' : 'Inimigo'}</strong></span>
+          </div>
+        </div>
+      )}
 
       {/* Draft Slots Visualization */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 mb-8">
