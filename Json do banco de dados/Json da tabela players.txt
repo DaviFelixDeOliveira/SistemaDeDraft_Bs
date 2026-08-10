@@ -1,0 +1,38 @@
+[
+  {
+    "id": "p1",
+    "name": "Lincxz",
+    "nickname": "TRY|Lincxz ❤️🔥",
+    "status": "Titular",
+    "is_active": true,
+    "comfort_brawlers": [],
+    "tags": []
+  },
+  {
+    "id": "p2",
+    "name": "N/A",
+    "nickname": "Kr",
+    "status": "Reserva",
+    "is_active": true,
+    "comfort_brawlers": [],
+    "tags": []
+  },
+  {
+    "id": "p4",
+    "name": "KaioZera",
+    "nickname": "𝒦𝒶𝒾ℴ𝒵ℯ𝓇𝒶♛",
+    "status": "Titular",
+    "is_active": true,
+    "comfort_brawlers": [],
+    "tags": []
+  },
+  {
+    "id": "p3",
+    "name": "DaviZão",
+    "nickname": "yĐaviZaoBS あ",
+    "status": "Titular",
+    "is_active": true,
+    "comfort_brawlers": [],
+    "tags": []
+  }
+]

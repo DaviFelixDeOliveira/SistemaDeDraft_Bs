@@ -1,0 +1,146 @@
+[
+  {
+    "id": "15000292",
+    "name": "Aberto",
+    "mode": "Zona Estratégica",
+    "terrain": "Zona Estratégica",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000292.png"
+  },
+  {
+    "id": "15000300",
+    "name": "Anel de fogo",
+    "mode": "Zona Estratégica",
+    "terrain": "Zona Estratégica",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000300.png"
+  },
+  {
+    "id": "15000548",
+    "name": "Descampado",
+    "mode": "Nocaute",
+    "terrain": "Nocaute",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000548.png"
+  },
+  {
+    "id": "15000137",
+    "name": "Pit Stop",
+    "mode": "Roubo",
+    "terrain": "Roubo",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000137.png"
+  },
+  {
+    "id": "15000018",
+    "name": "Ravina Kabum",
+    "mode": "Roubo",
+    "terrain": "Roubo",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000018.png"
+  },
+  {
+    "id": "15000019",
+    "name": "Zona Segura",
+    "mode": "Roubo",
+    "terrain": "Roubo",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000019.png"
+  },
+  {
+    "id": "15000306",
+    "name": "Besouros Brigões",
+    "mode": "Zona Estratégica",
+    "terrain": "Zona Estratégica",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000306.png"
+  },
+  {
+    "id": "15000367",
+    "name": "Caverna do Braço Dourado",
+    "mode": "Nocaute",
+    "terrain": "Nocaute",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000367.png"
+  },
+  {
+    "id": "15000703",
+    "name": "Novos Horizontes",
+    "mode": "Nocaute",
+    "terrain": "Nocaute",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000703.png"
+  },
+  {
+    "id": "15000007",
+    "name": "Mina rochosa",
+    "mode": "Pique-Gema",
+    "terrain": "Pique-Gema",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000007.png"
+  },
+  {
+    "id": "15000010",
+    "name": "Forte de Gemas",
+    "mode": "Pique-Gema",
+    "terrain": "Pique-Gema",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000010.png"
+  },
+  {
+    "id": "15000118",
+    "name": "Pintando o Pinball",
+    "mode": "Fute-Brawl",
+    "terrain": "Fute-Brawl",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000118.png"
+  },
+  {
+    "id": "15000026",
+    "name": "Tiro de Meta",
+    "mode": "Fute-Brawl",
+    "terrain": "Fute-Brawl",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000026.png"
+  },
+  {
+    "id": "15000025",
+    "name": "Drible Triplo",
+    "mode": "Fute-Brawl",
+    "terrain": "Fute-Brawl",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000025.png"
+  },
+  {
+    "id": "15000022",
+    "name": "Tocaia",
+    "mode": "Caça-Estrelas",
+    "terrain": "Caça-Estrelas",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000022.png"
+  },
+  {
+    "id": "15000082",
+    "name": "Bolo em Camadas",
+    "mode": "Caça-Estrelas",
+    "terrain": "Caça-Estrelas",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000082.png"
+  },
+  {
+    "id": "15000083",
+    "name": "Estação Seca",
+    "mode": "Caça-Estrelas",
+    "terrain": "Caça-Estrelas",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000083.png"
+  },
+  {
+    "id": "15000008",
+    "name": "Fliperama de Cristal",
+    "mode": "Pique-Gema",
+    "terrain": "Pique-Gema",
+    "is_active": true,
+    "image_url": "https://cdn.brawlify.com/maps/regular/15000008.png"
+  }
+]

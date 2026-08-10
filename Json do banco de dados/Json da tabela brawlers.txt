@@ -1,0 +1,1880 @@
+[
+  {
+    "id": "byron",
+    "name": "Byron",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000042.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000042.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "barley",
+    "name": "Barley",
+    "rarity": "Raro",
+    "tier": "B",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Lançadores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000006.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000006.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "jessie",
+    "name": "Jessie",
+    "rarity": "Super-Raro",
+    "tier": "B",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Controle",
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000007.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000007.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "nita",
+    "name": "Nita",
+    "rarity": "Super-Raro",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle",
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000008.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000008.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "dynamike",
+    "name": "Dynamike",
+    "rarity": "Super-Raro",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Lançadores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000009.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000009.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "el_primo",
+    "name": "El primo",
+    "rarity": "Raro",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório, Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000010.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000010.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "mortis",
+    "name": "Mortis",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000011.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000011.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "corvo",
+    "name": "Corvo",
+    "rarity": "Lendário",
+    "tier": "S",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000012.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000012.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "poco",
+    "name": "Poco",
+    "rarity": "Raro",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000013.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000013.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "bo",
+    "name": "Bo",
+    "rarity": "Épico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório, Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000014.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000014.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "piper",
+    "name": "Piper",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000015.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000015.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "pam",
+    "name": "Pam",
+    "rarity": "Épico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000016.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000016.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "tara",
+    "name": "Tara",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000017.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000017.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "darryl",
+    "name": "Darryl",
+    "rarity": "Super-Raro",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000018.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000018.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "penny",
+    "name": "Penny",
+    "rarity": "Super-Raro",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle",
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000019.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000019.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "frank",
+    "name": "Frank",
+    "rarity": "Épico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000020.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000020.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "eugenio",
+    "name": "Eugênio",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000021.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000021.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "tick",
+    "name": "Tick",
+    "rarity": "Super-Raro",
+    "tier": "D",
+    "health": "Baixo (-5000)",
+    "health_value": null,
+    "type": [
+      "Lançadores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000022.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000022.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "leon",
+    "name": "Leon",
+    "rarity": "Lendário",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000023.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000023.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "rosa",
+    "name": "Rosa",
+    "rarity": "Raro",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000024.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000024.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "carl",
+    "name": "Carl",
+    "rarity": "Super-Raro",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000025.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000025.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "bibi",
+    "name": "Bibi",
+    "rarity": "Épico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000026.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000026.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "sandy",
+    "name": "Sandy",
+    "rarity": "Lendário",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000028.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000028.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "bea",
+    "name": "Bea",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000029.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000029.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "emz",
+    "name": "Emz",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000030.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000030.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "mr_p",
+    "name": "Mr. P",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000031.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000031.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "max",
+    "name": "Max",
+    "rarity": "Mítico",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000032.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000032.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "jacky",
+    "name": "Jacky",
+    "rarity": "Super-Raro",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000034.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000034.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "gale",
+    "name": "Gale",
+    "rarity": "Épico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000035.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000035.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "nani",
+    "name": "Nani",
+    "rarity": "Épico",
+    "tier": "C",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000036.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000036.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "sprout",
+    "name": "Sprout",
+    "rarity": "Mítico",
+    "tier": "C",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Lançadores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000037.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000037.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "surge",
+    "name": "Surge",
+    "rarity": "Lendário",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000038.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000038.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "colette",
+    "name": "Colette",
+    "rarity": "Épico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000039.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000039.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "amber",
+    "name": "Amber",
+    "rarity": "Lendário",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000040.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000040.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "lou",
+    "name": "Lou",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000041.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000041.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "edgar",
+    "name": "Edgar",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000043.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000043.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "ruffs",
+    "name": "Ruffs",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório, Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000044.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000044.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "stu",
+    "name": "Stu",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório, Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000045.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000045.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "shelly",
+    "name": "Shelly",
+    "rarity": "Raro",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório, Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000000.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000000.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "rico",
+    "name": "Rico",
+    "rarity": "Super-Raro",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores",
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000004.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000004.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "8-bit",
+    "name": "8-Bit",
+    "rarity": "Super-Raro",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores",
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000027.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000027.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "belle",
+    "name": "Belle",
+    "rarity": "Épico",
+    "tier": "B",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000046.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000046.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "squeak",
+    "name": "Squeak",
+    "rarity": "Mítico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000047.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000047.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "grom",
+    "name": "Grom",
+    "rarity": "Épico",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Lançadores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000048.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000048.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "buzz",
+    "name": "Buzz",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000049.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000049.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "griff",
+    "name": "Griff",
+    "rarity": "Épico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000050.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000050.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "ash",
+    "name": "Ash",
+    "rarity": "Épico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000051.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000051.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "meg",
+    "name": "Meg",
+    "rarity": "Lendário",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000052.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000052.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "lola",
+    "name": "Lola",
+    "rarity": "Épico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000053.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000053.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "fang",
+    "name": "Fang",
+    "rarity": "Épico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000054.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000054.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "janet",
+    "name": "Janet",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000057.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000057.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "bonnie",
+    "name": "Bonnie",
+    "rarity": "Épico",
+    "tier": "C",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000058.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000058.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "otis",
+    "name": "Otis",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000059.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000059.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "sam",
+    "name": "Sam",
+    "rarity": "Épico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000060.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000060.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "gus",
+    "name": "Gus",
+    "rarity": "Super-Raro",
+    "tier": "C",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000061.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000061.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "buster",
+    "name": "Buster",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000062.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000062.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "chester",
+    "name": "Chester",
+    "rarity": "Lendário",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000063.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000063.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "bull",
+    "name": "Bull",
+    "rarity": "Raro",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000002.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000002.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "colt",
+    "name": "Colt",
+    "rarity": "Raro",
+    "tier": "A",
+    "health": "Média",
+    "health_value": null,
+    "type": [
+      "Tiro preciso",
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório, Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000001.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000001.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "16000056",
+    "name": "Eve",
+    "rarity": "Mythic",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": true,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000056.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000056.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "brock",
+    "name": "Brock",
+    "rarity": "Raro",
+    "tier": "B",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": true,
+    "how_breaks_walls": "Acessório, Ult",
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000003.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000003.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "spike",
+    "name": "Spike",
+    "rarity": "Lendário",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000005.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000005.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "gray",
+    "name": "Gray",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000064.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000064.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "larry_lawrie",
+    "name": "Larry & Lawrie",
+    "rarity": "Épico",
+    "tier": "C",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Lançadores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000077.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000077.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "melodie",
+    "name": "Melodie",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000078.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000078.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "angelo",
+    "name": "Angelo",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": true,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000079.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000079.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "draco",
+    "name": "Draco",
+    "rarity": "Lendário",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000080.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000080.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "lily",
+    "name": "Lily",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000081.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000081.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "berry",
+    "name": "Berry",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000082.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000082.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "clancy",
+    "name": "Clancy",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000083.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000083.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "moe",
+    "name": "Moe",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000084.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000084.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "kenji",
+    "name": "Kenji",
+    "rarity": "Lendário",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000085.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000085.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "glowy",
+    "name": "Glowy",
+    "rarity": "Mítico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000101.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000101.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "sirius",
+    "name": "Sirius",
+    "rarity": "Ultra Lendário",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000102.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000102.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "najia",
+    "name": "Najia",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000103.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000103.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "damian",
+    "name": "Damian",
+    "rarity": "Mítico",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000104.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000104.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "starr_nova",
+    "name": "Starr Nova",
+    "rarity": "Épico",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000105.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000105.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "bolt",
+    "name": "Bolt",
+    "rarity": "Raro",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000106.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000106.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "mandy",
+    "name": "Mandy",
+    "rarity": "Épico",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000065.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000065.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "r-t",
+    "name": "R-T",
+    "rarity": "Mítico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000066.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000066.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "willow",
+    "name": "Willow",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000067.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000067.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "maisie",
+    "name": "Maisie",
+    "rarity": "Épico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000068.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000068.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "hank",
+    "name": "Hank",
+    "rarity": "Épico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000069.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000069.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "cordelius",
+    "name": "Cordelius",
+    "rarity": "Lendário",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000070.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000070.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "doug",
+    "name": "Doug",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000071.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000071.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "pearl",
+    "name": "Pearl",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000072.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000072.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "chuck",
+    "name": "Chuck",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000073.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000073.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "charlie",
+    "name": "Charlie",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000074.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000074.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "mico",
+    "name": "Mico",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000075.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000075.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "kit",
+    "name": "Kit",
+    "rarity": "Lendário",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000076.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000076.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "lumi",
+    "name": "Lumi",
+    "rarity": "Lendário",
+    "tier": "S",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000091.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000091.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "shade",
+    "name": "Shade",
+    "rarity": "Épico",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": true,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000086.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000086.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "juju",
+    "name": "Juju",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Lançadores"
+    ],
+    "walks_on_water": true,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000087.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000087.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "meeple",
+    "name": "Meeple",
+    "rarity": "Mítico",
+    "tier": "C",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000089.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000089.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "ollie",
+    "name": "Ollie",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000090.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000090.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "alli",
+    "name": "Alli",
+    "rarity": "Mítico",
+    "tier": "C",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": true,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000095.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000095.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "trunk",
+    "name": "Trunk",
+    "rarity": "Épico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Tanque"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000096.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000096.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "mina",
+    "name": "Mina",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000097.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000097.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "ziggy",
+    "name": "Ziggy",
+    "rarity": "Mítico",
+    "tier": "D",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Destruidores"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000098.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000098.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "pierce",
+    "name": "Pierce",
+    "rarity": "Lendário",
+    "tier": "A",
+    "health": "Média (5000 - 6500)",
+    "health_value": null,
+    "type": [
+      "Tiro preciso"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000099.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000099.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "gigi",
+    "name": "Gigi",
+    "rarity": "Mítico",
+    "tier": "A",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Suporte"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000100.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000100.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "finx",
+    "name": "Finx",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000092.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000092.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "jae_yong",
+    "name": "Jae-Yong",
+    "rarity": "Mítico",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Controle"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000093.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000093.png",
+    "is_hot_pick": false,
+    "is_active": true
+  },
+  {
+    "id": "kaze",
+    "name": "Kaze",
+    "rarity": "Ultra Lendário",
+    "tier": "B",
+    "health": "Alto (+6500)",
+    "health_value": null,
+    "type": [
+      "Algoz"
+    ],
+    "walks_on_water": false,
+    "breaks_walls": false,
+    "how_breaks_walls": null,
+    "image_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/16000094.png",
+    "icon_url": "https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/16000094.png",
+    "is_hot_pick": false,
+    "is_active": true
+  }
+]
