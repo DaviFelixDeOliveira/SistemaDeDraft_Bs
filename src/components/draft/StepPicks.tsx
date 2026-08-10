@@ -6,10 +6,17 @@ import { brawlerService } from '../../services/brawlerService';
 import { mapService } from '../../services/mapService';
 import { playerService } from '../../services/playerService';
 import { analyticsService } from '../../services/analyticsService';
+import {
+  getModeFit,
+  computeComfortBonus,
+  computeMatchupPenalty,
+  computeHistoricalBonus,
+  ThreatsCacheMap,
+} from '../../lib/draftEngineUtils';
 
 import { Brawler, GameMap, Player } from '../../types';
 import { cn, fuzzySearch } from '../../lib/utils';
-import { Search, Shield, Target, Swords, Flame } from 'lucide-react';
+import { Search, Shield, Target, Swords, Flame, AlertTriangle } from 'lucide-react';
 
 interface StepPicksProps {
   draftState: DraftState;
@@ -31,6 +38,7 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
   const [maps, setMaps] = useState<GameMap[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [mapDetailStats, setMapDetailStats] = useState<any>(null);
+  const [threatsCache, setThreatsCache] = useState<ThreatsCacheMap>(new Map());
 
   useEffect(() => {
     async function loadRealData() {
@@ -42,6 +50,15 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
       setBrawlers(bData);
       setMaps(mData);
       setPlayers(pData);
+
+      // Carrega o cache de ameaças históricas para todos os brawlers (1.3)
+      // Uma única passagem nos dados — evita N chamadas ao analyticsService.
+      if (bData.length > 0) {
+        const allIds = bData.map(b => b.id);
+        analyticsService.getBrawlerThreatsMap(allIds).then(cache => {
+          setThreatsCache(cache);
+        });
+      }
     }
     loadRealData();
   }, []);
@@ -87,7 +104,7 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
    * DRAFT ENGINE RECOMMENDATION ALGORITHM (Algoritmo de Recomendação do Draft Wizard)
    * ---------------------------------------------------------------------------------
    * O cálculo de recomendação de brawlers opera sob a regra estrita de DIA 0.
-   * 
+   *
    * Fórmula de Pontuação Base (Dia 0):
    * 1. Meta Tier Base:
    *    - Tier S: +1000 pts
@@ -95,33 +112,52 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
    *    - Tier B: +600 pts
    *    - Tier C: +400 pts
    *    - Tier D: +200 pts
-   * 2. Comfort Picks do Elenco Ativo:
-   *    - Se o brawler for comfort pick de qualquer atleta ativo: +300 pts.
+   * 2. Comfort Picks do Elenco Ativo (1.1 — verificação de modo):
+   *    - Encaixe bom/neutro no modo: +350 pts.
+   *    - Encaixe FRACO no modo: +100 pts + badge de aviso "Conforto fraco neste modo".
    * 3. Adaptação de Terreno e Mecânica do Mapa:
-   *    - Terreno Fechado + Quebra Paredes (breaks_walls / how_breaks_walls): +200 pts.
+   *    - Terreno Fechado + Quebra Paredes (breaksWalls / howBreaksWalls): +200 pts.
    *    - Terreno Aberto + Sniper (Tiro preciso): +150 pts.
-   *    - Terreno Aberto + Curto Alcance (Tanque/Vida Alta sem Tiro preciso): -500 pts (Penalidade).
-   *    - Caminha na Água (walks_on_water): +100 pts.
+   *    - Terreno Aberto + Curto Alcance (Tanque/Vida Alta sem Tiro preciso): -500 pts.
+   *    - Caminha na Água (walksOnWater): +100 pts.
    * 4. Counters e Sinergias:
    *    - Contra 2+ Lançadores inimigos (Hard counters Mortis/Edgar/Mico): +10000 pts.
    *    - Contra 1+ Tanque inimigo (Destruidores/Controle): +150 pts.
    *    - Equilíbrio de Papéis do Trio TBK: +30 pts.
-   * 
-   * Ponderação Histórica Progressiva (Com Partidas Gravadas):
+   * 5. Penalidade de Matchup Específico (1.3):
+   *    - Por ameaça histórica já na equipe inimiga: -min(count,10)*10 pts por ameaça.
+   *
+   * Ponderação Histórica Progressiva (Com Partidas Gravadas — 1.5):
    *    - Bônus Histórico = (winrateNoMapa - 50) * Math.min(qtdPicksNoMapa, 10) * 10
    *    - No "Dia 0" (qtdPicksNoMapa === 0), o Bônus Histórico é exatamente 0.
+   *
+   * Aviso Preditivo de Counter-Threat (1.4):
+   *    - Não afeta score. Exibido como badge na recomendação quando ameaças
+   *      históricas do brawler ainda estão disponíveis para o inimigo draftar.
    */
-  const getRecommendedBrawlers = (): (Brawler & { score: number })[] => {
+  const getRecommendedBrawlers = (): (Brawler & {
+    score: number;
+    isComfort: boolean;
+    comfortPlayerName: string;
+    isStrongMapComfort: boolean;
+    mapWinrate: number;
+    mapPicksCount: number;
+    modeFit: 'good' | 'neutral' | 'poor';
+    counterThreatWarning?: string;
+  })[] => {
     if (!currentTeamPicking || currentTeamPicking === 'enemy') return [];
-    
+
     const available = brawlers.filter(b => !unavailableBrawlerIds.includes(b.id));
     const enemyTeamIds = draftState.picks.filter(p => p.team === 'enemy').map(p => p.brawlerId);
     const tbkTeamIds = draftState.picks.filter(p => p.team === 'tbk').map(p => p.brawlerId);
-    
+
     const enemyBrawlers = enemyTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
     const tbkBrawlers = tbkTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
-    
+
     const map = maps.find(m => m.id === draftState.mapId);
+
+    // IDs banidos + já pickados (para filtro do aviso de counter-threat)
+    const allUsedIds = new Set(unavailableBrawlerIds);
 
     const scoredBrawlers = available.map(brawler => {
       let score = 0;
@@ -137,102 +173,135 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
       else if (brawler.tier === 'B') score += 600;
       else if (brawler.tier === 'C') score += 400;
       else if (brawler.tier === 'D') score += 200;
-      
-      // 2. Comfort Picks do Elenco Ativo (resiliente por ID, slug ou Nome)
+
+      // 2. Comfort Picks do Elenco Ativo — com verificação de encaixe de modo (1.1)
       const comfortPlayer = players.find(p => {
         if (p.isActive === false || p.is_active === false) return false;
         if (!p.comfortBrawlers || !Array.isArray(p.comfortBrawlers)) return false;
-        return p.comfortBrawlers.some(cb => 
-          cb === brawler.id || 
-          cb.toLowerCase() === brawler.id.toLowerCase() || 
+        return p.comfortBrawlers.some(cb =>
+          cb === brawler.id ||
+          cb.toLowerCase() === brawler.id.toLowerCase() ||
           cb.toLowerCase() === brawler.name.toLowerCase()
         );
       });
 
+      // Classificação de encaixe no modo atual
+      const modeFit = map ? getModeFit(brawler, map.mode) : 'neutral';
+
       if (comfortPlayer) {
         isComfort = true;
         comfortPlayerName = comfortPlayer.nickname || comfortPlayer.name;
-        score += 350; // Bônus de conforto
+        // computeComfortBonus aplica +350 (bom/neutro) ou +100 (fraco) conforme modeFit
+        score += computeComfortBonus(brawler, map?.mode, true);
       }
 
       // 3. Adaptação ao Terreno e Mecânicas Únicas
       if (map) {
-         // Quebra paredes em mapas fechados
-         if (map.terrain === 'Fechado' && (brawler.breaks_walls || brawler.how_breaks_walls)) {
-           score += 200;
-         }
-         // Atirador de longo alcance em mapa aberto
-         if (map.terrain === 'Aberto' && brawler.type.includes('Tiro preciso')) {
-           score += 150;
-         }
-         // Terreno semi-aberto
-         if (map.terrain === 'Semi-Aberto' && (brawler.type.includes('Controle') || brawler.type.includes('Algoz'))) {
-           score += 150;
-         }
-         // Caminha sobre a água
-         if (brawler.walks_on_water) {
-           score += 100;
-         }
+        // Quebra paredes em mapas fechados (corrigido: usa camelCase do modelo)
+        if (map.terrain === 'Fechado' && (brawler.breaksWalls || (brawler.howBreaksWalls && brawler.howBreaksWalls !== 'N/A'))) {
+          score += 200;
+        }
+        // Atirador de longo alcance em mapa aberto
+        if (map.terrain === 'Aberto' && brawler.type.includes('Tiro preciso')) {
+          score += 150;
+        }
+        // Terreno semi-aberto
+        if (map.terrain === 'Semi-Aberto' && (brawler.type.includes('Controle') || brawler.type.includes('Algoz'))) {
+          score += 150;
+        }
+        // Caminha sobre a água (corrigido: usa camelCase do modelo)
+        if (brawler.walksOnWater) {
+          score += 100;
+        }
       }
 
       // 4. Counters Diretos e Sinergias do Trio
       const enemyTanksCount = enemyBrawlers.filter(b => b.type.includes('Tanque')).length;
       if (enemyTanksCount >= 1 && (brawler.type.includes('Destruidores') || brawler.type.includes('Controle'))) {
-         score += 150; 
-      }
-      
-      const enemyThrowersCount = enemyBrawlers.filter(b => b.type.includes('Lancadores')).length;
-      if (enemyThrowersCount >= 2 && (brawler.name === 'Mortis' || brawler.name === 'Mico' || brawler.name === 'Edgar')) {
-         score += 10000; // Absolute top hard counter
-      } else if (enemyThrowersCount >= 1 && (brawler.type.includes('Algoz') || brawler.type.includes('Tanque'))) {
-         score += 250; 
-      }
-      
-      // Sinergia com picks do time TBK
-      if (tbkBrawlers.length > 0) {
-         const hasTank = tbkBrawlers.some(b => b.type.includes('Tanque'));
-         const hasSniper = tbkBrawlers.some(b => b.type.includes('Tiro preciso'));
-         if (!hasTank && brawler.type.includes('Tanque')) score += 30;
-         if (!hasSniper && brawler.type.includes('Tiro preciso')) score += 30;
-      }
-      
-      // Penalidades de Terreno (Curto Alcance em Mapa Aberto)
-      if (map?.terrain === 'Aberto' && (brawler.type.includes('Tanque') || (brawler.health === 'Alta' && !brawler.type.includes('Tiro preciso')))) {
-         score -= 500;
+        score += 150;
       }
 
-      // 5. Ponderação Histórica Progressiva (Picks e Winrate no Mapa)
+      const enemyThrowersCount = enemyBrawlers.filter(b => b.type.includes('Lancadores')).length;
+      if (enemyThrowersCount >= 2 && (brawler.name === 'Mortis' || brawler.name === 'Mico' || brawler.name === 'Edgar')) {
+        score += 10000; // Absolute top hard counter
+      } else if (enemyThrowersCount >= 1 && (brawler.type.includes('Algoz') || brawler.type.includes('Tanque'))) {
+        score += 250;
+      }
+
+      // Sinergia com picks do time TBK
+      if (tbkBrawlers.length > 0) {
+        const hasTank = tbkBrawlers.some(b => b.type.includes('Tanque'));
+        const hasSniper = tbkBrawlers.some(b => b.type.includes('Tiro preciso'));
+        if (!hasTank && brawler.type.includes('Tanque')) score += 30;
+        if (!hasSniper && brawler.type.includes('Tiro preciso')) score += 30;
+      }
+
+      // Penalidades de Terreno (Curto Alcance em Mapa Aberto)
+      if (map?.terrain === 'Aberto' && (brawler.type.includes('Tanque') || (brawler.health === 'Alta' && !brawler.type.includes('Tiro preciso')))) {
+        score -= 500;
+      }
+
+      // 5. Ponderação Histórica Progressiva (Picks e Winrate no Mapa — 1.5)
       if (mapDetailStats?.topTbkPicks) {
-        const brawlerMapPick = mapDetailStats.topTbkPicks.find((tp: any) => tp.brawler?.id === brawler.id || tp.brawler?.name === brawler.name);
+        const brawlerMapPick = mapDetailStats.topTbkPicks.find((tp: any) =>
+          tp.brawler?.id === brawler.id || tp.brawler?.name === brawler.name
+        );
         if (brawlerMapPick) {
           mapPicksCount = brawlerMapPick.picks || 0;
           mapWinrate = brawlerMapPick.winrate || 50;
-          const historicalBonus = (mapWinrate - 50) * Math.min(mapPicksCount, 10) * 10;
-          score += historicalBonus;
+          score += computeHistoricalBonus(mapWinrate, mapPicksCount);
 
-          // Se for comfort pick E tiver alto winrate no mapa (>= 70% com pelo menos 2 partidas)
+          // Super bônus: comfort pick E alto winrate no mapa
           if (isComfort && mapWinrate >= 70 && mapPicksCount >= 2) {
             isStrongMapComfort = true;
-            score += 500; // Super bônus
+            score += 500;
           }
         }
       }
-      
-      return { 
-        ...brawler, 
-        score, 
-        isComfort, 
-        comfortPlayerName, 
-        isStrongMapComfort, 
-        mapWinrate, 
-        mapPicksCount 
+
+      // 6. Penalidade de Matchup Específico (1.3)
+      // Aplica penalidade se o brawler tem ameaças históricas já no time inimigo
+      score += computeMatchupPenalty(brawler.id, enemyTeamIds, threatsCache);
+
+      // 7. Aviso Preditivo de Counter-Threat (1.4 — não afeta score)
+      // Verifica se as ameaças históricas deste brawler ainda estão disponíveis para o inimigo
+      let counterThreatWarning: string | undefined;
+      const brawlerThreats = threatsCache.get(brawler.id) ?? [];
+      const availableThreats = brawlerThreats.filter(t => !allUsedIds.has(t.brawlerId));
+      if (availableThreats.length > 0) {
+        const threatNames = availableThreats
+          .slice(0, 3)
+          .map(t => brawlers.find(b => b.id === t.brawlerId)?.name)
+          .filter((name): name is string => !!name);
+        if (threatNames.length > 0) {
+          const namesStr = threatNames.join(', ');
+          counterThreatWarning =
+            `Atenção: historicamente perde para ${namesStr}, que o inimigo ainda pode pegar.`;
+        }
+      }
+
+      return {
+        ...brawler,
+        score,
+        isComfort,
+        comfortPlayerName,
+        isStrongMapComfort,
+        mapWinrate,
+        mapPicksCount,
+        modeFit,
+        counterThreatWarning,
       };
     });
-    
+
     return scoredBrawlers.sort((a, b) => b.score - a.score).slice(0, 3);
   };
 
-  const recommendations = useMemo(() => getRecommendedBrawlers(), [draftState, unavailableBrawlerIds, brawlers, maps, players]);
+  const recommendations = useMemo(
+    () => getRecommendedBrawlers(),
+    // threatsCache incluído para que o aviso de counter-threat e a penalidade de matchup
+    // sejam recalculados quando o cache carrega ou quando o draft muda
+    [draftState, unavailableBrawlerIds, brawlers, maps, players, mapDetailStats, threatsCache]
+  );
   const bestRecommendationId = recommendations[0]?.id;
 
   const unbalancedAlert = useMemo(() => {
@@ -448,21 +517,33 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
                    {rec.iconUrl && <img src={rec.iconUrl} alt="" className="w-full h-full object-cover" />}
                  </div>
                  <div className="flex-1">
-                   <div className="font-medium text-slate-900 dark:text-white flex items-center justify-between gap-1">
-                     <span>{rec.name}</span>
-                     {i === 0 && <span className="text-[10px] text-[#FFCC00] font-bold uppercase tracking-wider bg-[#FFCC00]/20 px-1.5 py-0.5 rounded">Top Pick</span>}
-                   </div>
-                   <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Score: <span className={rec.score > 0 ? "text-emerald-400" : "text-red-400"}>{rec.score}</span></div>
-                   {rec.isStrongMapComfort && (
-                     <div className="text-[10px] text-emerald-400 font-semibold mt-1 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded leading-tight">
-                       🔥 Conforto Forte ({rec.mapWinrate}% WR)
-                     </div>
-                   )}
-                   {!rec.isStrongMapComfort && rec.isComfort && (
-                     <div className="text-[10px] text-sky-400 font-semibold mt-1 bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 rounded leading-tight">
-                       ⭐ Conforto de {rec.comfortPlayerName}
-                     </div>
-                   )}
+                    <div className="font-medium text-slate-900 dark:text-white flex items-center justify-between gap-1">
+                      <span>{rec.name}</span>
+                      {i === 0 && <span className="text-[10px] text-[#FFCC00] font-bold uppercase tracking-wider bg-[#FFCC00]/20 px-1.5 py-0.5 rounded">Top Pick</span>}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Score: <span className={rec.score > 0 ? "text-emerald-400" : "text-red-400"}>{rec.score}</span></div>
+                    {rec.isStrongMapComfort && (
+                      <div className="text-[10px] text-emerald-400 font-semibold mt-1 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded leading-tight">
+                        🔥 Conforto Forte ({rec.mapWinrate}% WR)
+                      </div>
+                    )}
+                    {!rec.isStrongMapComfort && rec.isComfort && rec.modeFit !== 'poor' && (
+                      <div className="text-[10px] text-sky-400 font-semibold mt-1 bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 rounded leading-tight">
+                        ⭐ Conforto de {rec.comfortPlayerName}
+                      </div>
+                    )}
+                    {!rec.isStrongMapComfort && rec.isComfort && rec.modeFit === 'poor' && (
+                      <div className="text-[10px] text-amber-400 font-semibold mt-1 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded leading-tight flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                        Pick de conforto, mas fraco neste modo
+                      </div>
+                    )}
+                    {rec.counterThreatWarning && (
+                      <div className="text-[10px] text-orange-400 font-medium mt-1 bg-orange-500/10 border border-orange-500/20 px-1.5 py-0.5 rounded leading-tight flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                        {rec.counterThreatWarning}
+                      </div>
+                    )}
                  </div>
               </div>
             ))}

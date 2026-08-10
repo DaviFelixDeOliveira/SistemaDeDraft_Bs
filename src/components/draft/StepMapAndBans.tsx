@@ -5,9 +5,11 @@ import { ChevronDown, Search, Eye, Ban, Lightbulb } from 'lucide-react';
 import { DraftState } from './DraftWizard';
 import { mapService } from '../../services/mapService';
 import { brawlerService } from '../../services/brawlerService';
+import { analyticsService } from '../../services/analyticsService';
 import { GameMap, Brawler } from '../../types';
 import { MapDetailsView } from '../ui/MapDetailsView';
 import { cn, fuzzySearch } from '../../lib/utils';
+import { computeBanScore, EnemyPickStatsMap } from '../../lib/draftEngineUtils';
 
 interface StepMapAndBansProps {
   draftState: DraftState;
@@ -22,8 +24,8 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
   const [isMapDropdownOpen, setIsMapDropdownOpen] = useState(false);
   const [viewingMap, setViewingMap] = useState<GameMap | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+  const [banRecs, setBanRecs] = useState<{ brawlers: Brawler[]; reason: string }>({ brawlers: [], reason: '' });
 
   useEffect(() => {
     Promise.all([mapService.getMaps(), brawlerService.getBrawlers()]).then(([mData, bData]) => {
@@ -32,16 +34,65 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
     });
   }, []);
 
-
+  /**
+   * Carrega sugestões de ban com blending histórico (1.2).
+   * Usa computeBanScore (heurística + allEnemyPickStats do mapa).
+   * Em cold start (0 partidas no mapa), recai nas regras puras.
+   */
   useEffect(() => {
-    if (draftState.mapId) {
-      setIsSuggestionsLoading(true);
-      const timer = setTimeout(() => {
-        setIsSuggestionsLoading(false);
-      }, 1500);
-      return () => clearTimeout(timer);
+    if (!draftState.mapId || brawlers.length === 0) {
+      setBanRecs({ brawlers: [], reason: '' });
+      return;
     }
-  }, [draftState.mapId]);
+
+    const selectedMap = maps.find(m => m.id === draftState.mapId);
+    if (!selectedMap) return;
+
+    setIsSuggestionsLoading(true);
+
+    analyticsService.getMapDetailStats(draftState.mapId).then(stats => {
+      const enemyPickStats: EnemyPickStatsMap = (stats as any).allEnemyPickStats ?? {};
+      const hasHistoricalData = Object.values(enemyPickStats).some(s => s.picks > 0);
+      const totalMapMatches = stats.totalMatches ?? 0;
+
+      // Calcula scores de ban para todos os brawlers disponíveis
+      const available = brawlers.filter(
+        b => !draftState.tbkBans.includes(b.id) && !draftState.enemyBans.includes(b.id)
+      );
+
+      const scored = available
+        .map(b => ({
+          brawler: b,
+          score: computeBanScore(b, selectedMap.terrain, draftState.tbkStarts, enemyPickStats),
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      const topBrawlers = scored.slice(0, 4).map(s => s.brawler);
+
+      // Razão dinâmica: data-driven ou cold start
+      let reason: string;
+      if (hasHistoricalData) {
+        reason = `Baseado em ${totalMapMatches} partida${totalMapMatches !== 1 ? 's' : ''} neste mapa — brawlers com alto winrate inimigo no mapa recebem prioridade de ban.`;
+      } else if (!draftState.tbkStarts) {
+        if (selectedMap.terrain === 'Aberto') {
+          reason = 'O Inimigo tem o First Pick num Mapa Aberto. Priorize banir Snipers ou Brawlers Tier S.';
+        } else {
+          reason = 'O Inimigo tem o First Pick. Priorize banir os brawlers mais fortes do Meta (Tier S).';
+        }
+      } else {
+        if (selectedMap.terrain === 'Aberto') {
+          reason = 'A TBK tem o First Pick num Mapa Aberto. Bana Assassinos (Algozes) que possam ser counters do nosso pick.';
+        } else {
+          reason = 'A TBK tem o First Pick. Elimine os counters mais versáteis ou Algozes para proteger sua escolha.';
+        }
+      }
+
+      setBanRecs({ brawlers: topBrawlers, reason });
+      setIsSuggestionsLoading(false);
+    }).catch(() => {
+      setIsSuggestionsLoading(false);
+    });
+  }, [draftState.mapId, draftState.tbkStarts, draftState.tbkBans, draftState.enemyBans, brawlers, maps]);
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 3000);
@@ -68,37 +119,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
 
   const selectedMap = maps.find(m => m.id === draftState.mapId);
 
-  const banRecs = useMemo(() => {
-    if (!selectedMap) return { brawlers: [], reason: '' };
-    
-    const available = brawlers.filter(b => 
-      !draftState.tbkBans.includes(b.id) && 
-      !draftState.enemyBans.includes(b.id)
-    );
-
-    let recommended: Brawler[] = [];
-    let reason = "";
-
-    if (!draftState.tbkStarts) {
-      if (selectedMap.terrain === 'Aberto') {
-        recommended = available.filter(b => b.type.includes('Tiro preciso') || b.tier === 'S').sort((a,b) => (a.tier === 'S' ? -1 : 1));
-        reason = "O Inimigo tem o First Pick num Mapa Aberto. Priorize banir Snipers ou Brawlers Tier S.";
-      } else {
-        recommended = available.filter(b => b.tier === 'S' || b.tier === 'A').sort((a,b) => (a.tier === 'S' ? -1 : 1));
-        reason = "O Inimigo tem o First Pick. Priorize banir os brawlers mais fortes do Meta (Tier S).";
-      }
-    } else {
-      if (selectedMap.terrain === 'Aberto') {
-        recommended = available.filter(b => b.type.includes('Algoz'));
-        reason = "A TBK tem o First Pick num Mapa Aberto. Bana Assassinos (Algozes) que possam ser counters do nosso pick.";
-      } else {
-        recommended = available.filter(b => b.type.includes('Algoz') || b.type.includes('Controle'));
-        reason = "A TBK tem o First Pick. Elimine os counters mais versáteis ou Algozes para proteger sua escolha.";
-      }
-    }
-    
-    return { brawlers: recommended.slice(0, 4), reason };
-  }, [selectedMap, brawlers, draftState.tbkStarts, draftState.tbkBans, draftState.enemyBans]);
+  // banRecs agora é estado async (ver useEffect acima) — removido o useMemo estático
 
 
   const canProceed = draftState.mapId !== '' && 

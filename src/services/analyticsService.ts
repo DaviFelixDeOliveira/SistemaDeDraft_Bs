@@ -404,7 +404,8 @@ export const analyticsService = {
 
     // Picks TBK no Mapa
     const tbkPickCounts: Record<string, { total: number; wins: number }> = {};
-    const enemyPickCounts: Record<string, number> = {};
+    // Picks inimigos no Mapa — agora com contagem de vitórias inimigo (1.2)
+    const enemyPickCounts: Record<string, { total: number; wins: number }> = {};
 
     mapPicks.forEach(p => {
       if (p.team === 'tbk') {
@@ -413,7 +414,11 @@ export const analyticsService = {
         const match = mapMatches.find(m => m.id === p.match_id);
         if (match && match.result === 'victory') tbkPickCounts[p.brawler_id].wins++;
       } else {
-        enemyPickCounts[p.brawler_id] = (enemyPickCounts[p.brawler_id] || 0) + 1;
+        if (!enemyPickCounts[p.brawler_id]) enemyPickCounts[p.brawler_id] = { total: 0, wins: 0 };
+        enemyPickCounts[p.brawler_id].total++;
+        // Vitória do inimigo = derrota da TBK
+        const match = mapMatches.find(m => m.id === p.match_id);
+        if (match && match.result === 'defeat') enemyPickCounts[p.brawler_id].wins++;
       }
     });
 
@@ -428,10 +433,21 @@ export const analyticsService = {
       .slice(0, 5);
 
     const topEnemyPicks = Object.entries(enemyPickCounts)
-      .map(([bId, picksCount]) => ({ brawler: brawlersMap.get(bId), picks: picksCount }))
+      .map(([bId, data]) => ({ brawler: brawlersMap.get(bId), picks: data.total }))
       .filter(item => item.brawler)
       .sort((a, b) => b.picks - a.picks)
       .slice(0, 5);
+
+    /**
+     * allEnemyPickStats — registro completo de picks inimigos no mapa.
+     * Usado pelo motor de bans para blending histórico (1.2).
+     * Record<brawlerId, { picks, wins, winrate }>
+     */
+    const allEnemyPickStats: Record<string, { picks: number; wins: number; winrate: number }> = {};
+    Object.entries(enemyPickCounts).forEach(([bId, data]) => {
+      const winrate = data.total > 0 ? Math.round((data.wins / data.total) * 100) : 50;
+      allEnemyPickStats[bId] = { picks: data.total, wins: data.wins, winrate };
+    });
 
     // Bans no Mapa
     const totalBansCount: Record<string, number> = {};
@@ -473,8 +489,65 @@ export const analyticsService = {
       topEnemyPicks,
       topTotalBans,
       topTbkBans,
-      topEnemyBans
+      topEnemyBans,
+      allEnemyPickStats // (1.2) registro completo para motor de bans
     };
+  },
+
+  /**
+   * Carrega ameaças históricas para múltiplos brawlers em uma única passagem.
+   * Retorna Map<brawlerId, ThreatEntry[]> onde cada ThreatEntry é um
+   * brawler inimigo que venceu contra o brawler alvo.
+   *
+   * Mais eficiente que N chamadas a getBrawlerDetailStats para o loop de scoring.
+   * Usado por StepPicks.tsx para a penalidade de matchup específico (1.3).
+   */
+  getBrawlerThreatsMap: async (
+    brawlerIds: string[]
+  ): Promise<Map<string, { brawlerId: string; count: number }[]>> => {
+    const [matches, picks] = await Promise.all([
+      analyticsService.getAllMatches(),
+      analyticsService.getAllPicks()
+    ]);
+
+    const matchesMap = new Map<string, Match>(matches.map(m => [m.id, m]));
+    const brawlerIdSet = new Set(brawlerIds);
+
+    // Pré-agrupa picks por partida para evitar O(n²) de buscas
+    const picksByMatch = new Map<string, typeof picks>();
+    for (const pick of picks) {
+      if (!picksByMatch.has(pick.match_id)) picksByMatch.set(pick.match_id, []);
+      picksByMatch.get(pick.match_id)!.push(pick);
+    }
+
+    // Acumula contagens de ameaças: Map<brawlerAlvo, Map<brawlerInimigo, count>>
+    const threatCountMap = new Map<string, Map<string, number>>();
+    brawlerIdSet.forEach(id => threatCountMap.set(id, new Map()));
+
+    // Itera picks TBK que pertencem aos brawlers alvo
+    for (const pick of picks) {
+      if (pick.team !== 'tbk' || !brawlerIdSet.has(pick.brawler_id)) continue;
+      const match = matchesMap.get(pick.match_id);
+      if (!match || match.result !== 'defeat') continue; // apenas derrotas
+
+      const matchPicks = picksByMatch.get(pick.match_id) ?? [];
+      const enemyPicks = matchPicks.filter(p => p.team === 'enemy');
+      const innerMap = threatCountMap.get(pick.brawler_id)!;
+
+      for (const ep of enemyPicks) {
+        innerMap.set(ep.brawler_id, (innerMap.get(ep.brawler_id) ?? 0) + 1);
+      }
+    }
+
+    // Converte para o formato final: Map<brawlerId, ThreatEntry[]> ordenado por count desc
+    const result = new Map<string, { brawlerId: string; count: number }[]>();
+    for (const [bId, innerMap] of threatCountMap) {
+      const threats = Array.from(innerMap.entries())
+        .map(([enemyId, count]) => ({ brawlerId: enemyId, count }))
+        .sort((a, b) => b.count - a.count);
+      result.set(bId, threats);
+    }
+    return result;
   },
 
   /**
