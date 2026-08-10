@@ -1,59 +1,84 @@
 # Ideias Futuras
 
-Backlog de melhorias planejadas, ainda **não implementadas**. Cada item aqui deve virar
-seu próprio prompt/tarefa quando for a vez dele — não implementar tudo de uma vez.
+Backlog de melhorias ordenado da **mais necessária** para a **menos necessária**.
 
+---
 
-- [ ] **1. Tradução do sistema para Inglês e Espanhol**
-   Adicionar um seletor de idioma na interface, com português como padrão. Envolve
-   implementar i18n (ex: react-i18next), extrair todas as strings hoje hardcoded no código
-   para arquivos de tradução, e traduzir cada uma para EN e ES. Escopo grande — melhor
-   tratar como projeto isolado, não misturado com mudanças de algoritmo.
+## 🔴 FASE 1: Alta Prioridade (Segurança, Usabilidade & Persistência)
 
-- [ ] **2. Campo de DPS por brawler**
-   Adicionar um campo `dps` (Alto / Médio / Baixo) no cadastro de cada brawler, para ser
-   usado pelo algoritmo de recomendação. Exemplo: brawlers de DPS baixo não deveriam ser
-   fortemente sugeridos em modos que exigem dano sustentado, como Roubo (onde o objetivo é
-   destruir o cofre inimigo).
+- [ ] **1. Backup dos dados / Sistema de Restauração (Item 21)**
+  Salvar todos os dados do sistema em JSON e permitir restaurar brawlers, mapas, players, picks de conforto e tags customizadas com 1 comando ou botão.
 
-- [ ] **3. Objetivo por modo de jogo**
-   Cadastrar, para cada modo (Caça-Estrelas, Roubo, Nocaute, Pique-Gema, Fute-Brawl, Zona
-   Estratégica), qual é o objetivo real do modo e a prioridade relativa entre os
-   sub-objetivos, para o algoritmo de recomendação pesar isso.
-   Exemplo: no Caça-Estrelas o objetivo é matar e sobreviver, mas sobreviver pesa mais que
-   matar — o sistema deveria priorizar bons "matadores" (Algoz/Tiro Preciso) combinados com
-   Suportes que mantêm o time vivo, e brawlers de alta mobilidade/velocidade, em vez de só
-   olhar dano bruto.
+- [ ] **2. Manter tela e rascunho do draft ao reiniciar a página (Item 15)**
+  Ao recarregar a página (web ou mobile), o sistema deve manter a última tela em que o usuário estava e carregar as informações do draft que estavam em andamento via `localStorage`.
 
-- [ ] **4. Indicador de confiança/amostra**
-   Quando uma sugestão do algoritmo vem de winrate com poucas partidas registradas (ex: 2
-   jogos), sinalizar visualmente que o dado ainda é raso, para diferenciar de uma sugestão
-   apoiada em uma amostra grande (ex: 50 partidas).
+- [ ] **3. Níveis de Acesso — Administrador vs Player (Item 20)**
+  Adicionar sistema de senha/acesso para administrador e jogador. O administrador pode alterar jogadores, tiers de brawlers e mapas; o player pode apenas visualizar e selecionar seus brawlers e picks de conforto.
 
-- [ ] **5. Detecção de tendência do meta interno**
-   Comparar o winrate das últimas N partidas de um brawler contra o winrate anterior a
-   essas partidas, para detectar se ele está "subindo" ou "caindo" de força dentro das
-   próprias scrims do time, além do tier oficial cadastrado.
+- [ ] **4. Botão de limpar campos do draft (Item 16)**
+  Adicionar um botão de reset rápido no assistente de draft que limpa todos os campos e picks de uma só vez.
 
-- [ ] **6. Perfil/scouting de adversário recorrente**
-   Quando o time enfrenta o mesmo adversário mais de uma vez, manter um histórico
-   específico contra aquele time (picks favoritos deles, bans que costumam fazer) para uso
-   no próximo confronto.
+- [ ] **5. Adicionar brawlers de conforto pressionando Enter (Item 11)**
+  Ao selecionar um brawler de conforto, adicioná-lo automaticamente ao apertar Enter e fechar o modal, acelerando a seleção contínua.
 
-- [ ] **7. Detecção automática de arquétipo de composição**
-   Reconhecer padrões como "comp de poke", "double tank", "dive comp" a partir dos
-   tipos/classes escolhidos no draft, como contexto complementar ao alerta de composição
-   desbalanceada que já existe.
+---
 
-- [ ] **8. Exportar relatório pós-scrim**
-   Gerar automaticamente uma imagem ou PDF resumido da sessão de treino (picks, bans,
-   resultado, destaques) para compartilhar rapidamente com o time.
+## 🟡 FASE 2: Média Prioridade (Algoritmo, Mobile & Atributos)
 
-- [ ] **9. Rotação de jogadores**
-   Alertar se os mesmos jogadores estão sendo escalados sempre enquanto outros do elenco
-   não jogam há muito tempo.
+- [ ] **6. Ajustes de Usabilidade Mobile (Item 18)**
+  - Botão de arquivar jogador ao lado do nome com modal de confirmação.
+  - Ativar tags customizadas ao clicar fora ou apertar Enter no teclado mobile.
+  - Sincronização em tempo real das alterações feitas via web no dispositivo mobile.
 
-- [ ] **10. Sincronização automática do tier list do meta**
-    Hoje o tier S/A/B/C/D de cada brawler é cadastrado manualmente. Uma automação futura
-    poderia puxar atualizações de tier de uma fonte confiável a cada balanceamento do jogo,
-    em vez de exigir atualização manual.
+- [ ] **7. Campo de DPS por brawler (Item 2)**
+  Adicionar campo `dps` (Alto / Médio / Baixo) no cadastro de brawlers para influenciar modos que exigem dano sustentado (ex: Roubo).
+
+- [ ] **8. Prioridade por Objetivos do Modo de Jogo (Item 3)**
+  Cadastrar os objetivos reais e sub-objetivos de cada modo (ex: Caça-Estrelas valoriza sobrevivência + eliminações em relação a dano bruto).
+
+- [ ] **9. Exibir Objetivos e Bans Recomendados por Modo (Item 13)**
+  Exibir na tela as dicas de objetivo do modo e sugestões de brawlers recomendados para banir ou escolher dependendo de ser First Pick ou Last Pick.
+
+- [ ] **10. Adicionar mais atributos dos brawlers (Item 12)**
+  Cadastrar informações complementares: DPS, velocidade de movimento, alcance, etc.
+
+- [ ] **11. Indicador de Confiança/Amostra do Winrate (Item 4)**
+  Sinalizar visualmente quando uma sugestão do algoritmo vem de poucas partidas (ex: 2 jogos) vs amostragem consolidada (ex: 50 jogos).
+
+- [ ] **12. Adicionar mais filtros na lista de brawlers (Item 17)**
+  Adicionar filtros por classe, raridade, modo de jogo recomendado, etc.
+
+- [ ] **13. Ajustes de Cores e Contraste da Interface (Item 14)**
+  Ajustar paleta de cores e contraste para melhorar a leitura e navegação visual.
+
+---
+
+## 🟢 FASE 3: Baixa Prioridade (Análises Avançadas & Ajustes Textuais)
+
+- [ ] **14. Detecção automática de Arquétipo de Composição (Item 7)**
+  Reconhecer padrões de composições no draft (ex: "Comp de Poke", "Double Tank", "Dive Comp").
+
+- [ ] **15. Detecção de Tendência do Meta Interno (Item 5)**
+  Comparar winrate recente (últimas N partidas) contra o histórico antigo para identificar brawlers em alta ou em queda nas scrims.
+
+- [ ] **16. Perfil/Scouting de Adversários Recorrentes (Item 6)**
+  Manter histórico específico contra times adversários frequentes (picks favoritos e bans comuns deles).
+
+- [ ] **17. Exportar Relatório Pós-Scrim (Item 8)**
+  Gerar imagem ou PDF resumido da sessão de treino para compartilhamento rápido.
+
+- [ ] **18. Alerta de Rotação de Mapas (Item 9)**
+  Alertar se determinados mapas não estão sendo escolhidos há muito tempo.
+
+- [ ] **19. Sincronização Automática de Tier List via API (Item 10)**
+  Automação para atualizar os tiers (S/A/B/C/D) dos brawlers a cada novo patch de balanceamento.
+
+- [ ] **20. Tradução para Inglês e Espanhol — i18n (Item 1)**
+  Seletor de idiomas na interface extraindo todas as strings para internacionalização.
+
+- [ ] **21. Ajustes nas Frases Descritivas de Modos e Mapas (Item 19)**
+
+  Ajustar os textos explicativos exibidos nos modais de imagens dos mapas.
+  - Mapa fechado: "Mapa fechado com muitas paredes, ideal para assassinos, tanques e brawlers de curto alcance."
+  - Mapa aberto: "Mapa aberto com poucas zonas de proteção, ideal para atiradores e controle de mapa."
+  - Mapa semi-aberto: "Mapa semi-aberto com uma mistura de zonas abertas e zonas de proteção, ideal para uma variedade de brawlers, sendo eles assassinos ou atiradores."
