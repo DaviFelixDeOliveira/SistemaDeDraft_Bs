@@ -692,5 +692,66 @@ export const analyticsService = {
     }
 
     return result;
-  }
+  },
+
+  /**
+   * Retorna estatísticas de cada brawler jogado por um jogador específico.
+   * Usa os dados reais de match_picks (player_id preenchido na etapa pós-partida).
+   * Retorna array ordenado por total de partidas desc.
+   */
+  getPlayerBrawlerStats: async (playerId: string): Promise<
+    Array<{
+      brawlerId: string;
+      brawlerName: string;
+      brawlerIconUrl?: string;
+      brawlerImageUrl?: string;
+      matches: number;
+      wins: number;
+      winrate: number;
+    }>
+  > => {
+    const [matches, picks, brawlers] = await Promise.all([
+      analyticsService.getAllMatches(),
+      analyticsService.getAllPicks(),
+      brawlerService.getBrawlers(),
+    ]);
+
+    const matchesMap = new Map<string, Match>(matches.map(m => [m.id, m]));
+    const brawlersMap = new Map(brawlers.map(b => [b.id, b]));
+
+    // Filtra apenas picks TBK deste jogador
+    const playerPicks = picks.filter(
+      p => p.player_id === playerId && p.team === 'tbk'
+    );
+
+    // Agrega por brawler
+    const brawlerCounts: Record<string, { total: number; wins: number }> = {};
+    playerPicks.forEach(p => {
+      if (!brawlerCounts[p.brawler_id]) {
+        brawlerCounts[p.brawler_id] = { total: 0, wins: 0 };
+      }
+      brawlerCounts[p.brawler_id].total++;
+      const match = matchesMap.get(p.match_id);
+      if (match && match.result === 'victory') {
+        brawlerCounts[p.brawler_id].wins++;
+      }
+    });
+
+    return Object.entries(brawlerCounts)
+      .map(([brawlerId, data]) => {
+        const brawler = brawlersMap.get(brawlerId);
+        const winrate =
+          data.total > 0 ? Math.round((data.wins / data.total) * 100) : 0;
+        return {
+          brawlerId,
+          brawlerName: brawler?.name || 'Brawler Desconhecido',
+          brawlerIconUrl: brawler?.iconUrl,
+          brawlerImageUrl: brawler?.imageUrl,
+          matches: data.total,
+          wins: data.wins,
+          winrate,
+        };
+      })
+      .sort((a, b) => b.matches - a.matches);
+  },
 };

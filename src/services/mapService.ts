@@ -1,9 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { GameMap, Composition } from '../types';
-import { mockMaps, mockCompositions } from '../data/mockData';
-
-// Em memória apenas para composições se necessário
-let compsDb = [...mockCompositions];
+import { mockMaps } from '../data/mockData';
 
 function mapFromSupabase(data: any): GameMap {
   return {
@@ -27,6 +24,18 @@ function mapToSupabase(map: Partial<GameMap>): any {
   if (map.is_active !== undefined) row.is_active = map.is_active;
   if (map.imageUrl !== undefined) row.image_url = map.imageUrl;
   return row;
+}
+
+function compFromSupabase(data: any): Composition {
+  return {
+    id: data.id,
+    mapId: data.map_id,
+    brawlers: data.brawlers as [string, string, string],
+    description: data.description || undefined,
+    winrate: data.winrate ?? 0,
+    matchesPlayed: data.matches_played ?? 0,
+    is_active: data.is_active ?? true,
+  };
 }
 
 export const mapService = {
@@ -71,14 +80,86 @@ export const mapService = {
     if (error) console.error('Erro ao atualizar status do mapa no Supabase:', error);
   },
 
-  // Operações de composições (mantidas localmente em memória apenas)
-  getCompsByMap: async (mapId: string): Promise<Composition[]> => {
-    return compsDb.filter(c => c.mapId === mapId);
+  // ─── Composições ────────────────────────────────────────────────────────────
+
+  /**
+   * Busca todas as composições ativas do Supabase.
+   * Retorna array vazio se a tabela ainda não existir ou estiver vazia.
+   */
+  getComps: async (): Promise<Composition[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('compositions')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Erro ao buscar composições do Supabase:', error.message);
+        return [];
+      }
+      return (data || []).map(compFromSupabase);
+    } catch (err) {
+      console.warn('Erro ao conectar ao Supabase para composições:', err);
+      return [];
+    }
   },
 
-  createComp: async (comp: Omit<Composition, 'id'>): Promise<Composition> => {
-    const newComp = { ...comp, id: crypto.randomUUID() };
-    compsDb.push(newComp);
-    return newComp;
-  }
+  /**
+   * Busca composições de um mapa específico.
+   */
+  getCompsByMap: async (mapId: string): Promise<Composition[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('compositions')
+        .select('*')
+        .eq('map_id', mapId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Erro ao buscar composições do mapa:', error.message);
+        return [];
+      }
+      return (data || []).map(compFromSupabase);
+    } catch (err) {
+      console.warn('Erro ao conectar ao Supabase para composições do mapa:', err);
+      return [];
+    }
+  },
+
+  /**
+   * Cria uma nova composição e persiste no Supabase.
+   * isMeta=true para composições salvas via "Salvar como Meta do Mapa".
+   * isMeta=false para composições criadas manualmente via "Nova Comp".
+   */
+  createComp: async (comp: Omit<Composition, 'id'>, isMeta = false): Promise<Composition> => {
+    const row = {
+      map_id: comp.mapId,
+      brawlers: comp.brawlers,
+      description: comp.description || null,
+      winrate: comp.winrate ?? 0,
+      matches_played: comp.matchesPlayed ?? 0,
+      is_meta: isMeta,
+      is_active: true,
+    };
+
+    try {
+      const { data, error } = await supabase
+        .from('compositions')
+        .insert(row)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao criar composição no Supabase:', error.message);
+        // Fallback: retorna com id gerado localmente
+        return { ...comp, id: crypto.randomUUID() };
+      }
+      return compFromSupabase(data);
+    } catch (err) {
+      console.error('Erro ao conectar ao Supabase para criar composição:', err);
+      return { ...comp, id: crypto.randomUUID() };
+    }
+  },
 };

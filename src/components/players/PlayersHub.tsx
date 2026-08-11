@@ -10,7 +10,14 @@ import { ConfirmModal } from "../ui/ConfirmModal";
 
 import { analyticsService } from '../../services/analyticsService';
 
-export function PlayersHub() {
+import { UserRole } from '../LockScreen';
+
+interface PlayersHubProps {
+  userRole?: UserRole;
+}
+
+export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
+  const isPlayerMode = userRole === 'player';
   const [players, setPlayers] = useState<Player[]>([]);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -141,13 +148,15 @@ export function PlayersHub() {
               Arquivados
             </button>
           </div>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 w-fit"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Jogador
-          </button>
+          {!isPlayerMode && (
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 w-fit"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Jogador
+            </button>
+          )}
         </div>
       </div>
 
@@ -163,22 +172,24 @@ export function PlayersHub() {
                 className="p-5 border-b border-zinc-100 dark:border-[#2A2A2A] relative cursor-pointer"
                 onClick={() => setSelectedPlayer(player)}
               >
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); }}
-                    className="text-zinc-400 hover:text-blue-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
-                    title="Editar Jogador"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={(e) => togglePlayerStatus(player.id, e)}
-                    className="text-zinc-400 hover:text-[#FF3366] transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
-                    title={player.isActive !== false ? "Arquivar Jogador" : "Desarquivar Jogador"}
-                  >
-                    {player.isActive !== false ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
-                  </button>
-                </div>
+                {!isPlayerMode && (
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); }}
+                      className="text-zinc-400 hover:text-blue-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
+                      title="Editar Jogador"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={(e) => togglePlayerStatus(player.id, e)}
+                      className="text-zinc-400 hover:text-[#FF3366] transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
+                      title={player.isActive !== false ? "Arquivar Jogador" : "Desarquivar Jogador"}
+                    >
+                      {player.isActive !== false ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
                 
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
@@ -236,20 +247,22 @@ export function PlayersHub() {
                     <Award className="w-4 h-4 text-[#FFCC00]" />
                     Comfort Picks
                   </h4>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => setEditingPlayer(player)}
-                      className="text-xs text-blue-500 hover:underline font-medium flex items-center gap-1"
-                    >
-                      <Edit2 className="w-3 h-3" /> Editar
-                    </button>
-                    <button 
-                      onClick={() => handleDeletePlayer(player.id, player.nickname)}
-                      className="text-xs text-red-500 hover:underline font-medium flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3 h-3" /> Excluir
-                    </button>
-                  </div>
+                  {!isPlayerMode && (
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setEditingPlayer(player)}
+                        className="text-xs text-blue-500 hover:underline font-medium flex items-center gap-1"
+                      >
+                        <Edit2 className="w-3 h-3" /> Editar
+                      </button>
+                      <button 
+                        onClick={() => handleDeletePlayer(player.id, player.nickname)}
+                        className="text-xs text-red-500 hover:underline font-medium flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" /> Excluir
+                      </button>
+                    </div>
+                  )}
                 </div>
                 
                 {comfortBrawlers.length > 0 ? (

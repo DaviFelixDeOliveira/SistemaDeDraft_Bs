@@ -5,6 +5,7 @@ import { Player } from '../../types';
 import { cn } from '../../lib/utils';
 import { useState, useEffect } from 'react';
 import { brawlerService } from '../../services/brawlerService';
+import { analyticsService } from '../../services/analyticsService';
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -50,13 +51,34 @@ interface DetailsModalProps {
 }
 
 export function DetailsModal({ player, isOpen, onClose, stats }: DetailsModalProps) {
-  const [showWinrateDetails, setShowWinrateDetails] = useState(false);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
+  const [brawlerStats, setBrawlerStats] = useState<Array<{
+    brawlerId: string;
+    brawlerName: string;
+    brawlerIconUrl?: string;
+    brawlerImageUrl?: string;
+    matches: number;
+    wins: number;
+    winrate: number;
+  }>>([]);
+  const [loadingBrawlerStats, setLoadingBrawlerStats] = useState(false);
 
   useEffect(() => {
     brawlerService.getBrawlers().then(setBrawlers);
   }, []);
-  
+
+  useEffect(() => {
+    if (isOpen && player) {
+      setLoadingBrawlerStats(true);
+      analyticsService.getPlayerBrawlerStats(player.id).then(data => {
+        setBrawlerStats(data);
+        setLoadingBrawlerStats(false);
+      });
+    } else {
+      setBrawlerStats([]);
+    }
+  }, [isOpen, player]);
+
   if (!isOpen || !player) return null;
 
   const comfortBrawlers = (player.comfortBrawlers || []).map(id => brawlers.find(b => b.id === id)).filter(Boolean);
@@ -101,27 +123,39 @@ export function DetailsModal({ player, isOpen, onClose, stats }: DetailsModalPro
             </div>
           </div>
 
-          {showWinrateDetails && (
-            <div className="bg-zinc-50 dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-4 animate-in slide-in-from-top-2">
-               <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3">Detalhamento de Winrate</h4>
-               <div className="space-y-2">
-                  {[
-                     { mode: 'Pique-Gema', wr: 75, matches: 12 },
-                     { mode: 'Fute-Brawl', wr: 60, matches: 10 },
-                     { mode: 'Nocaute', wr: 80, matches: 5 },
-                     { mode: 'Caça-Estrelas', wr: 40, matches: 5 }
-                  ].map(m => (
-                     <div key={m.mode} className="flex justify-between items-center bg-white dark:bg-[#121212] p-2 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
-                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{m.mode}</span>
-                        <div className="flex items-center gap-4">
-                           <span className="text-xs text-zinc-500">{m.matches} partidas</span>
-                           <span className={cn("text-sm font-bold", m.wr >= 60 ? "text-emerald-500" : "text-amber-500")}>{m.wr}%</span>
-                        </div>
-                     </div>
-                  ))}
-               </div>
-            </div>
-          )}
+          {/* Seção de Brawlers por Jogador — dados reais de match_picks */}
+          <div className="bg-zinc-50 dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-4">
+            <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3">Brawlers Jogados (Histórico Real)</h4>
+            {loadingBrawlerStats ? (
+              <div className="flex items-center gap-2 py-3 text-zinc-500 text-sm">
+                <div className="w-4 h-4 border-2 border-zinc-300 border-t-emerald-500 rounded-full animate-spin" />
+                Carregando estatísticas...
+              </div>
+            ) : brawlerStats.length > 0 ? (
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {brawlerStats.map(bs => (
+                  <div key={bs.brawlerId} className="flex items-center gap-3 bg-white dark:bg-[#121212] p-2 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
+                    <div className="w-8 h-8 rounded-md overflow-hidden bg-zinc-200 dark:bg-zinc-800 flex-shrink-0">
+                      {(bs.brawlerIconUrl || bs.brawlerImageUrl) && (
+                        <img src={bs.brawlerIconUrl || bs.brawlerImageUrl} alt={bs.brawlerName} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <span className="flex-1 text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">{bs.brawlerName}</span>
+                    <div className="flex items-center gap-3 text-xs flex-shrink-0">
+                      <span className="text-zinc-500">{bs.matches} partida{bs.matches !== 1 ? 's' : ''}</span>
+                      <span className={cn("font-bold", bs.winrate >= 60 ? "text-emerald-500" : bs.winrate >= 40 ? "text-amber-500" : "text-red-500")}>
+                        {bs.winrate}% WR
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-500 italic py-2">
+                Nenhuma partida registrada com jogador vinculado ainda.
+              </p>
+            )}
+          </div>
 
           <div>
             <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3">Top Brawlers & Comfort Picks</h4>
@@ -321,9 +355,19 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
               <div className="mb-2">
                 <input
                   type="text"
-                  placeholder="Buscar brawler por nome..."
+                  placeholder="Buscar brawler (pressione Enter p/ adicionar)..."
                   value={brawlerSearch}
                   onChange={(e) => setBrawlerSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (filteredComfortBrawlers.length > 0) {
+                        const target = filteredComfortBrawlers[0];
+                        toggleBrawler(target.id);
+                        setBrawlerSearch('');
+                      }
+                    }
+                  }}
                   className="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg focus:outline-none focus:border-[#FF3366] text-zinc-900 dark:text-white"
                 />
               </div>

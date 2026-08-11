@@ -8,16 +8,26 @@ import { PlayersHub } from './components/players/PlayersHub';
 import { MapsHub } from './components/maps/MapsHub';
 import { BrawlersHub } from './components/brawlers/BrawlersHub';
 import { ConfirmModal } from './components/ui/ConfirmModal';
-import { LockScreen, hasActiveSession, clearSession } from './components/LockScreen';
+import { LockScreen, hasActiveSession, clearSession, getUserRole, UserRole } from './components/LockScreen';
+
+const ACTIVE_TAB_KEY = 'tbk_hub_active_tab';
 
 export default function App() {
-  // Inicializa autenticado se já houver sessão salva no localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(() => hasActiveSession());
+  const [userRole, setUserRole] = useState<UserRole>(() => getUserRole());
   const [isViewLoading, setIsViewLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [currentView, setCurrentView] = useState('dashboard');
+  
+  // Item 2: Restaura a última tela aberta do localStorage ao recarregar a página
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      return localStorage.getItem(ACTIVE_TAB_KEY) || 'dashboard';
+    } catch {
+      return 'dashboard';
+    }
+  });
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Splash screen: mostra apenas na primeira abertura da sessão
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -29,14 +39,19 @@ export default function App() {
     setIsViewLoading(true);
     setCurrentView(view);
     setIsSidebarOpen(false);
+    try {
+      localStorage.setItem(ACTIVE_TAB_KEY, view);
+    } catch (e) {
+      console.warn('Erro ao salvar aba ativa no localStorage:', e);
+    }
     setTimeout(() => {
       setIsViewLoading(false);
     }, 400);
   };
 
-  const handleAuthenticated = () => {
+  const handleAuthenticated = (role: UserRole) => {
     setIsAuthenticated(true);
-    setCurrentView('dashboard');
+    setUserRole(role);
   };
 
   const requestLogout = () => {
@@ -49,7 +64,6 @@ export default function App() {
     setIsAuthenticated(false);
   };
 
-  // Splash screen inicial
   if (showSplash) {
     return (
       <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500">
@@ -78,7 +92,6 @@ export default function App() {
     );
   }
 
-  // Tela de bloqueio — nenhum recurso acessível sem autenticação
   if (!isAuthenticated) {
     return <LockScreen onAuthenticated={handleAuthenticated} />;
   }
@@ -91,10 +104,10 @@ export default function App() {
         onLogout={requestLogout}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        userRole={userRole}
       />
 
       <main className="flex-1 flex flex-col w-full overflow-hidden">
-        {/* Mobile Header Toggle */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-zinc-200 dark:border-[#2A2A2A] bg-white dark:bg-[#121212]">
           <div className="flex items-center gap-3">
             <button
@@ -108,7 +121,6 @@ export default function App() {
           <ThemeToggle />
         </div>
 
-        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-x-hidden overflow-y-auto">
           <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
             <div className="hidden md:flex justify-end mb-4">
@@ -135,12 +147,12 @@ export default function App() {
                 )}
                 {currentView === 'players' && (
                   <div className="w-full max-w-full">
-                    <PlayersHub />
+                    <PlayersHub userRole={userRole} />
                   </div>
                 )}
                 {currentView === 'maps' && (
                   <div className="w-full max-w-full">
-                    <MapsHub />
+                    <MapsHub userRole={userRole} />
                   </div>
                 )}
                 {currentView === 'brawlers' && (

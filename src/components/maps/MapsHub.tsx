@@ -14,7 +14,14 @@ const GAME_MODES: GameMode[] = [
   'Pique-Gema', 'Fute-Brawl', 'Caça-Estrelas', 'Roubo', 'Zona Estratégica', 'Nocaute'
 ];
 
-export function MapsHub() {
+import { UserRole } from '../LockScreen';
+
+interface MapsHubProps {
+  userRole?: UserRole;
+}
+
+export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
+  const isPlayerMode = userRole === 'player';
   const [maps, setMaps] = useState<GameMap[]>([]);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [comps, setComps] = useState<Composition[]>([]);
@@ -36,14 +43,16 @@ export function MapsHub() {
   }, []);
 
   const loadData = async () => {
-    const [mData, bData, dStats] = await Promise.all([
+    const [mData, bData, dStats, cData] = await Promise.all([
       mapService.getMaps(),
       brawlerService.getBrawlers(),
-      analyticsService.getDashboardStats()
+      analyticsService.getDashboardStats(),
+      mapService.getComps(),
     ]);
     setMaps(mData);
     setBrawlers(bData);
     setDashStats(dStats);
+    setComps(cData);
 
     const statsMap: Record<string, any> = {};
     await Promise.all(mData.map(async (map) => {
@@ -141,13 +150,15 @@ export function MapsHub() {
             </div>
           </div>
           
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm h-full"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Mapa
-          </button>
+          {!isPlayerMode && (
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm h-full"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Mapa
+            </button>
+          )}
         </div>
       </div>
 
@@ -229,22 +240,24 @@ export function MapsHub() {
                   onClick={() => setSelectedMap(map)}
                   className="bg-white dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden hover:border-[#FF3366]/50 dark:hover:border-[#FF3366]/50 transition-colors cursor-pointer group flex relative"
                 >
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setEditingMap(map); setIsAddModalOpen(true); }}
-                      className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-blue-500 transition-colors shadow-sm"
-                      title="Editar Mapa"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={(e) => toggleMapStatus(map.id, e)}
-                      className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-[#FF3366] transition-colors shadow-sm"
-                      title={map.isActive ? "Arquivar Mapa" : "Desarquivar Mapa"}
-                    >
-                      {map.isActive ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
-                    </button>
-                  </div>
+                  {!isPlayerMode && (
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setEditingMap(map); setIsAddModalOpen(true); }}
+                        className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-blue-500 transition-colors shadow-sm"
+                        title="Editar Mapa"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={(e) => toggleMapStatus(map.id, e)}
+                        className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-[#FF3366] transition-colors shadow-sm"
+                        title={map.isActive ? "Arquivar Mapa" : "Desarquivar Mapa"}
+                      >
+                        {map.isActive ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  )}
                   <div className="w-32 min-h-[120px] bg-zinc-200 dark:bg-zinc-800 flex-shrink-0 relative overflow-hidden">
                     {map.imageUrl ? (
                       <img src={map.imageUrl} alt={map.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -310,13 +323,14 @@ export function MapsHub() {
           isOpen={isAddCompModalOpen}
           onClose={() => setIsAddCompModalOpen(false)}
           mapId={selectedMap.id}
-          onSave={(newComp) => { 
+          onSave={async (newComp) => { 
              setConfirmConfig({
                isOpen: true,
                title: 'Salvar Composição',
                message: 'Deseja confirmar a adição desta composição ao mapa?',
-               action: () => {
-                 setComps(prev => [...prev, { ...newComp, id: Date.now().toString() }]);
+               action: async () => {
+                 const saved = await mapService.createComp(newComp, false);
+                 setComps(prev => [...prev, saved]);
                  setIsAddCompModalOpen(false);
                  setConfirmConfig(prev => ({ ...prev, isOpen: false }));
                }

@@ -26,6 +26,8 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
   const [isTestingVariation, setIsTestingVariation] = useState(false);
   const [brawlerOut, setBrawlerOut] = useState<string>('');
   const [brawlerIn, setBrawlerIn] = useState<string>('');
+  const [isSavingMeta, setIsSavingMeta] = useState(false);
+  const [metaSaved, setMetaSaved] = useState(false);
 
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [maps, setMaps] = useState<GameMap[]>([]);
@@ -99,6 +101,78 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         });
         onFinish();
         setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  /** Salvar Vitória da Scrim — registra a partida normalmente, sem criar meta */
+  const handleSaveVictory = () => {
+    if (result !== 'victory') return;
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Salvar Vitória da Scrim',
+      message: 'Registrar esta vitória no histórico da equipe? Nenhuma composição meta será criada.',
+      action: async () => {
+        await analyticsService.recordScrim({
+          mapId: draftState.mapId,
+          result: 'victory',
+          tbkPicks: tbkPicks.map(bId => ({
+            brawlerId: bId,
+            playerId: draftState.playerAssignments[bId] || undefined
+          })),
+          enemyPicks: enemyPicks,
+          tbkBans: draftState.tbkBans.filter(Boolean) as string[],
+          enemyBans: draftState.enemyBans.filter(Boolean) as string[],
+        });
+        onFinish();
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  /** Salvar como Meta do Mapa — registra a vitória E cria uma composição meta */
+  const handleSaveAsMapMeta = () => {
+    if (result !== 'victory') return;
+    if (tbkPicks.length < 3) {
+      alert('Selecione pelo menos 3 brawlers na composição TBK antes de salvar como meta.');
+      return;
+    }
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Salvar como Meta do Mapa',
+      message: 'Registrar esta vitória E salvar a composição TBK como meta de referência para este mapa?',
+      action: async () => {
+        setIsSavingMeta(true);
+        try {
+          // 1. Registra a scrim como vitória
+          await analyticsService.recordScrim({
+            mapId: draftState.mapId,
+            result: 'victory',
+            tbkPicks: tbkPicks.map(bId => ({
+              brawlerId: bId,
+              playerId: draftState.playerAssignments[bId] || undefined
+            })),
+            enemyPicks: enemyPicks,
+            tbkBans: draftState.tbkBans.filter(Boolean) as string[],
+            enemyBans: draftState.enemyBans.filter(Boolean) as string[],
+          });
+
+          // 2. Cria a composição meta no Supabase
+          const mapName = map?.name || 'Mapa';
+          await mapService.createComp({
+            mapId: draftState.mapId,
+            brawlers: tbkPicks.slice(0, 3) as [string, string, string],
+            description: `Meta — ${mapName}`,
+            winrate: 0,
+            matchesPlayed: 0,
+          }, true); // isMeta = true
+
+          setMetaSaved(true);
+        } finally {
+          setIsSavingMeta(false);
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        onFinish();
       }
     });
   };
@@ -401,7 +475,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
       {result === 'victory' && (
         <div className="flex flex-col sm:flex-row justify-center mt-4 gap-4">
            <button 
-             onClick={handleSaveResult}
+             onClick={handleSaveVictory}
              className={cn(
                "flex-1 border p-4 sm:p-6 rounded-xl transition-all duration-200 flex flex-col items-center justify-center text-center h-auto min-h-[100px]",
                allPlayersAssigned
@@ -415,11 +489,32 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
              </span>
            </button>
            <button 
-             onClick={handleSaveResult}
-             className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 dark:text-white p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px] cursor-pointer"
+             onClick={handleSaveAsMapMeta}
+             disabled={isSavingMeta || tbkPicks.length < 3}
+             className={cn(
+               "flex-1 p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px] cursor-pointer",
+               metaSaved
+                 ? "bg-emerald-500/10 border-2 border-emerald-500 text-emerald-400"
+                 : "bg-emerald-600 hover:bg-emerald-500 text-white disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed"
+             )}
            >
-             <span className="font-bold text-[15px] mb-2 block">Salvar como Meta do Mapa</span>
-             <span className="text-xs text-emerald-100 font-normal leading-tight block max-w-xs mx-auto">Define como trio referência na biblioteca de Mapas</span>
+             {isSavingMeta ? (
+               <>
+                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-2" />
+                 <span className="font-bold text-[15px] block">Salvando...</span>
+               </>
+             ) : metaSaved ? (
+               <>
+                 <span className="text-2xl mb-1">✅</span>
+                 <span className="font-bold text-[15px] block">Meta Salva!</span>
+                 <span className="text-xs font-normal leading-tight block max-w-xs mx-auto text-emerald-300">Composição registrada na biblioteca de Mapas</span>
+               </>
+             ) : (
+               <>
+                 <span className="font-bold text-[15px] mb-2 block">Salvar como Meta do Mapa</span>
+                 <span className="text-xs text-emerald-100 font-normal leading-tight block max-w-xs mx-auto">Define como trio referência na biblioteca de Mapas</span>
+               </>
+             )}
            </button>
         </div>
       )}

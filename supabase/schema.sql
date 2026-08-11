@@ -85,3 +85,20 @@ alter table matches disable row level security;
 alter table match_picks disable row level security;
 alter table match_bans disable row level security;
 
+-- 7. TABELA DE COMPOSIÇÕES META POR MAPA
+-- Armazena composições cadastradas manualmente (via "Nova Comp") e
+-- composições salvas automaticamente como meta do mapa (via "Salvar como Meta do Mapa").
+-- O campo is_meta=true identifica as composições geradas pelo draft.
+create table if not exists compositions (
+  id uuid primary key default gen_random_uuid(),
+  map_id text not null,
+  brawlers text[] not null default '{}',
+  description text,
+  winrate numeric default 0,
+  matches_played integer default 0,
+  is_meta boolean default true,
+  is_active boolean default true,
+  created_at timestamp without time zone default now()
+);
+
+alter table compositions disable row level security;

@@ -100,15 +100,6 @@ function DashboardContent() {
     })
     .slice(0, 10);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-zinc-800 border-t-[#FF3366] border-r-fuchsia-500 animate-spin mb-4" />
-        <span className="text-slate-500 font-medium">Carregando métricas...</span>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
