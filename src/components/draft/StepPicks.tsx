@@ -13,10 +13,11 @@ import {
   computeHistoricalBonus,
   ThreatsCacheMap,
 } from '../../lib/draftEngineUtils';
+import { MODE_OBJECTIVES, getFirstPickTip, getModeIcon } from '../../lib/tactics';
 
-import { Brawler, GameMap, Player } from '../../types';
+import { Brawler, GameMap, Player, GameMode } from '../../types';
 import { cn, fuzzySearch } from '../../lib/utils';
-import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2 } from 'lucide-react';
+import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2, Lightbulb, Crown, Sparkles } from 'lucide-react';
 
 interface StepPicksProps {
   draftState: DraftState;
@@ -398,6 +399,33 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
           <div className="flex items-center gap-2 text-xs bg-slate-50 dark:bg-[#1A1A1A] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#2A2A2A] text-slate-600 dark:text-zinc-300">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>First Pick: <strong className="text-slate-900 dark:text-white">{draftState.tbkStarts ? 'TBK (Nosso)' : 'Inimigo'}</strong></span>
+          </div>
+        </div>
+      )}
+
+      {/* Tactical Cards: Mode Objective + First/Last Pick Tip */}
+      {selectedMap && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Mode Objective Card */}
+          <div className={`border rounded-xl p-3.5 ${MODE_OBJECTIVES[selectedMap.mode as GameMode]?.color || 'bg-slate-500/10 border-slate-500/30 text-slate-400'}`}>
+            <div className="flex items-start gap-2.5">
+              <span className="text-xl flex-shrink-0 mt-0.5">{getModeIcon(selectedMap.mode as GameMode)}</span>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-sm leading-tight">{MODE_OBJECTIVES[selectedMap.mode as GameMode]?.label || 'Objetivo do Modo'}</h4>
+                <p className="text-[11px] mt-1 leading-relaxed opacity-90">{MODE_OBJECTIVES[selectedMap.mode as GameMode]?.description || 'Selecione um mapa para ver o objetivo tático.'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* First/Last Pick Tactical Tip */}
+          <div className={`border rounded-xl p-3.5 ${getFirstPickTip(draftState.tbkStarts).color}`}>
+            <div className="flex items-start gap-2.5">
+              <span className="text-xl flex-shrink-0 mt-0.5">{getFirstPickTip(draftState.tbkStarts).icon}</span>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-sm leading-tight">{getFirstPickTip(draftState.tbkStarts).title}</h4>
+                <p className="text-[11px] mt-1 leading-relaxed opacity-90">{getFirstPickTip(draftState.tbkStarts).description}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
