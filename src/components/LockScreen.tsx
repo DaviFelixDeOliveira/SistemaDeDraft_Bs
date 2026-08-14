@@ -5,8 +5,8 @@ import { cn } from '../lib/utils';
 // ================================================================
 // CÓDIGOS DE ACESSO DO SISTEMA
 // ================================================================
-export const ACCESS_CODE_ADMIN = '1234';
-export const ACCESS_CODE_PLAYER = '0000';
+export const ACCESS_CODE_ADMIN = '240807';
+export const ACCESS_CODE_PLAYER = '180703';
 // ================================================================
 
 const MAX_ATTEMPTS = 3;
@@ -97,8 +97,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
         } else {
           const remaining = MAX_ATTEMPTS - newAttempts;
           setError(
-            `Código de acesso inválido. Tente novamente.${
-              remaining === 1 ? ' (Última tentativa antes do bloqueio)' : ''
+            `Código de acesso inválido. Tente novamente.${remaining === 1 ? ' (Última tentativa antes do bloqueio)' : ''
             }`
           );
           setTimeout(() => inputRef.current?.focus(), 50);
@@ -144,7 +143,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
               TBK <span className="text-[#FFCC00]">Hub</span>
             </h1>
             <p className="text-zinc-500 text-sm mt-1">
-              Insira a senha de Administrador (1234) ou Player (0000)
+              Insira a senha de Administrador (não público) ou Player (não público)
             </p>
           </div>
 
@@ -205,8 +204,8 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
                 isLockedOut || !code.trim()
                   ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
                   : isLoading
-                  ? 'bg-white/10 text-white/50 cursor-wait border border-white/10'
-                  : 'bg-white hover:bg-[#FF3366] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(255,51,102,0.3)]'
+                    ? 'bg-white/10 text-white/50 cursor-wait border border-white/10'
+                    : 'bg-white hover:bg-[#FF3366] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(255,51,102,0.3)]'
               )}
             >
               {isLoading ? 'Verificando...' : 'Entrar'}
@@ -226,7 +225,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
 
           <div className="px-8 pb-6 text-center">
             <p className="text-zinc-600 text-xs">
-              Admin: <strong>1234</strong> &bull; Player: <strong>0000</strong>
+              Admin: <strong>não público</strong> &bull; Player: <strong>não público</strong>
             </p>
           </div>
         </div>

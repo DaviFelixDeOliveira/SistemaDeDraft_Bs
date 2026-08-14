@@ -91,6 +91,19 @@ export interface MatchRecordData {
     brawlerIn: string;
     isWin: boolean;
   };
+  trainingSessionId?: string; // Novo campo para vincular partida à sessão de treino
+}
+
+export interface TrainingSession {
+  id: string;
+  name: string;
+  startedAt: string;
+  endedAt: string | null;
+  isActive: boolean;
+  matchesCount: number;
+  totalWins: number;
+  totalLosses: number;
+  notes?: string;
 }
 
 
