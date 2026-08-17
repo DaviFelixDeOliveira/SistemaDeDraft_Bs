@@ -7,6 +7,7 @@ import {
   LogOut,
   Target,
   PanelLeftClose,
+  PanelLeftOpen,
   Download,
   Upload,
   History,
@@ -15,7 +16,9 @@ import {
   Save,
   Clock,
   FileJson,
-  Database
+  Database,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { UserRole } from './LockScreen';
@@ -60,6 +63,15 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
     processingText: '',
     successText: ''
   });
+
+  // Persistir isCollapsed no localStorage
+  const toggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('tbk_hub_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const loadSnapshotInfo = async () => {
     const info = await backupRestoreService.getLatestSnapshotInfo();
@@ -244,23 +256,40 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
         isCollapsed ? "w-64 md:w-20" : "w-64",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
+        {/* ═══ HEADER ═══ */}
         <div className={cn("p-6 flex items-center", isCollapsed ? "md:px-0 md:justify-center justify-between" : "justify-between")}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-[#FF3366] flex items-center justify-center shadow-[0_0_15px_rgba(255,51,102,0.4)]">
+          {/* Logo + Título */}
+          <div className={cn("flex items-center gap-3", isCollapsed && "md:gap-0")}>
+            <div className="w-8 h-8 rounded bg-[#FF3366] flex items-center justify-center shadow-[0_0_15px_rgba(255,51,102,0.4)]" title={isCollapsed ? "TBK Hub" : undefined}>
               <Swords className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
+            <h1 className={cn("text-xl font-bold text-zinc-900 dark:text-white tracking-tight", isCollapsed && "md:hidden")}>
               TBK <span className="text-[#FFCC00]">Hub</span>
             </h1>
           </div>
+          
+          {/* Botão Fechar (mobile) */}
           <button 
             onClick={onClose} 
             className="md:hidden text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <PanelLeftClose className="w-6 h-6" />
           </button>
+
+          {/* Botão Toggle Collapse (desktop only) */}
+          <button
+            onClick={toggleCollapse}
+            className={cn(
+              "hidden md:flex items-center justify-center p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all",
+              isCollapsed && "md:absolute md:top-6 md:right-1"
+            )}
+            title={isCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
+          >
+            {isCollapsed ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
+          </button>
         </div>
 
+        {/* ═══ NAVEGAÇÃO ═══ */}
         <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -286,9 +315,35 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
           })}
         </nav>
 
-        <div className="p-4 border-t border-zinc-200 dark:border-[#2A2A2A] space-y-3">
-          {/* Badge de Nível de Acesso */}
-          <div className="flex items-center justify-between px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400">
+        {/* ═══ FOOTER ═══ */}
+        <div className={cn("p-4 border-t border-zinc-200 dark:border-[#2A2A2A] space-y-3", isCollapsed && "md:p-2 md:space-y-2")}>
+          
+          {/* ── Badge de Nível de Acesso ── */}
+          {isCollapsed ? (
+            /* Modo colapsado (desktop): só ícone + title */
+            <div 
+              className="hidden md:flex items-center justify-center py-2"
+              title={`Logado como ${userRole === 'admin' ? 'Admin' : 'Player'}`}
+            >
+              <div className={cn(
+                "w-9 h-9 rounded-xl flex items-center justify-center",
+                userRole === 'admin' 
+                  ? "bg-[#FF3366]/10 border border-[#FF3366]/20" 
+                  : "bg-blue-500/10 border border-blue-500/20"
+              )}>
+                {userRole === 'admin' 
+                  ? <Shield className="w-4 h-4 text-[#FF3366]" /> 
+                  : <UserIcon className="w-4 h-4 text-blue-500" />
+                }
+              </div>
+            </div>
+          ) : null}
+          
+          {/* Modo expandido: badge completo (sempre visível no mobile) */}
+          <div className={cn(
+            "flex items-center justify-between px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400",
+            isCollapsed && "md:hidden"
+          )}>
             <div className="flex items-center gap-2">
               {userRole === 'admin' ? (
                 <Shield className="w-4 h-4 text-[#FF3366]" />
@@ -305,63 +360,104 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
             </span>
           </div>
 
-          {/* Seção de Backup Separado */}
+          {/* ── Seção de Backup (Admin only) ── */}
           {userRole === 'admin' && (
-            <div className="space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-800">
-              {/* Exibição da Data do Último Backup Salvo */}
-              <div className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 px-1">
-                <Clock className="w-3 h-3 text-indigo-500 shrink-0" />
-                <span className="truncate">
-                  {snapshotInfo?.savedAt ? `Salvo: ${formatSnapshotDate(snapshotInfo.savedAt)}` : 'Nenhum backup salvo no banco'}
-                </span>
+            <>
+              {/* MODO EXPANDIDO */}
+              <div className={cn("space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-800", isCollapsed && "md:hidden")}>
+                {/* Data do Último Backup */}
+                <div className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 px-1">
+                  <Clock className="w-3 h-3 text-indigo-500 shrink-0" />
+                  <span className="truncate">
+                    {snapshotInfo?.savedAt ? `Salvo: ${formatSnapshotDate(snapshotInfo.savedAt)}` : 'Nenhum backup salvo no banco'}
+                  </span>
+                </div>
+
+                {/* Botão "Salvar Backup" */}
+                <button
+                  onClick={handleSaveBackup}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                  title="Salva um snapshot completo no banco Supabase (sem baixar arquivo)"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Salvar Backup</span>
+                </button>
+
+                {/* Botões "Restaurar" e "Baixar .JSON" */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsRestoreModalOpen(true)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] rounded-lg text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-colors"
+                    title="Opções de restauração de backup"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    Restaurar
+                  </button>
+                  <button 
+                    onClick={handleDownloadBackup}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] rounded-lg text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-colors"
+                    title="Baixar arquivo JSON com backup completo"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Baixar .JSON
+                  </button>
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".json"
+                  onChange={handleFileChange}
+                />
               </div>
 
-              {/* Botão "Salvar Backup" */}
-              <button
-                onClick={handleSaveBackup}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-sm"
-                title="Salva um snapshot completo no banco Supabase (sem baixar arquivo)"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>Salvar Backup</span>
-              </button>
-
-              {/* Botões "Restaurar" e "Baixar .JSON" */}
-              <div className="flex gap-2">
+              {/* MODO COLAPSADO (desktop) — ícones empilhados */}
+              <div className={cn("hidden pt-1 border-t border-zinc-200/60 dark:border-zinc-800 space-y-1", isCollapsed && "md:block")}>
+                <button
+                  onClick={handleSaveBackup}
+                  className="w-full flex items-center justify-center p-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white transition-all"
+                  title="Salvar Backup no Supabase"
+                >
+                  <Save className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => setIsRestoreModalOpen(true)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] rounded-lg text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-colors"
-                  title="Opções de restauração de backup"
+                  className="w-full flex items-center justify-center p-2.5 rounded-lg bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] text-zinc-700 dark:text-zinc-300 transition-colors"
+                  title="Restaurar Backup"
                 >
-                  <Upload className="w-3.5 h-3.5" />
-                  Restaurar
+                  <Upload className="w-4 h-4" />
                 </button>
-                <button 
+                <button
                   onClick={handleDownloadBackup}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] rounded-lg text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-colors"
-                  title="Baixar arquivo JSON com backup completo"
+                  className="w-full flex items-center justify-center p-2.5 rounded-lg bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] text-zinc-700 dark:text-zinc-300 transition-colors"
+                  title="Baixar Backup .JSON"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  Baixar .JSON
+                  <Download className="w-4 h-4" />
                 </button>
-              </div>
 
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept=".json"
-                onChange={handleFileChange}
-              />
-            </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".json"
+                  onChange={handleFileChange}
+                />
+              </div>
+            </>
           )}
 
+          {/* ── Botão Sair ── */}
           <button 
             onClick={onLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+            title={isCollapsed ? "Sair do Sistema" : undefined}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 rounded-xl text-sm font-bold text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors",
+              isCollapsed ? "md:px-0 md:py-2.5 px-4 py-2" : "px-4 py-2"
+            )}
           >
             <LogOut className="w-5 h-5" />
-            {!isCollapsed && <span>Sair do Sistema</span>}
+            <span className={cn(isCollapsed && "md:hidden")}>Sair do Sistema</span>
           </button>
         </div>
       </div>
