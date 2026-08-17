@@ -96,6 +96,7 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
               filters={brawlerFilters} 
               compact 
               onKeyDown={handleKeyDown} 
+              autoFocus={true}
             />
           </div>
           <div className="p-1 overflow-y-auto flex-1">

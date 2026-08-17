@@ -179,6 +179,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                     value={mapSearch}
                     onChange={(e) => setMapSearch(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
+                    autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();

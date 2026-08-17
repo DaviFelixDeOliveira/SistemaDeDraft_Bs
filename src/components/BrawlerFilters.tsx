@@ -52,8 +52,15 @@ export function applyBrawlerFilters(brawlers: Brawler[], filters: BrawlerFilters
   return filtered;
 }
 
-export function BrawlerFilterBar({ filters, compact = false, onKeyDown }: { filters: BrawlerFiltersState, compact?: boolean, onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void }) {
+export function BrawlerFilterBar({ filters, compact = false, onKeyDown, autoFocus = false }: { filters: BrawlerFiltersState, compact?: boolean, onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void, autoFocus?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   return (
     <div className="flex flex-col gap-2 w-full z-10">
@@ -61,12 +68,14 @@ export function BrawlerFilterBar({ filters, compact = false, onKeyDown }: { filt
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input 
+            ref={inputRef}
             type="text" 
             placeholder="Buscar brawler..." 
             value={filters.search}
             onChange={(e) => filters.setSearch(e.target.value)}
             className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg pl-10 pr-4 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366] transition-colors"
             onKeyDown={onKeyDown}
+            autoFocus={autoFocus}
           />
         </div>
         <button 
