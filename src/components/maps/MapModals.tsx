@@ -58,12 +58,17 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
                   Terreno {map.terrain}
                   <Info className="w-3.5 h-3.5" />
                 </span>
-                <div className="absolute top-full left-0 mt-2 w-56 p-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[11px] rounded-lg shadow-xl opacity-0 invisible group-hover/terrain:opacity-100 group-hover/terrain:visible transition-all z-20 font-medium pointer-events-none">
-                  {map.terrain === 'Aberto' && 'Mapas abertos favorecem composições de longo alcance (Snipers) e controle de visão.'}
-                  {map.terrain === 'Semi-Aberto' && 'Equilíbrio entre rotas de flanco e controle central. Requer composições versáteis.'}
-                  {map.terrain === 'Fechado' && 'Mapas fechados favorecem tanques, assassinos e brawlers de alto dano a curta distância.'}
-                  {map.terrain === 'Misto' && 'Zonas abertas e fechadas. Exige brawlers que dominem áreas específicas do mapa.'}
-                  <div className="absolute -top-1 left-4 w-2 h-2 bg-zinc-900 dark:bg-zinc-100 rotate-45" />
+                <div className="absolute top-full left-0 mt-2 w-64 p-3 bg-[#18181b] border border-[#2e344a] text-zinc-200 text-[11px] rounded-xl shadow-2xl opacity-0 invisible group-hover/terrain:opacity-100 group-hover/terrain:visible transition-all z-50 font-medium pointer-events-none">
+                  <span className="font-bold border-b border-zinc-700 pb-1 mb-1 block uppercase text-[10px] tracking-wider text-emerald-400">
+                    Terreno {map.terrain}
+                  </span>
+                  <span className="block break-words leading-relaxed text-zinc-300">
+                    {map.terrain === 'Aberto' && 'Mapas abertos favorecem composições de longo alcance (Snipers) e controle de visão.'}
+                    {map.terrain === 'Semi-Aberto' && 'Equilíbrio entre rotas de flanco e controle central. Requer composições versáteis.'}
+                    {map.terrain === 'Fechado' && 'Mapas fechados favorecem tanques, assassinos e brawlers de alto dano a curta distância.'}
+                    {map.terrain === 'Misto' && 'Zonas abertas e fechadas. Exige brawlers que dominem áreas específicas do mapa.'}
+                  </span>
+                  <div className="absolute -top-1 left-4 w-2 h-2 bg-[#18181b] border-t border-l border-[#2e344a] rotate-45" />
                 </div>
               </div>
             </div>

@@ -35,7 +35,7 @@ export function TrainingHistory() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedExportSession, setSelectedExportSession] = useState<string>('');
   const [selectedMatchForDetails, setSelectedMatchForDetails] = useState<Match | null>(null);
-  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportingFormat, setExportingFormat] = useState<'png' | 'jpg' | 'pdf' | null>(null);
   const reportCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -206,7 +206,7 @@ export function TrainingHistory() {
   const handleExportImage = async (format: 'png' | 'jpg') => {
     if (!reportCardRef.current) return;
     try {
-      setIsExporting(true);
+      setExportingFormat(format);
       const element = reportCardRef.current;
       
       const options = {
@@ -242,18 +242,19 @@ export function TrainingHistory() {
       console.error('Erro ao exportar imagem:', err);
       alert(`Ocorreu um erro ao gerar a imagem: ${err?.message || err}`);
     } finally {
-      setIsExporting(false);
+      setExportingFormat(null);
     }
   };
 
   const handleExportPDF = async () => {
     if (!reportCardRef.current) return;
     try {
-      setIsExporting(true);
+      setExportingFormat('pdf');
       const element = reportCardRef.current;
 
-      const imgData = await domToPng(element, {
-        scale: 2.5,
+      // Renderiza o elemento em um canvas de alta fidelidade
+      const canvas = await domToCanvas(element, {
+        scale: 2,
         backgroundColor: '#0d0e12',
         width: element.scrollWidth,
         height: element.scrollHeight,
@@ -262,24 +263,73 @@ export function TrainingHistory() {
         }
       });
 
-      const img = new Image();
-      img.src = imgData;
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
+      const a4WidthPt = 595.28;
+      const a4HeightPt = 841.89;
+      const margin = 16;
+      const printableWidthPt = a4WidthPt - (margin * 2);
+      const printableHeightPt = a4HeightPt - (margin * 2);
 
-      // Largura A4 padrão em px (a 72dpi = 595.28, mas podemos criar PDF sob medida da folha ou A4 com proporção)
-      const pdfWidth = img.width;
-      const pdfHeight = img.height;
+      // Altura em pixels do canvas correspondente a 1 folha A4
+      const scaleFactor = printableWidthPt / canvas.width;
+      const pageCanvasHeight = printableHeightPt / scaleFactor;
+
+      const totalPages = Math.ceil(canvas.height / pageCanvasHeight);
 
       const pdf = new jsPDF({
-        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [pdfWidth, pdfHeight]
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
       });
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
+      for (let i = 0; i < totalPages; i++) {
+        const sourceY = i * pageCanvasHeight;
+        const sourceHeight = Math.min(pageCanvasHeight, canvas.height - sourceY);
+
+        // Canvas temporário para fatiar o trecho correspondente à página
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+
+        const ctx = pageCanvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#0d0e12';
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(
+            canvas,
+            0, sourceY, canvas.width, sourceHeight,
+            0, 0, canvas.width, sourceHeight
+          );
+        }
+
+        const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+        const renderedHeightPt = sourceHeight * scaleFactor;
+
+        if (i > 0) {
+          pdf.addPage('a4', 'portrait');
+        }
+
+        pdf.addImage(
+          pageImgData,
+          'JPEG',
+          margin,
+          margin,
+          printableWidthPt,
+          renderedHeightPt,
+          undefined,
+          'FAST'
+        );
+
+        // Rodapé de paginação elegante se tiver múltiplas páginas
+        if (totalPages > 1) {
+          pdf.setFontSize(8);
+          pdf.setTextColor(140, 140, 150);
+          pdf.text(
+            `Página ${i + 1} de ${totalPages}`,
+            a4WidthPt - margin - 50,
+            a4HeightPt - 8
+          );
+        }
+      }
 
       const now = new Date();
       const day = String(now.getDate()).padStart(2, '0');
@@ -292,7 +342,7 @@ export function TrainingHistory() {
       console.error('Erro ao exportar PDF:', err);
       alert(`Ocorreu um erro ao gerar o arquivo PDF: ${err?.message || err}`);
     } finally {
-      setIsExporting(false);
+      setExportingFormat(null);
     }
   };
 
@@ -785,24 +835,24 @@ export function TrainingHistory() {
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => handleExportImage('png')}
-                    disabled={!exportSession || isExporting}
+                    disabled={!exportSession || exportingFormat !== null}
                     className="flex-1 sm:flex-none px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
-                    <FileImage className="w-3.5 h-3.5 text-emerald-500" /> Baixar PNG
+                    <FileImage className="w-3.5 h-3.5 text-emerald-500" /> {exportingFormat === 'png' ? 'Gerando PNG...' : 'Baixar PNG'}
                   </button>
                   <button
                     onClick={() => handleExportImage('jpg')}
-                    disabled={!exportSession || isExporting}
+                    disabled={!exportSession || exportingFormat !== null}
                     className="flex-1 sm:flex-none px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
-                    <FileImage className="w-3.5 h-3.5 text-blue-500" /> Baixar JPG
+                    <FileImage className="w-3.5 h-3.5 text-blue-500" /> {exportingFormat === 'jpg' ? 'Gerando JPG...' : 'Baixar JPG'}
                   </button>
                   <button
                     onClick={handleExportPDF}
-                    disabled={!exportSession || isExporting}
+                    disabled={!exportSession || exportingFormat !== null}
                     className="flex-1 sm:flex-none px-5 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
-                    <FileText className="w-3.5 h-3.5" /> {isExporting ? 'Gerando...' : 'Baixar PDF'}
+                    <FileText className="w-3.5 h-3.5" /> {exportingFormat === 'pdf' ? 'Gerando PDF A4...' : 'Baixar PDF'}
                   </button>
                 </div>
               </div>

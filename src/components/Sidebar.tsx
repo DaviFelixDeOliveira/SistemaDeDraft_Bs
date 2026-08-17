@@ -17,6 +17,7 @@ import {
   Clock,
   FileJson,
   Database,
+  PanelLeft,
   ChevronsLeft,
   ChevronsRight
 } from 'lucide-react';
@@ -233,7 +234,11 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
   const formatSnapshotDate = (isoStr: string | null) => {
     if (!isoStr) return 'Nenhum snapshot salvo';
     try {
-      const d = new Date(isoStr);
+      let ts = isoStr;
+      if (!/[Zz]$/.test(ts) && !/[+-]\d{2}:\d{2}$/.test(ts)) {
+        ts += 'Z';
+      }
+      const d = new Date(ts);
       return `${d.toLocaleDateString()} às ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } catch {
       return 'Data indisponível';
@@ -257,16 +262,43 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         {/* ═══ HEADER ═══ */}
-        <div className={cn("p-6 flex items-center", isCollapsed ? "md:px-0 md:justify-center justify-between" : "justify-between")}>
-          {/* Logo + Título */}
-          <div className={cn("flex items-center gap-3", isCollapsed && "md:gap-0")}>
-            <div className="w-8 h-8 rounded bg-[#FF3366] flex items-center justify-center shadow-[0_0_15px_rgba(255,51,102,0.4)]" title={isCollapsed ? "TBK Hub" : undefined}>
-              <Swords className="w-5 h-5 text-white" />
-            </div>
-            <h1 className={cn("text-xl font-bold text-zinc-900 dark:text-white tracking-tight", isCollapsed && "md:hidden")}>
-              TBK <span className="text-[#FFCC00]">Hub</span>
-            </h1>
-          </div>
+        <div className={cn("p-5 flex items-center border-b border-zinc-100 dark:border-[#222] transition-all", isCollapsed ? "justify-center" : "justify-between")}>
+          {isCollapsed ? (
+            /* Modo Compacto: Estilo Gemini - Logo vira botão com ícone de abrir ao passar o mouse */
+            <button
+              onClick={toggleCollapse}
+              className="hidden md:flex group relative w-10 h-10 rounded-xl items-center justify-center bg-zinc-100 dark:bg-zinc-900/80 hover:bg-zinc-200 dark:hover:bg-[#20232e] border border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-sm"
+              title="Abrir barra lateral"
+            >
+              {/* Logo normal */}
+              <div className="w-7 h-7 rounded-lg bg-[#FF3366] flex items-center justify-center shadow-[0_0_12px_rgba(255,51,102,0.4)] group-hover:hidden transition-all">
+                <Swords className="w-4 h-4 text-white" />
+              </div>
+              {/* Ícone de Expandir (PanelLeft) visível no hover */}
+              <PanelLeft className="w-5 h-5 text-zinc-700 dark:text-zinc-200 hidden group-hover:block transition-all scale-110" />
+            </button>
+          ) : (
+            /* Modo Expandido: Logo + Nome + Botão de Recolher na direita */
+            <>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#FF3366] flex items-center justify-center shadow-[0_0_15px_rgba(255,51,102,0.4)] shrink-0">
+                  <Swords className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
+                  TBK <span className="text-[#FFCC00]">Hub</span>
+                </h1>
+              </div>
+
+              {/* Botão Toggle Collapse */}
+              <button
+                onClick={toggleCollapse}
+                className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors"
+                title="Recolher barra lateral"
+              >
+                <PanelLeft className="w-5 h-5" />
+              </button>
+            </>
+          )}
           
           {/* Botão Fechar (mobile) */}
           <button 
@@ -274,18 +306,6 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
             className="md:hidden text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <PanelLeftClose className="w-6 h-6" />
-          </button>
-
-          {/* Botão Toggle Collapse (desktop only) */}
-          <button
-            onClick={toggleCollapse}
-            className={cn(
-              "hidden md:flex items-center justify-center p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all",
-              isCollapsed && "md:absolute md:top-6 md:right-1"
-            )}
-            title={isCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
-          >
-            {isCollapsed ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
           </button>
         </div>
 

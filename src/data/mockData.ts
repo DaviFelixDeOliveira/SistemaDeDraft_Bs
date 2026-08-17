@@ -86,8 +86,8 @@ export const mockBrawlers: Brawler[] = [
   { id: '16000106', name: 'Bolt', rarity: 'Épico', tier: 'A', health: 'Alta', healthValue: '+6500', type: ['Tanque'], walksOnWater: false, breaksWalls: false, howBreaksWalls: 'N/A' }
 ].map(b => ({
   ...b,
-  imageUrl: `https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/${b.id}.png`,
-  iconUrl: `https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/${b.id}.png`
+  imageUrl: `https://cdn.brawlify.com/brawlers/borders/${b.id}.png`,
+  iconUrl: `https://cdn.brawlify.com/brawlers/emoji/${b.id}.png`
 }));
 
 

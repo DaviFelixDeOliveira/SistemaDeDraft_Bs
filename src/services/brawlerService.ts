@@ -4,6 +4,18 @@ import { mockBrawlers } from '../data/mockData';
 
 // Converte do formato do banco (snake_case) para o formato do app (camelCase)
 function mapFromSupabase(data: any): Brawler {
+  let img = data.image_url || undefined;
+  let icon = data.icon_url || undefined;
+
+  // Normaliza URLs do GitHub Raw (com erro 429) para o CDN oficial do Brawlify
+  if (img && img.includes('raw.githubusercontent.com/Brawlify/CDN/master/brawlers/')) {
+    img = img.replace('raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/', 'cdn.brawlify.com/brawlers/borders/')
+             .replace('raw.githubusercontent.com/Brawlify/CDN/master/brawlers/borders/', 'cdn.brawlify.com/brawlers/borders/');
+  }
+  if (icon && icon.includes('raw.githubusercontent.com/Brawlify/CDN/master/brawlers/')) {
+    icon = icon.replace('raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/', 'cdn.brawlify.com/brawlers/emoji/');
+  }
+
   return {
     id: data.id,
     name: data.name,
@@ -15,8 +27,8 @@ function mapFromSupabase(data: any): Brawler {
     walksOnWater: !!data.walks_on_water,
     breaksWalls: !!data.breaks_walls,
     howBreaksWalls: data.how_breaks_walls || undefined,
-    imageUrl: data.image_url || undefined,
-    iconUrl: data.icon_url || undefined,
+    imageUrl: img,
+    iconUrl: icon,
     isHotPick: !!data.is_hot_pick,
     is_active: data.is_active ?? true,
   };
