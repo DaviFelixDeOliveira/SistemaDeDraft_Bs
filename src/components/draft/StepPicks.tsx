@@ -1,3 +1,4 @@
+import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from "../BrawlerFilters";
 import { getBrawlerBgColor, getBrawlerClassIcon } from "../../lib/utils";
 import React from "react";
 import { useState, useMemo, useEffect } from 'react';
@@ -13,13 +14,13 @@ import {
   computeHistoricalBonus,
   ThreatsCacheMap,
 } from '../../lib/draftEngineUtils';
-import { MODE_OBJECTIVES, getFirstPickTip, getModeIcon } from '../../lib/tactics';
 
-import { Brawler, GameMap, Player, GameMode } from '../../types';
+import { Brawler, GameMap, Player } from '../../types';
 import { cn, fuzzySearch } from '../../lib/utils';
-import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2, Lightbulb, Crown, Sparkles } from 'lucide-react';
+import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2, Undo2, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface StepPicksProps {
+  onUndo?: () => void;
   draftState: DraftState;
   setDraftState: React.Dispatch<React.SetStateAction<DraftState>>;
   onNext: () => void;
@@ -33,8 +34,8 @@ const getPickOrder = (tbkStarts: boolean): ('tbk' | 'enemy')[] => {
     : ['enemy', 'tbk', 'tbk', 'enemy', 'enemy', 'tbk'];
 };
 
-export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPicksProps) {
-  const [search, setSearch] = useState('');
+export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }: StepPicksProps) {
+  const brawlerFilters = useBrawlerFilters();
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [maps, setMaps] = useState<GameMap[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -91,14 +92,18 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
       ...prev,
       picks: [...prev.picks, { brawlerId, team: currentTeamPicking! }]
     }));
-    setSearch('');
+    brawlerFilters.setSearch('');
   };
 
   const handleUndoPick = () => {
-    setDraftState(prev => ({
-      ...prev,
-      picks: prev.picks.slice(0, -1)
-    }));
+    if (onUndo) {
+      onUndo();
+    } else {
+      setDraftState(prev => ({
+        ...prev,
+        picks: prev.picks.slice(0, -1)
+      }));
+    }
   };
 
   /**
@@ -329,8 +334,8 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
   const recommendedComp = null;
 
   const filteredBrawlers = useMemo(() => {
-    return brawlers.filter(b => fuzzySearch(search, b.name));
-  }, [search, brawlers]);
+    return applyBrawlerFilters(brawlers, brawlerFilters);
+  }, [brawlers, brawlerFilters.search, brawlerFilters.tier, brawlerFilters.brawlerClass, brawlerFilters.rarity, brawlerFilters.sortOrder]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && filteredBrawlers.length > 0) {
@@ -350,23 +355,32 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Pick Progress & Current Turn */}
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={onPrev} className="text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:text-white px-4 py-2 cursor-pointer">Voltar</button>
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+      <div className="flex flex-col mb-6 gap-4">
+        <div className="text-center w-full">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white whitespace-nowrap">
             {isDraftComplete ? "Draft Concluído" : `Vez da ${currentTeamPicking === 'tbk' ? 'TBK' : 'Inimigo'} escolher`}
           </h2>
           {!isDraftComplete && (
             <p className="text-sm text-slate-500 dark:text-zinc-400">Pick {currentPickIndex + 1} de 6</p>
           )}
         </div>
-        <button 
-          onClick={onNext} 
-          disabled={!isDraftComplete}
-          className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:bg-zinc-800 disabled:text-zinc-600 text-slate-900 dark:text-white px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-        >
-          Avançar
-        </button>
+        
+        <div className="flex items-center justify-between gap-3 w-full">
+          <button 
+            onClick={onPrev} 
+            className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-4 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer shadow-sm w-full sm:w-auto justify-center flex-1 sm:flex-none"
+          >
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </button>
+          
+          <button 
+            onClick={onNext} 
+            disabled={!isDraftComplete}
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:bg-zinc-800 disabled:text-zinc-600 text-slate-900 dark:text-white px-6 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer shadow-sm w-full sm:w-auto justify-center flex-1 sm:flex-none"
+          >
+            Avançar <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Selected Map & Mode Display Banner */}
@@ -399,33 +413,6 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
           <div className="flex items-center gap-2 text-xs bg-slate-50 dark:bg-[#1A1A1A] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#2A2A2A] text-slate-600 dark:text-zinc-300">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>First Pick: <strong className="text-slate-900 dark:text-white">{draftState.tbkStarts ? 'TBK (Nosso)' : 'Inimigo'}</strong></span>
-          </div>
-        </div>
-      )}
-
-      {/* Tactical Cards: Mode Objective + First/Last Pick Tip */}
-      {selectedMap && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Mode Objective Card */}
-          <div className={`border rounded-xl p-3.5 ${MODE_OBJECTIVES[selectedMap.mode as GameMode]?.color || 'bg-slate-500/10 border-slate-500/30 text-slate-400'}`}>
-            <div className="flex items-start gap-2.5">
-              <span className="text-xl flex-shrink-0 mt-0.5">{getModeIcon(selectedMap.mode as GameMode)}</span>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-sm leading-tight">{MODE_OBJECTIVES[selectedMap.mode as GameMode]?.label || 'Objetivo do Modo'}</h4>
-                <p className="text-[11px] mt-1 leading-relaxed opacity-90">{MODE_OBJECTIVES[selectedMap.mode as GameMode]?.description || 'Selecione um mapa para ver o objetivo tático.'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* First/Last Pick Tactical Tip */}
-          <div className={`border rounded-xl p-3.5 ${getFirstPickTip(draftState.tbkStarts).color}`}>
-            <div className="flex items-start gap-2.5">
-              <span className="text-xl flex-shrink-0 mt-0.5">{getFirstPickTip(draftState.tbkStarts).icon}</span>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-sm leading-tight">{getFirstPickTip(draftState.tbkStarts).title}</h4>
-                <p className="text-[11px] mt-1 leading-relaxed opacity-90">{getFirstPickTip(draftState.tbkStarts).description}</p>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -526,7 +513,6 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
       {/* Composition Recommendation */}
       {!isDraftComplete && currentTeamPicking === 'tbk' && recommendedComp && (
         <div className="bg-emerald-500/10 border border-emerald-500/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-5 h-5 text-emerald-400" />
             <h3 className="font-semibold text-emerald-400">Composição Recomendada: {recommendedComp.description}</h3>
@@ -563,7 +549,6 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
       {/* Engine Recommendations */}
       {!isDraftComplete && currentTeamPicking === 'tbk' && !recommendedComp && recommendations.length > 0 && (
         <div className="bg-white dark:bg-[#1A1A1A] border border-[#FFCC00]/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(255,204,0,0.1)]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFCC00]/10 rounded-full blur-3xl animate-pulse" />
           <div className="flex items-center gap-2 mb-3">
             <Target className="w-5 h-5 text-[#FFCC00]" />
             <h3 className="font-semibold text-[#FFCC00]">Recomendação da IA</h3>
@@ -589,6 +574,19 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
                       {i === 0 && <span className="text-[10px] text-[#FFCC00] font-bold uppercase tracking-wider bg-[#FFCC00]/20 px-1.5 py-0.5 rounded">Top Pick</span>}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Score: <span className={rec.score > 0 ? "text-emerald-400" : "text-red-400"}>{rec.score}</span></div>
+                    {rec.mapPicksCount > 0 && (
+                      <div className={cn(
+                        "text-[10px] font-semibold mt-1 border px-1.5 py-0.5 rounded flex items-center justify-between gap-1",
+                        rec.mapPicksCount < 5 
+                          ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-500" 
+                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                      )}>
+                        <span className="truncate">
+                          {rec.mapPicksCount < 5 ? '⚠️ Baixa amostragem' : '✅ Alta Confiança'} ({rec.mapPicksCount} {rec.mapPicksCount === 1 ? 'jogo' : 'jogos'})
+                        </span>
+                        <span>{rec.mapWinrate}% WR</span>
+                      </div>
+                    )}
                     {rec.isStrongMapComfort && (
                       <div className="text-[10px] text-emerald-400 font-semibold mt-1 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded leading-tight">
                         🔥 Conforto Forte ({rec.mapWinrate}% WR)
@@ -634,20 +632,16 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
 
 
           <div className="flex justify-between items-center">
-             <div className="relative w-64">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500 dark:text-zinc-500" />
-                <input
-                  type="text"
-                  placeholder="Buscar brawler..."
-                  className="w-full bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-lg pl-9 pr-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={handleKeyDown}
+             <div className="relative w-64 z-10">
+                <BrawlerFilterBar 
+                  filters={brawlerFilters} 
+                  compact 
+                  onKeyDown={handleKeyDown} 
                 />
              </div>
              {draftState.picks.length > 0 && (
-               <button onClick={handleUndoPick} className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:text-white underline">
-                 Desfazer último pick
+               <button onClick={handleUndoPick} className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-4 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 mt-4 shadow-sm">
+                 <Undo2 className="w-4 h-4" /> Desfazer último pick
                </button>
              )}
           </div>
@@ -715,11 +709,8 @@ export function StepPicks({ draftState, setDraftState, onNext, onPrev }: StepPic
           </div>
           <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Fase de Picks Concluída</h3>
           <p className="text-slate-500 dark:text-zinc-400 mb-6 max-w-md">Os dois times já selecionaram seus brawlers. Avance para jogar a partida e registrar os resultados.</p>
-          <button 
-            onClick={handleUndoPick}
-            className="text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:text-white underline mb-8"
-          >
-            Desfazer último pick
+          <button onClick={handleUndoPick} className="bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-4 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer w-full sm:w-auto flex items-center justify-center gap-2 mb-8 mx-auto shadow-sm">
+            <Undo2 className="w-4 h-4" /> Desfazer último pick
           </button>
         </div>
       )}

@@ -1,7 +1,5 @@
 # Algoritmos Futuros — TBK Hub
 
-**Aviso:** Antes de fazer, debata sobre a ideia, e me diga como fará ela e se podemos fazer, se aprovado, implemente.
-
 ## ⚠️ Princípio geral (vale para todos os itens abaixo que envolvem "counter"/confronto)
 
 Quando um algoritmo precisar saber se um brawler nosso "countera" ou "é counterado" por um brawler do inimigo, a prioridade é sempre:
@@ -60,3 +58,6 @@ Quando um algoritmo precisar saber se um brawler nosso "countera" ou "é counter
 - [ ] **14. Cálculo de Tendência do Meta Interno (Média Móvel)**
   Comparar o winrate das últimas $N$ partidas registradas (ex: últimas 10) com o histórico global antigo da equipe para identificar brawlers que estão crescendo ou caindo de rendimento nos treinos.
   > **Exemplo Prático:** Brawler X tem 40% de WR no histórico geral, mas nas últimas 10 partidas teve 80% WR ➔ O algoritmo gera o marcador `Em Alta no Meta Interno`.
+
+- [x] **15. Algoritmo de Reversão de Ações do Draft (Ctrl + Z / Voltar)**
+  Gerenciar a pilha de estados das etapas do draft para reverter picks/bans selecionados sem corromper as validações da partida ou do treino ativo.

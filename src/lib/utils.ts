@@ -116,7 +116,7 @@ export const getBrawlerBgColor = (brawler: { name?: string, rarity?: string }) =
     case 'Mítico': return 'bg-[#ef4140]';
     case 'Lendário': return 'bg-[#f8c820]';
     case 'Ultralendário':
-    case 'Cromático': return 'bg-gradient-to-br from-yellow-300 via-red-400 to-purple-400';
+    case 'Cromático': return 'bg-amber-400';
     default: return 'bg-slate-200 dark:bg-slate-800';
   }
 };

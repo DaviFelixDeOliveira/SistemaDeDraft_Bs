@@ -8,8 +8,10 @@ import { brawlerService } from '../../services/brawlerService';
 import { analyticsService } from '../../services/analyticsService';
 import { GameMap, Brawler } from '../../types';
 import { MapDetailsView } from '../ui/MapDetailsView';
+import { BrawlerSelectDropdown } from '../ui/BrawlerSelectDropdown';
 import { cn, fuzzySearch } from '../../lib/utils';
 import { computeBanScore, EnemyPickStatsMap } from '../../lib/draftEngineUtils';
+import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from '../BrawlerFilters';
 
 interface StepMapAndBansProps {
   draftState: DraftState;
@@ -304,7 +306,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
             <h3 className="font-semibold text-emerald-400">Bans da TBK</h3>
           </div>
           {[0, 1, 2].map(index => (
-            <BrawlerBanSelect
+            <BrawlerSelectDropdown icon={<Ban className="w-3 h-3 text-red-500/70 ml-1" />}
               key={`tbk-ban-${index}`}
               placeholder={`Ban ${index + 1}`}
               value={draftState.tbkBans[index]}
@@ -326,7 +328,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
             <h3 className="font-semibold text-red-400">Bans do Inimigo</h3>
           </div>
           {[0, 1, 2].map(index => (
-            <BrawlerBanSelect
+            <BrawlerSelectDropdown icon={<Ban className="w-3 h-3 text-red-500/70 ml-1" />}
               key={`enemy-ban-${index}`}
               placeholder={`Ban ${index + 1}`}
               value={draftState.enemyBans[index]}
@@ -346,7 +348,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
       <div className="pt-4 flex justify-end">
         <button
           onClick={handleNextClick}
-          className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 dark:text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 dark:text-white px-6 py-3 rounded-lg font-medium transition-colors"
         >
           Avançar para o draft
         </button>
@@ -362,141 +364,3 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
   );
 }
 
-interface BrawlerBanSelectProps {
-  key?: string; placeholder: string;
-  value: string | null;
-  onChange: (brawlerId: string) => void;
-  disabledBrawlers: string[];
-  suggestedBrawlers?: string[];
-  allBrawlers: Brawler[];
-}
-
-function BrawlerBanSelect({ placeholder, value, onChange, disabledBrawlers, suggestedBrawlers = [], allBrawlers }: BrawlerBanSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const selectedBrawler = value ? allBrawlers.find(b => b.id === value) : null;
-  const filteredBrawlers = allBrawlers.filter(b => fuzzySearch(search, b.name));
-
-  const sortedBrawlers = useMemo(() => {
-    if (!search) {
-      return [...allBrawlers].sort((a, b) => {
-        const aSug = suggestedBrawlers.includes(a.id);
-        const bSug = suggestedBrawlers.includes(b.id);
-        if (aSug && !bSug) return -1;
-        if (!aSug && bSug) return 1;
-        return a.name.localeCompare(b.name);
-      });
-    }
-    return filteredBrawlers;
-  }, [allBrawlers, filteredBrawlers, search, suggestedBrawlers]);
-
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && sortedBrawlers.length > 0) {
-      const firstAvailable = sortedBrawlers.find(b => !disabledBrawlers.includes(b.id));
-      if (firstAvailable) {
-        onChange(firstAvailable.id);
-        setIsOpen(false);
-        setSearch('');
-      }
-    }
-  };
-
-  const firstAvailableId = sortedBrawlers.find(b => !disabledBrawlers.includes(b.id))?.id;
-
-  return (
-    <div className="relative" ref={wrapperRef}>
-      <div 
-        className={cn(
-          "flex items-center justify-between w-full bg-slate-50 dark:bg-[#0A0A0A] border rounded-lg px-3 py-2 cursor-pointer transition-colors",
-          selectedBrawler ? "border-zinc-600" : "border-slate-200 dark:border-[#2A2A2A] hover:border-zinc-600"
-        )}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {selectedBrawler ? (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-slate-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {selectedBrawler.iconUrl ? (
-                <img src={selectedBrawler.iconUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[10px] text-slate-500 dark:text-zinc-500">IMG</span>
-              )}
-            </div>
-            <span className="text-sm text-slate-900 dark:text-white">{selectedBrawler.name}</span>
-            <Ban className="w-3 h-3 text-red-500/70 ml-1" />
-          </div>
-        ) : (
-          <span className="text-sm text-zinc-600">{placeholder}</span>
-        )}
-        <ChevronDown className="w-4 h-4 text-slate-500 dark:text-zinc-500" />
-      </div>
-
-      {isOpen && (
-        <div className="absolute z-40 w-full mt-1 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-lg shadow-xl max-h-60 flex flex-col">
-          <div className="sticky top-0 p-2 bg-white dark:bg-[#1A1A1A] border-b border-slate-200 dark:border-[#2A2A2A] z-10">
-            <input
-              autoFocus
-              type="text"
-              placeholder="Buscar brawler..."
-              className="w-full bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded pl-3 pr-2 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-          <div className="p-1 overflow-y-auto flex-1">
-            {sortedBrawlers.length > 0 ? (
-              sortedBrawlers.map(brawler => {
-                const isDisabled = disabledBrawlers.includes(brawler.id);
-                const isSuggested = suggestedBrawlers.includes(brawler.id) && !search;
-                return (
-                  <div
-                    key={brawler.id}
-                    className={cn(
-                      "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors relative",
-                      isDisabled 
-                        ? "opacity-40 cursor-not-allowed" 
-                        : "hover:bg-[#FF3366]/20 hover:text-[#FF3366] cursor-pointer text-slate-700 dark:text-zinc-300",
-                      isSuggested && !isDisabled && "bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:text-[#FFCC00]"
-                    )}
-                    onClick={() => {
-                      if (!isDisabled) {
-                        onChange(brawler.id);
-                        setIsOpen(false);
-                      }
-                    }}
-                  >
-                     <div className={cn("w-5 h-5 rounded flex-shrink-0 overflow-hidden", getBrawlerBgColor(brawler))}>
-                       {brawler.iconUrl && <img src={brawler.iconUrl} alt="" className="w-full h-full object-cover" />}
-                     </div>
-                     {brawler.name}
-                     {isSuggested && !isDisabled && (
-                       <Lightbulb className="w-3 h-3 ml-auto text-[#FFCC00]" />
-                     )}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="py-4 text-center text-sm text-slate-500 dark:text-zinc-400">
-                Nenhum brawler encontrado
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

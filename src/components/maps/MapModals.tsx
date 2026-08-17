@@ -1,6 +1,6 @@
 import { getBrawlerBgColor } from "../../lib/utils";
 import React, { useState, useEffect } from 'react';
-import { X, Award, Shield, Target, Plus, Flame } from 'lucide-react';
+import { X, Award, Shield, Target, Plus, Flame, Info } from 'lucide-react';
 import { GameMap, GameMode, Brawler } from '../../types';
 import { cn } from '../../lib/utils';
 import { MapDetailsView } from '../ui/MapDetailsView';
@@ -48,14 +48,24 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
             <div className="text-zinc-500 dark:text-zinc-400 mt-1 flex items-center gap-3">
               <span className="flex items-center gap-1"><Target className="w-4 h-4" /> {map.mode}</span>
               <span>&bull;</span>
-              <span className={cn(
-                  "text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border",
+              <div className="relative group/terrain">
+                <span className={cn(
+                  "text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border cursor-help flex items-center gap-1",
                   map.terrain === 'Aberto' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
                   map.terrain === 'Fechado' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
                   'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                 )}>
                   Terreno {map.terrain}
-              </span>
+                  <Info className="w-3.5 h-3.5" />
+                </span>
+                <div className="absolute top-full left-0 mt-2 w-56 p-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[11px] rounded-lg shadow-xl opacity-0 invisible group-hover/terrain:opacity-100 group-hover/terrain:visible transition-all z-20 font-medium pointer-events-none">
+                  {map.terrain === 'Aberto' && 'Mapas abertos favorecem composições de longo alcance (Snipers) e controle de visão.'}
+                  {map.terrain === 'Semi-Aberto' && 'Equilíbrio entre rotas de flanco e controle central. Requer composições versáteis.'}
+                  {map.terrain === 'Fechado' && 'Mapas fechados favorecem tanques, assassinos e brawlers de alto dano a curta distância.'}
+                  {map.terrain === 'Misto' && 'Zonas abertas e fechadas. Exige brawlers que dominem áreas específicas do mapa.'}
+                  <div className="absolute -top-1 left-4 w-2 h-2 bg-zinc-900 dark:bg-zinc-100 rotate-45" />
+                </div>
+              </div>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
@@ -285,6 +295,22 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
             />
           </div>
 
+                    <div>
+            <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Modo de Jogo</label>
+            <select 
+              value={formData.mode || 'Pique-Gema'}
+              onChange={e => setFormData({ ...formData, mode: e.target.value as any })}
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+            >
+              <option value="Pique-Gema">Pique-Gema</option>
+              <option value="Fute-Brawl">Fute-Brawl</option>
+              <option value="Caça-Estrelas">Caça-Estrelas</option>
+              <option value="Roubo">Roubo</option>
+              <option value="Zona Estratégica">Zona Estratégica</option>
+              <option value="Nocaute">Nocaute</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Terreno do Mapa</label>
             <select 
@@ -345,7 +371,7 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
               if (formData.name) onSave(formData);
             }}
             disabled={!formData.name}
-            className="px-6 py-2 bg-[#FF3366] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
+            className="px-6 py-3 bg-[#FF3366] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
           >
             Salvar
           </button>
@@ -460,7 +486,7 @@ export function AddCompModal({ isOpen, onClose, onSave, mapId }: AddCompModalPro
               }
             }}
             disabled={!name || brawlers.length !== 3}
-            className="px-6 py-2 bg-[#FF3366] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
+            className="px-6 py-3 bg-[#FF3366] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
           >
             Salvar Comp
           </button>

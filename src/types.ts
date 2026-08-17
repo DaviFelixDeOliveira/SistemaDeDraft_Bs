@@ -53,8 +53,17 @@ export interface Composition {
   is_active?: boolean;
 }
 
+export interface TrainingSession {
+  id: string;
+  start_date: string;
+  end_date: string | null;
+  notes?: string;
+  opponent_name?: string;
+}
+
 export interface Match {
   id: string;
+  session_id?: string | null;
   match_date: string;
   map_id: string;
   result: 'victory' | 'defeat';
@@ -79,6 +88,7 @@ export interface MatchBan {
 
 export interface MatchRecordData {
   mapId: string;
+  sessionId?: string | null;
   result: 'victory' | 'defeat';
   tbkPicks: { brawlerId: string; playerId?: string }[];
   enemyPicks: string[];
@@ -91,19 +101,6 @@ export interface MatchRecordData {
     brawlerIn: string;
     isWin: boolean;
   };
-  trainingSessionId?: string; // Novo campo para vincular partida à sessão de treino
-}
-
-export interface TrainingSession {
-  id: string;
-  name: string;
-  startedAt: string;
-  endedAt: string | null;
-  isActive: boolean;
-  matchesCount: number;
-  totalWins: number;
-  totalLosses: number;
-  notes?: string;
 }
 
 

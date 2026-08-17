@@ -8,9 +8,16 @@ import { Brawler } from '../../types';
 import { BrawlerModal } from './BrawlerModal';
 
 import { analyticsService } from '../../services/analyticsService';
+import { UserRole } from '../LockScreen';
+import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from '../BrawlerFilters';
 
-export function BrawlersHub() {
-  const [search, setSearch] = useState('');
+interface BrawlersHubProps {
+  userRole?: UserRole;
+}
+
+export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
+  const isPlayerMode = userRole === 'player';
+  const brawlerFilters = useBrawlerFilters();
   const [selectedBrawler, setSelectedBrawler] = useState<Brawler | null>(null);
   const [brawlerStatsDetail, setBrawlerStatsDetail] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,7 +47,7 @@ export function BrawlersHub() {
     setIsFetching(false);
   };
 
-  const filtered = brawlers.filter(b => fuzzySearch(search, b.name));
+  const filtered = applyBrawlerFilters(brawlers, brawlerFilters);
 
   const handleSelectBrawler = (b: Brawler) => {
     setLoading(true);
@@ -96,9 +103,12 @@ export function BrawlersHub() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">Brawlers Hub & Metagame</h2>
-            <span className="text-xs font-bold bg-[#FF3366]/10 text-[#FF3366] border border-[#FF3366]/20 px-3 py-1 rounded-full">
-              {brawlers.length} Brawlers Cadastrados
-            </span>
+            <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3.5 py-1.5 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                {brawlers.length} Brawlers Disponíveis
+              </span>
+            </div>
           </div>
           <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">Estatísticas detalhadas de todos os Brawlers</p>
         </div>
@@ -111,30 +121,26 @@ export function BrawlersHub() {
           selectedBrawler ? "hidden md:flex" : "flex"
         )}>
           <div className="p-4 border-b border-zinc-200 dark:border-[#2A2A2A] space-y-3">
-            <button
-              onClick={() => {
-                setEditingBrawler(null);
-                setIsModalOpen(true);
-              }}
-              className="w-full bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> Novo Brawler
-            </button>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input 
-                type="text" 
-                placeholder="Buscar Brawler..." 
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && filtered.length > 0) {
-                    handleSelectBrawler(filtered[0]);
-                  }
+            {!isPlayerMode && (
+              <button
+                onClick={() => {
+                  setEditingBrawler(null);
+                  setIsModalOpen(true);
                 }}
-                className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg pl-9 pr-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366] transition-colors"
-              />
-            </div>
+                className="w-full bg-[#FF3366] hover:bg-[#E62E5C] text-white px-6 py-3 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> Novo Brawler
+              </button>
+            )}
+            <BrawlerFilterBar 
+              filters={brawlerFilters} 
+              compact
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && filtered.length > 0) {
+                  handleSelectBrawler(filtered[0]);
+                }
+              }}
+            />
           </div>
           <div className="p-2 flex-1 overflow-y-auto">
              {filtered.map(b => (
@@ -188,7 +194,7 @@ export function BrawlersHub() {
                 <div className="flex flex-col gap-8 max-w-4xl mx-auto">
                    
                    {/* A) Cabeçalho do Brawler */}
-                   <div className="flex flex-col sm:flex-row items-start gap-6 bg-white dark:bg-[#121212] p-6 rounded-2xl border border-zinc-200 dark:border-[#2A2A2A] shadow-sm relative overflow-hidden">
+                   <div className="flex flex-col sm:flex-row items-start gap-6 bg-white dark:bg-[#121212] p-6 rounded-xl border border-zinc-200 dark:border-[#2A2A2A] shadow-sm relative overflow-hidden">
                       <div className={cn(
                         "w-24 h-24 sm:w-32 sm:h-32 rounded-2xl flex-shrink-0 relative overflow-hidden", getBrawlerBgColor(selectedBrawler),
                         selectedBrawler.tier === 'S' ? "border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.3)]" : "border-2 border-zinc-200 dark:border-zinc-700"
@@ -206,33 +212,35 @@ export function BrawlersHub() {
                            <h3 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white flex items-center gap-3">
                               {selectedBrawler.name}
                            </h3>
-                           <div className="flex items-center gap-2">
-                             <button 
-                                onClick={() => {
-                                  setEditingBrawler(selectedBrawler);
-                                  setIsModalOpen(true);
-                                }}
-                                className="bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
-                             >
-                               <Edit2 className="w-4 h-4" /> Editar
-                             </button>
-                             <button 
-                                onClick={() => {
-                                  setConfirmConfig({
-                                    isOpen: true,
-                                    title: 'Excluir Brawler',
-                                    message: `Tem certeza que deseja excluir ${selectedBrawler.name}? Esta ação não pode ser desfeita.`,
-                                    action: () => {
-                                      setBrawlers(prev => prev.filter(b => b.id !== selectedBrawler.id));
-                                      setSelectedBrawler(null);
-                                    }
-                                  });
-                                }}
-                                className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
-                             >
-                               <Trash2 className="w-4 h-4" /> Excluir
-                             </button>
-                           </div>
+                           {!isPlayerMode && (
+                             <div className="flex items-center gap-2">
+                               <button 
+                                  onClick={() => {
+                                    setEditingBrawler(selectedBrawler);
+                                    setIsModalOpen(true);
+                                  }}
+                                  className="bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+                               >
+                                 <Edit2 className="w-4 h-4" /> Editar
+                               </button>
+                               <button 
+                                  onClick={() => {
+                                    setConfirmConfig({
+                                      isOpen: true,
+                                      title: 'Excluir Brawler',
+                                      message: `Tem certeza que deseja excluir ${selectedBrawler.name}? Esta ação não pode ser desfeita.`,
+                                      action: () => {
+                                        setBrawlers(prev => prev.filter(b => b.id !== selectedBrawler.id));
+                                        setSelectedBrawler(null);
+                                      }
+                                    });
+                                  }}
+                                  className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
+                               >
+                                 <Trash2 className="w-4 h-4" /> Excluir
+                               </button>
+                             </div>
+                           )}
                          </div>
 
                          <div className="flex flex-wrap items-center gap-2">
@@ -265,7 +273,7 @@ export function BrawlersHub() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                        
                        {/* B) Card 1: Análise Detalhada de Banimentos */}
-                       <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-2xl p-5 shadow-sm flex flex-col gap-5">
+                       <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-6 shadow-sm flex flex-col gap-5">
                           <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                              <Target className="w-5 h-5 text-[#FF3366]" /> Análise de Banimentos
                           </h4>
@@ -276,7 +284,7 @@ export function BrawlersHub() {
                                 <span className="font-black text-zinc-900 dark:text-white">{brawlerStatsDetail?.totalBans || 0}x</span>
                              </div>
                              <div className="w-full h-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-[#FF3366] to-fuchsia-500 rounded-full relative" style={{ width: `${Math.min((brawlerStatsDetail?.totalBans || 0) * 10, 100)}%` }}>
+                                <div className="h-full bg-[#FF3366] rounded-full relative" style={{ width: `${Math.min((brawlerStatsDetail?.totalBans || 0) * 10, 100)}%` }}>
                                    <div className="absolute top-0 right-0 bottom-0 w-4 bg-white/30 blur-[2px] rounded-full animate-pulse" />
                                 </div>
                              </div>
@@ -317,7 +325,7 @@ export function BrawlersHub() {
                        </div>
                        
                        {/* C) Card 2: Desempenho, Picks e Winrate */}
-                       <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-2xl p-5 shadow-sm flex flex-col gap-5">
+                       <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-6 shadow-sm flex flex-col gap-5">
                           <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                              <Activity className="w-5 h-5 text-emerald-500" /> Desempenho e Picks
                           </h4>
@@ -328,37 +336,44 @@ export function BrawlersHub() {
                                 <span className="font-black text-emerald-500">{brawlerStatsDetail?.tbkPicksCount > 0 ? `${brawlerStatsDetail.winrate}%` : '0%'}</span>
                              </div>
                              <div className="w-full h-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full relative" style={{ width: `${brawlerStatsDetail?.tbkPicksCount > 0 ? brawlerStatsDetail.winrate : 0}%` }}>
+                                <div className="h-full bg-emerald-500 rounded-full relative" style={{ width: `${brawlerStatsDetail?.tbkPicksCount > 0 ? brawlerStatsDetail.winrate : 0}%` }}>
                                    <div className="absolute top-0 right-0 bottom-0 w-4 bg-white/30 blur-[2px] rounded-full animate-pulse" />
                                 </div>
                              </div>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                             <div className="flex flex-col gap-3">
-                                <div className="bg-zinc-50 dark:bg-[#1A1A1A] p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/50 flex flex-col justify-center flex-1">
-                                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Picks (TBK vs Inimigos)</span>
-                                   <div className="flex items-end gap-2">
-                                      <span className="text-2xl font-black text-blue-500">{brawlerStatsDetail?.tbkPicksCount || 0}</span>
-                                      <span className="text-sm font-bold text-zinc-500 mb-1">vs</span>
-                                      <span className="text-2xl font-black text-red-500">{brawlerStatsDetail?.enemyPicksCount || 0}</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                             <div className="flex flex-col">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Picks (TBK vs Inimigos)</span>
+                                <div className="flex items-end gap-3">
+                                   <div className="flex flex-col">
+                                      <span className="text-3xl font-black text-blue-500 leading-none">{brawlerStatsDetail?.tbkPicksCount || 0}</span>
+                                      <span className="text-[10px] text-zinc-500 font-semibold mt-1">TBK</span>
+                                   </div>
+                                   <span className="text-xl font-black text-zinc-300 dark:text-zinc-700 leading-none mb-4">/</span>
+                                   <div className="flex flex-col">
+                                      <span className="text-3xl font-black text-red-500 leading-none">{brawlerStatsDetail?.enemyPicksCount || 0}</span>
+                                      <span className="text-[10px] text-zinc-500 font-semibold mt-1">Inimigos</span>
                                    </div>
                                 </div>
                              </div>
-                             
-                             <div className="bg-zinc-50 dark:bg-[#1A1A1A] p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">Comfort Picks (Atletas)</span>
-                                <div className="space-y-2">
+                              
+                             <div className="flex flex-col">
+                                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Comfort Picks (Atletas)</span>
+                                <div className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                                    {brawlerStatsDetail?.comfortStats && brawlerStatsDetail.comfortStats.length > 0 ? (
                                       brawlerStatsDetail.comfortStats.map((cs: any, idx: number) => (
-                                         <div key={idx} className="flex items-center gap-2 text-xs">
-                                            <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold">{idx + 1}</div>
-                                            <span className="text-zinc-700 dark:text-zinc-300 font-medium flex-1">{cs.playerName}</span>
-                                            <span className="font-bold text-emerald-500">{cs.winrate}% WR ({cs.matches})</span>
+                                         <div key={idx} className="flex items-center gap-2 text-sm bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-lg">
+                                            <div className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold text-[10px]">{idx + 1}</div>
+                                            <span className="text-zinc-700 dark:text-zinc-300 font-semibold flex-1 truncate">{cs.playerName}</span>
+                                            <div className="flex flex-col items-end">
+                                              <span className="font-black text-emerald-500 text-xs">{cs.winrate}% WR</span>
+                                              <span className="text-[10px] text-zinc-500 font-medium">{cs.matches} {cs.matches === 1 ? 'partida' : 'partidas'}</span>
+                                            </div>
                                          </div>
                                       ))
                                    ) : (
-                                      <span className="text-xs text-zinc-500 italic">Sem partidas com atletas ainda</span>
+                                      <span className="text-xs text-zinc-500 italic">Nenhum atleta marcou como conforto.</span>
                                    )}
                                 </div>
                              </div>
@@ -366,7 +381,7 @@ export function BrawlersHub() {
                        </div>
 
                        {/* D) Card 3: Sinergias e Counters Diretos */}
-                       <div className="lg:col-span-2 bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-2xl p-5 shadow-sm">
+                       <div className="lg:col-span-2 bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-6 shadow-sm">
                           <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-5">
                              <Zap className="w-5 h-5 text-amber-500" /> Sinergias e Counters
                           </h4>

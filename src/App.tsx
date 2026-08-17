@@ -4,6 +4,7 @@ import { DraftWizard } from './components/draft/DraftWizard';
 import { Menu, Loader2, Swords } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Dashboard } from './components/dashboard/Dashboard';
+import { TrainingHistory } from './components/dashboard/TrainingHistory';
 import { PlayersHub } from './components/players/PlayersHub';
 import { MapsHub } from './components/maps/MapsHub';
 import { BrawlersHub } from './components/brawlers/BrawlersHub';
@@ -33,6 +34,31 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 1800);
     return () => clearTimeout(timer);
+  }, []);
+
+  
+  // Global listener for ESC and Ctrl+Z on search inputs
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement && (active.type === 'text' || active.type === 'search')) {
+        const isSearchField = active.placeholder.toLowerCase().includes('buscar') || active.placeholder.toLowerCase().includes('pesquisar') || active.type === 'search' || active.placeholder.toLowerCase().includes('ban');
+        
+        if (e.key === 'Escape' || (isSearchField && (e.ctrlKey || e.metaKey) && e.key === 'z')) {
+          e.preventDefault();
+          e.stopPropagation();
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+          if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(active, '');
+            const event = new Event('input', { bubbles: true });
+            active.dispatchEvent(event);
+          }
+        }
+      }
+    };
+    // Use capture phase to intercept before React synthetic events if needed
+    window.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
   }, []);
 
   const handleViewChange = (view: string) => {
@@ -68,7 +94,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500">
         <div className="relative">
-          <div className="w-20 h-20 bg-gradient-to-br from-[#FF3366] to-[#cc0033] rounded-2xl flex items-center justify-center shadow-[0_0_60px_rgba(255,51,102,0.4)] animate-pulse">
+          <div className="w-20 h-20 bg-[#FF3366] rounded-2xl flex items-center justify-center shadow-[0_0_60px_rgba(255,51,102,0.4)] animate-pulse">
             <Swords className="w-10 h-10 text-white" />
           </div>
           <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FFCC00] rounded-full flex items-center justify-center shadow-lg">
@@ -157,7 +183,12 @@ export default function App() {
                 )}
                 {currentView === 'brawlers' && (
                   <div className="w-full max-w-full">
-                    <BrawlersHub />
+                    <BrawlersHub userRole={userRole} />
+                  </div>
+                )}
+                {currentView === 'history' && (
+                  <div className="w-full max-w-full">
+                    <TrainingHistory />
                   </div>
                 )}
               </>

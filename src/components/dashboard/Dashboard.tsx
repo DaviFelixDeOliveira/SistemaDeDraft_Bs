@@ -2,7 +2,7 @@ import { getBrawlerBgColor } from "../../lib/utils";
 import React, { useEffect, useState } from 'react';
 import { analyticsService } from '../../services/analyticsService';
 import { mapService } from '../../services/mapService';
-import { Trophy, Swords, XCircle, Activity, Map as MapIcon, Flame, Shield, Crosshair, Loader2 } from 'lucide-react';
+import { Trophy, Swords, XCircle, Activity, Map as MapIcon, Flame, Shield, Crosshair, Loader2, Eye, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { CustomTooltip } from "../ui/CustomTooltip";
 import { AreaChart, LabelList, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
@@ -10,6 +10,43 @@ import { Composition } from '../../types';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 function DashboardContent() {
+  
+  const CustomBrawlerTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-3 text-white shadow-xl min-w-[150px]">
+          <p className="font-bold mb-2 border-b border-[#2A2A2A] pb-2 text-sm">{label || data.name}</p>
+          <div className="flex flex-col gap-1 text-sm">
+            <div className="flex justify-between items-center gap-4">
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-zinc-400">Picks (Nós)</span>
+              </span>
+              <span className="font-bold text-blue-500">{data.tbkPickCount}</span>
+            </div>
+            <div className="flex justify-between items-center gap-4">
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-zinc-400">Bans (Geral)</span>
+              </span>
+              <span className="font-bold text-red-500">{data.ban}</span>
+            </div>
+            <div className="flex justify-between items-center gap-4 mt-1 border-t border-[#2A2A2A] pt-1">
+              <span className="text-zinc-400 text-xs">Winrate (Nós)</span>
+              <span className={cn("font-bold text-xs", data.winrate >= 50 ? "text-emerald-500" : "text-red-500")}>{data.winrate}%</span>
+            </div>
+            <div className="flex justify-between items-center gap-4">
+              <span className="text-zinc-400 text-xs">Vitórias / Derrotas</span>
+              <span className="font-bold text-xs"><span className="text-emerald-500">{data.tbkWins}V</span> - <span className="text-red-500">{data.tbkLosses}D</span></span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const CustomXAxisTick = (props: any) => {
     const { x, y, payload } = props;
     // Usa os dados já carregados do Supabase via brawlerStats
@@ -34,15 +71,17 @@ function DashboardContent() {
   const [modeWinrate, setModeWinrate] = useState<any[]>([]);
   const [brawlerStats, setBrawlerStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mapAlerts, setMapAlerts] = useState<any[]>([]);
   const [isBansModalOpen, setIsBansModalOpen] = useState(false);
   const [bansSortOrder, setBansSortOrder] = useState<"mais" | "menos">("mais");
   const [selectedComposition, setSelectedComposition] = useState<any | null>(null);
   const [selectedHotBrawler, setSelectedHotBrawler] = useState<any | null>(null);
+  const [selectedMapImage, setSelectedMapImage] = useState<string | null>(null);
 
   // Bans Tabs State
   const [activeBanTab, setActiveBanTab] = useState<'geral' | 'tbk' | 'enemy'>('geral');
   const [isLoadingBans, setIsLoadingBans] = useState(false);
-  const [activeTimeFilter, setActiveTimeFilter] = useState<'Último Dia / Treino' | 'Última Semana' | 'Último Mês' | 'Geral'>('Geral');
+  const [activeTimeFilter, setActiveTimeFilter] = useState<'Última Semana' | 'Último Mês' | 'Geral'>('Geral');
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
 
   const [hotBrawlerDetails, setHotBrawlerDetails] = useState<any>(null);
@@ -51,18 +90,20 @@ function DashboardContent() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const [s, mPerf, wWr, mWr, bStats] = await Promise.all([
+      const [s, mPerf, wWr, mWr, bStats, alerts] = await Promise.all([
         analyticsService.getDashboardStats(),
         analyticsService.getMapPerformance(),
         analyticsService.getWeeklyWinrate(),
         analyticsService.getWinrateByMode(),
-        analyticsService.getBrawlerStats()
+        analyticsService.getBrawlerStats(),
+        analyticsService.getMapRotationAlerts(5)
       ]);
       setStats(s);
       setMapPerformance(mPerf);
       setWeeklyWinrate(wWr);
       setModeWinrate(mWr);
       setBrawlerStats(bStats);
+      setMapAlerts(alerts);
       setLoading(false);
     }
     loadData();
@@ -105,6 +146,37 @@ function DashboardContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard Geral</h2>
       </div>
+
+
+      
+      {/* Alerta de Rotação de Mapas */}
+      {mapAlerts.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
+          <div className="flex gap-3 flex-1">
+            <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center shrink-0">
+              <span className="text-amber-600 dark:text-amber-400 font-bold text-lg leading-none mt-0.5">⚠️</span>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-amber-800 dark:text-amber-300 text-sm mb-1">Aviso de Rotação de Mapas</h4>
+              <p className="text-amber-700 dark:text-amber-400 text-sm">
+                O mapa <strong>"{mapAlerts[0].map.name}"</strong> ({mapAlerts[0].map.mode}) não é treinado há {mapAlerts[0].daysSince === Infinity ? 'muito tempo' : `${mapAlerts[0].daysSince} dias`}. Considere incluí-lo na próxima scrim.
+                {mapAlerts.length > 1 && ` (E mais ${mapAlerts.length - 1} mapas inativos).`}
+              </p>
+            </div>
+          </div>
+          {mapAlerts[0].map.imageUrl && (
+            <div 
+              className="relative group shrink-0 self-center sm:self-auto cursor-pointer rounded-lg overflow-hidden border border-amber-200 dark:border-amber-500/20 shadow-sm" 
+              onClick={() => setSelectedMapImage(mapAlerts[0].map.imageUrl)}
+            >
+               <img src={mapAlerts[0].map.imageUrl} alt={mapAlerts[0].map.name} className="w-24 h-16 sm:w-32 sm:h-20 object-cover" />
+               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 <Eye className="w-5 h-5 text-white" />
+               </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* A) Top Cards (KPIs) - 2 cols mobile, 4 desktop */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -156,7 +228,7 @@ function DashboardContent() {
           </h3>
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2">
             {(modeWinrate || []).map((item) => {
-              const wr = item.winrate || item.value || 0;
+              const wr = item.winrate !== undefined ? item.winrate : (item.value || 0);
               const textWrColor = wr > 50 ? "text-emerald-500" : wr >= 30 ? "text-amber-500" : "text-red-500 font-black";
               const barWrColor = wr > 50 ? "bg-emerald-500" : wr >= 30 ? "bg-amber-500" : "bg-red-500";
               return (
@@ -196,7 +268,7 @@ function DashboardContent() {
               <Crosshair className="w-5 h-5 text-fuchsia-500" /> Top Banimentos
             </h3>
             <div className="flex gap-2">
-              {['Último Treino', 'Última Semana', 'Último Mês', 'Geral'].map((t) => (
+              {['Última Semana', 'Último Mês', 'Geral'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setActiveTimeFilter(t as any)}
@@ -261,7 +333,7 @@ function DashboardContent() {
                       </div>
                       <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-[#FF3366] to-fuchsia-500 rounded-full"
+                          className="h-full bg-[#FF3366] rounded-full"
                           style={{ width: `${((b[banField] || 0) / maxBan) * 100}%` }} />
                       </div>
                     </div>
@@ -342,13 +414,13 @@ function DashboardContent() {
           <h3 className="font-bold text-slate-900 dark:text-white mb-6">Top Brawlers (Picks vs Bans)</h3>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={(brawlerStats || []).slice(0, 5)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={(brawlerStats || []).slice().sort((a,b) => (b.tbkPickCount || 0) - (a.tbkPickCount || 0)).slice(0, 5)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
                 <XAxis dataKey="name" stroke="#52525B" fontSize={12} tickLine={false} axisLine={false} tick={<CustomXAxisTick />} />
                 <YAxis stroke="#52525B" fontSize={12} tickLine={false} axisLine={false} />
-                <RechartsTooltip content={<CustomTooltip />} />
+                <RechartsTooltip content={<CustomBrawlerTooltip />} cursor={{fill: '#2A2A2A'}} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="pick" name="Picks" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="tbkPickCount" name="Nossos Picks" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="ban" name="Bans" fill="#FF3366" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -382,9 +454,12 @@ function DashboardContent() {
                   </div>
                   <div className="text-center w-full">
                     <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{b?.name}</div>
-                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                    <div className="flex flex-col items-center justify-center gap-1 mt-2">
                       <span className={cn("text-xs px-1.5 py-0.5 rounded border font-bold", wrColor)}>{wr}% WR</span>
-                      <span className="text-[10px] text-slate-500 font-bold">{b.tbkPickCount || b.pick} picks</span>
+                      <div className="flex flex-col items-center mt-1 text-[10px] text-slate-500 font-bold leading-none gap-0.5">
+                        <span><span className="text-blue-500">{b.tbkPickCount || 0}</span> picks nossos</span>
+                        <span><span className="text-red-500">{b.enemyPickCount || 0}</span> picks ini.</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -526,7 +601,10 @@ function DashboardContent() {
       )}
 
       {/* Mode Details Modal */}
-      {selectedMode && (
+      {selectedMode && (() => {
+        const currentModeStats = (modeWinrate || []).find(m => m.name === selectedMode);
+        const currentModeWr = currentModeStats?.winrate !== undefined ? currentModeStats.winrate : (currentModeStats?.value || 0);
+        return (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-slate-200 dark:border-[#2A2A2A] flex justify-between items-center bg-slate-50 dark:bg-[#0A0A0A]">
@@ -535,7 +613,20 @@ function DashboardContent() {
                   <Trophy className="w-5 h-5 text-emerald-500" />
                   Mapas de {selectedMode}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">Estatísticas detalhadas por mapa</p>
+                <div className="flex gap-4 mt-2">
+                  <div className="text-sm">
+                    <span className="text-slate-500 dark:text-zinc-400">WR Global: </span>
+                    <span className={cn("font-bold", stats.winrate >= 60 ? "text-emerald-500" : stats.winrate >= 40 ? "text-amber-500" : "text-red-500")}>
+                      {stats.winrate}%
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-slate-500 dark:text-zinc-400">WR {selectedMode}: </span>
+                    <span className={cn("font-bold", currentModeWr >= 60 ? "text-emerald-500" : currentModeWr >= 40 ? "text-amber-500" : "text-red-500")}>
+                      {currentModeWr}%
+                    </span>
+                  </div>
+                </div>
               </div>
               <button
                 onClick={() => setSelectedMode(null)}
@@ -607,6 +698,31 @@ function DashboardContent() {
                 <div className="text-center text-slate-500 py-8">Nenhum mapa registrado para este modo.</div>
               )}
             </div>
+          </div>
+        </div>
+        );
+      })()}
+
+      {selectedMapImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" 
+          onClick={() => setSelectedMapImage(null)}
+        >
+          <div 
+            className="relative w-full max-w-4xl max-h-full flex items-center justify-center animate-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedMapImage(null)} 
+              className="absolute -top-12 right-0 sm:-right-12 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-all"
+            >
+              <X className="w-6 h-6 sm:w-8 sm:h-8" />
+            </button>
+            <img 
+              src={selectedMapImage} 
+              alt="Visualização do Mapa" 
+              className="w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" 
+            />
           </div>
         </div>
       )}

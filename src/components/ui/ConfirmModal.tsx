@@ -32,11 +32,10 @@ export function ConfirmModal({
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen && !showToast) {
       setIsProcessing(false);
-      setShowToast(false);
     }
-  }, [isOpen]);
+  }, [isOpen, showToast]);
 
   if (!isOpen && !showToast) return null;
 

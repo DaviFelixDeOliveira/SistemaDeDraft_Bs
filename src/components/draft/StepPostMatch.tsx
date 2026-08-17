@@ -12,6 +12,7 @@ import { brawlerService } from '../../services/brawlerService';
 import { mapService } from '../../services/mapService';
 import { playerService } from '../../services/playerService';
 import { Brawler, GameMap, Player } from '../../types';
+import { BrawlerSelectDropdown } from '../ui/BrawlerSelectDropdown';
 
 interface StepPostMatchProps {
   draftState: DraftState;
@@ -413,21 +414,14 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                   <div className="flex-1 w-full relative">
                     <label className="block text-xs text-slate-500 dark:text-zinc-400 mb-1">Brawler que entrou</label>
                     <div className="relative group">
-                       <select 
-                         value={brawlerIn} 
-                         onChange={(e) => setBrawlerIn(e.target.value)}
-                         className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
-                       >
-                         <option value="">Selecionar...</option>
-                          {brawlers.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                          ))}
-                       </select>
-                       <div className={cn("absolute left-2 top-1.5 w-6 h-6 rounded overflow-hidden pointer-events-none", brawlerOut ? getBrawlerBgColor(brawlers.find(b => b.id === brawlerOut) || {}) : "bg-slate-200 dark:bg-zinc-800")}>
-                         {brawlerIn && brawlers.find(b => b.id === brawlerIn)?.iconUrl && (
-                            <img src={brawlers.find(b => b.id === brawlerIn)?.imageUrl || brawlers.find(b => b.id === brawlerIn)?.iconUrl} className="w-full h-full object-cover" />
-                         )}
-                       </div>
+                       <BrawlerSelectDropdown 
+                          placeholder="Selecionar brawler..." 
+                          value={brawlerIn} 
+                          onChange={(val) => setBrawlerIn(val)} 
+                          disabledBrawlers={[...tbkPicks, ...enemyPicks]} 
+                          allBrawlers={brawlers} 
+                       />
+                       
                     </div>
                   </div>
                 </div>

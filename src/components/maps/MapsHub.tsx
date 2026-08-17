@@ -37,22 +37,25 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
 
   const [dashStats, setDashStats] = useState({ totalMatches: 0, winrate: 0 });
   const [mapStatsMap, setMapStatsMap] = useState<Record<string, any>>({});
+  const [modeWinrates, setModeWinrates] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    const [mData, bData, dStats, cData] = await Promise.all([
+    const [mData, bData, dStats, cData, mWr] = await Promise.all([
       mapService.getMaps(),
       brawlerService.getBrawlers(),
       analyticsService.getDashboardStats(),
       mapService.getComps(),
+      analyticsService.getWinrateByMode()
     ]);
     setMaps(mData);
     setBrawlers(bData);
     setDashStats(dStats);
     setComps(cData);
+    setModeWinrates(mWr);
 
     const statsMap: Record<string, any> = {};
     await Promise.all(mData.map(async (map) => {
@@ -142,7 +145,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
             {/* Winrate Progress Bar */}
             <div className="w-full h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full relative"
+                className="h-full bg-emerald-500 rounded-full relative"
                 style={{ width: `${globalWinrate}%` }}
               >
                  <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/60 blur-[1px] rounded-full" />
@@ -152,7 +155,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
           
           {!isPlayerMode && (
             <button 
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => { setEditingMap(undefined); setIsAddModalOpen(true); }}
               className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm h-full"
             >
               <Plus className="w-4 h-4" />
@@ -172,7 +175,16 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
                 type="text" 
                 placeholder="Buscar mapa..." 
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={e => {
+                  const query = e.target.value;
+                  setSearchQuery(query);
+                  if (query.length > 1) {
+                    const foundMap = maps.find(m => m.name.toLowerCase().includes(query.toLowerCase()) && m.isActive === viewActive);
+                    if (foundMap && foundMap.mode !== activeMode) {
+                      setActiveMode(foundMap.mode);
+                    }
+                  }
+                }}
                 className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg pl-9 pr-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366] transition-colors"
               />
             </div>
@@ -200,7 +212,23 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
         <div className="flex-1 p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{activeMode}</h3>
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                {activeMode}
+                <span className={cn(
+                  "text-sm font-black px-2 py-0.5 rounded-full",
+                  (() => {
+                    const modeWrData = modeWinrates.find(m => m.name === activeMode);
+                    const modeWr = modeWrData?.winrate !== undefined ? modeWrData.winrate : (modeWrData?.value || 0);
+                    return modeWr >= 60 ? "bg-emerald-500/10 text-emerald-500" : modeWr >= 40 ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500";
+                  })()
+                )}>
+                  {(() => {
+                    const modeWrData = modeWinrates.find(m => m.name === activeMode);
+                    const modeWr = modeWrData?.winrate !== undefined ? modeWrData.winrate : (modeWrData?.value || 0);
+                    return `${modeWr}% WR`;
+                  })()}
+                </span>
+              </h3>
               <span className="text-sm font-medium text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
                 {filteredMaps.length} Mapas {viewActive ? 'Ativos' : 'Arquivados'}
               </span>
@@ -233,32 +261,14 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
               <span className="text-slate-500 font-medium text-sm">Carregando mapas...</span>
             </div>
           ) : filteredMaps.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredMaps.map(map => (
                 <div 
                   key={map.id} 
                   onClick={() => setSelectedMap(map)}
-                  className="bg-white dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden hover:border-[#FF3366]/50 dark:hover:border-[#FF3366]/50 transition-colors cursor-pointer group flex relative"
+                  className="bg-white dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl hover:border-[#FF3366]/50 dark:hover:border-[#FF3366]/50 transition-colors cursor-pointer group flex flex-col relative shadow-sm"
                 >
-                  {!isPlayerMode && (
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setEditingMap(map); setIsAddModalOpen(true); }}
-                        className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-blue-500 transition-colors shadow-sm"
-                        title="Editar Mapa"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={(e) => toggleMapStatus(map.id, e)}
-                        className="p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 hover:text-[#FF3366] transition-colors shadow-sm"
-                        title={map.isActive ? "Arquivar Mapa" : "Desarquivar Mapa"}
-                      >
-                        {map.isActive ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  )}
-                  <div className="w-32 min-h-[120px] bg-zinc-200 dark:bg-zinc-800 flex-shrink-0 relative overflow-hidden">
+                  <div className="w-full aspect-[4/5] sm:aspect-square bg-zinc-200 dark:bg-zinc-800 flex-shrink-0 relative overflow-hidden rounded-t-xl border-b border-zinc-100 dark:border-zinc-800">
                     {map.imageUrl ? (
                       <img src={map.imageUrl} alt={map.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
@@ -266,28 +276,93 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
                          <MapIcon className="w-12 h-12 text-zinc-500" />
                       </div>
                     )}
+                    {/* Mode pill positioned over image to save space */}
+                    <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
+                       <span className={cn(
+                          "text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded border shadow-sm backdrop-blur-md",
+                          map.mode === 'Pique-Gema' ? 'bg-purple-500/80 text-white border-purple-400' :
+                          map.mode === 'Fute-Brawl' ? 'bg-blue-500/80 text-white border-blue-400' :
+                          map.mode === 'Combate' ? 'bg-emerald-500/80 text-white border-emerald-400' :
+                          'bg-zinc-800/80 text-white border-zinc-600'
+                        )}>
+                          {map.mode}
+                       </span>
+                    </div>
                   </div>
-                  <div className="p-4 flex-1 flex flex-col justify-center">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-bold text-zinc-900 dark:text-white leading-tight">{map.name}</h4>
-                      <span className={cn(
-                        "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border",
-                        map.terrain === 'Aberto' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
-                        map.terrain === 'Fechado' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
-                        'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                      )}>
-                        {map.terrain}
-                      </span>
+                  <div className="p-3 sm:p-4 flex-1 flex flex-col justify-start w-full min-w-0">
+                    <div className="flex items-start justify-between mb-3 gap-2 w-full min-w-0">
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <h4 className="font-bold text-zinc-900 dark:text-white leading-tight truncate" title={map.name}>{map.name}</h4>
+                        <div className="relative group/tooltip w-fit">
+                          <button type="button" className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-200">
+                            Terreno: {map.terrain || 'Misto'}
+                            <Info className="w-3 h-3 flex-shrink-0" />
+                          </button>
+                          <div className="absolute bottom-full left-0 mb-2 w-[220px] sm:w-[250px] p-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs rounded-xl shadow-xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible group-active/tooltip:opacity-100 group-active/tooltip:visible transition-all z-[100] font-medium pointer-events-none">
+                            <span className="font-bold border-b border-zinc-700 dark:border-zinc-300 pb-1.5 mb-1.5 block uppercase text-[10px] tracking-wider text-emerald-400 dark:text-emerald-500">
+                              Terreno: {map.terrain || 'Misto'}
+                            </span>
+                            <span className="block break-words whitespace-pre-wrap">
+                              {map.terrain === 'Aberto' && 'Mapas abertos favorecem composições de longo alcance (Snipers) e controle de visão.'}
+                              {map.terrain === 'Semi-Aberto' && 'Equilíbrio entre rotas de flanco e controle central. Requer composições versáteis.'}
+                              {map.terrain === 'Fechado' && 'Mapas fechados favorecem tanques, assassinos e brawlers de alto dano a curta distância.'}
+                              {map.terrain === 'Misto' && 'Zonas abertas e fechadas. Exige brawlers que dominem áreas específicas do mapa.'}
+                              {!['Aberto', 'Semi-Aberto', 'Fechado', 'Misto'].includes(map.terrain) && 'Terreno não especificado corretamente.'}
+                            </span>
+                            <div className="absolute -bottom-1.5 left-4 w-3 h-3 bg-zinc-900 dark:bg-zinc-100 rotate-45" />
+                          </div>
+                        </div>
+                      </div>
+                      {!isPlayerMode && (
+                        <div className="flex flex-col gap-1 shadow-sm rounded-lg overflow-hidden bg-zinc-50 dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] p-1 flex-shrink-0">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setEditingMap(map); setIsAddModalOpen(true); }}
+                            className="p-1.5 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                            title="Editar Mapa"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={(e) => toggleMapStatus(map.id, e)}
+                            className="p-1.5 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-[#FF3366] hover:bg-[#FF3366]/10 dark:hover:bg-[#FF3366]/10 transition-colors"
+                            title={map.isActive ? "Arquivar Mapa" : "Desarquivar Mapa"}
+                          >
+                            {map.isActive ? <Archive className="w-3.5 h-3.5" /> : <ArchiveRestore className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-                      <div className="flex items-center gap-1">
-                        <Flame className="w-3.5 h-3.5 text-orange-500" />
-                        <span>Winrate: {(mapStatsMap[map.id]?.totalMatches || 0) > 0 ? `${mapStatsMap[map.id]?.winrate}%` : '0%'}</span>
+                    <div className="flex flex-col gap-2 mt-auto pt-3 border-t border-zinc-100 dark:border-zinc-800/50">
+                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="flex items-center gap-1 font-medium">
+                          <Crosshair className="w-3.5 h-3.5 text-blue-500" />
+                          <span>{mapStatsMap[map.id]?.totalMatches || 0} Jogos</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className={cn(
+                            "font-black px-1.5 py-0.5 rounded text-[10px]",
+                            (() => {
+                              const matches = mapStatsMap[map.id]?.totalMatches || 0;
+                              const wr = mapStatsMap[map.id]?.winrate || 0;
+                              if (matches === 0) return "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400";
+                              if (wr >= 60) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+                              if (wr >= 40) return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
+                              return "bg-red-500/10 text-red-600 dark:text-red-400";
+                            })()
+                          )}>
+                            {(mapStatsMap[map.id]?.totalMatches || 0) > 0 ? `${mapStatsMap[map.id]?.winrate}% WR` : '0% WR'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Crosshair className="w-3.5 h-3.5 text-blue-500" />
-                        <span>{mapStatsMap[map.id]?.totalMatches || 0} Partidas</span>
+                      <div className="w-full h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            (mapStatsMap[map.id]?.winrate || 0) >= 60 ? "bg-emerald-500" : (mapStatsMap[map.id]?.winrate || 0) >= 40 ? "bg-amber-500" : "bg-red-500"
+                          )}
+                          style={{ width: `${(mapStatsMap[map.id]?.totalMatches || 0) > 0 ? mapStatsMap[map.id]?.winrate : 0}%` }}
+                        />
                       </div>
                     </div>
                   </div>

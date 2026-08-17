@@ -47,12 +47,24 @@ alter table brawlers disable row level security;
 alter table maps disable row level security;
 alter table players disable row level security;
 
--- 4. TABELA DE PARTIDAS (SCRIMS)
+-- 4. TABELA DE SESSÕES DE TREINO (SCRIMS)
+create table if not exists training_sessions (
+  id uuid primary key default gen_random_uuid(),
+  start_date timestamp without time zone not null default now(),
+  end_date timestamp without time zone,
+  notes text,
+  opponent_name text
+);
+
+alter table training_sessions disable row level security;
+
+-- 5. TABELA DE PARTIDAS (SCRIMS)
 -- ATENÇÃO: os valores aceitos pelo banco são em PORTUGUÊS.
 -- O código interno usa 'victory'/'defeat' e 'tbk'/'enemy' —
 -- a conversão é feita pelas funções toDbResult/toDbTeam em src/lib/utils.ts.
 create table if not exists matches (
   id uuid primary key default gen_random_uuid(),
+  session_id uuid references training_sessions(id) on delete set null,
   match_date timestamp without time zone not null default now(),
   map_id text,
   result text not null,
@@ -61,7 +73,9 @@ create table if not exists matches (
   constraint matches_result_check check (result = any (array['vitoria'::text, 'derrota'::text]))
 );
 
--- 5. TABELA DE PICKS POR PARTIDA
+create index if not exists idx_matches_session_id on matches(session_id);
+
+-- 6. TABELA DE PICKS POR PARTIDA
 create table if not exists match_picks (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null,
@@ -71,7 +85,7 @@ create table if not exists match_picks (
   constraint match_picks_team_check check (team = any (array['nos'::text, 'inimigo'::text]))
 );
 
--- 6. TABELA DE BANIMENTOS POR PARTIDA
+-- 7. TABELA DE BANIMENTOS POR PARTIDA
 create table if not exists match_bans (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null,
@@ -85,7 +99,7 @@ alter table matches disable row level security;
 alter table match_picks disable row level security;
 alter table match_bans disable row level security;
 
--- 7. TABELA DE COMPOSIÇÕES META POR MAPA
+-- 8. TABELA DE COMPOSIÇÕES META POR MAPA
 -- Armazena composições cadastradas manualmente (via "Nova Comp") e
 -- composições salvas automaticamente como meta do mapa (via "Salvar como Meta do Mapa").
 -- O campo is_meta=true identifica as composições geradas pelo draft.
@@ -101,4 +115,12 @@ create table if not exists compositions (
   created_at timestamp without time zone default now()
 );
 
-alter table compositions disable row level security;
+-- 10. TABELA DE ÚLTIMO BACKUP SALVO NO BANCO
+create table if not exists latest_backup (
+  id text primary key default 'latest',
+  payload jsonb not null,
+  saved_at timestamp without time zone default now()
+);
+
+alter table latest_backup disable row level security;
+

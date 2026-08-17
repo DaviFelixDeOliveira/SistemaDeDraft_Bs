@@ -97,7 +97,8 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
         } else {
           const remaining = MAX_ATTEMPTS - newAttempts;
           setError(
-            `Código de acesso inválido. Tente novamente.${remaining === 1 ? ' (Última tentativa antes do bloqueio)' : ''
+            `Código de acesso inválido. Tente novamente.${
+              remaining === 1 ? ' (Última tentativa antes do bloqueio)' : ''
             }`
           );
           setTimeout(() => inputRef.current?.focus(), 50);
@@ -131,7 +132,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
           <div className="px-8 pt-8 pb-6 text-center border-b border-white/[0.05]">
             <div className="flex justify-center mb-5">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-[#FF3366] to-[#cc0033] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,51,102,0.35)]">
+                <div className="w-16 h-16 bg-[#FF3366] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,51,102,0.35)]">
                   <Swords className="w-8 h-8 text-white" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#111111] rounded-full flex items-center justify-center border border-white/10">
@@ -204,8 +205,8 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
                 isLockedOut || !code.trim()
                   ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
                   : isLoading
-                    ? 'bg-white/10 text-white/50 cursor-wait border border-white/10'
-                    : 'bg-white hover:bg-[#FF3366] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(255,51,102,0.3)]'
+                  ? 'bg-white/10 text-white/50 cursor-wait border border-white/10'
+                  : 'bg-white hover:bg-[#FF3366] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(255,51,102,0.3)]'
               )}
             >
               {isLoading ? 'Verificando...' : 'Entrar'}

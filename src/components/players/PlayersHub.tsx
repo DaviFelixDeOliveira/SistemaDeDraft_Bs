@@ -132,7 +132,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
             <button
               onClick={() => setViewActive(true)}
               className={cn(
-                "px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors",
                 viewActive ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
@@ -141,7 +141,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
             <button
               onClick={() => setViewActive(false)}
               className={cn(
-                "px-4 py-1.5 rounded-md text-sm font-medium transition-colors",
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors",
                 !viewActive ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               )}
             >
@@ -173,7 +173,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                 onClick={() => setSelectedPlayer(player)}
               >
                 {!isPlayerMode && (
-                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); }}
                       className="text-zinc-400 hover:text-blue-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
@@ -182,26 +182,27 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button 
-                      onClick={(e) => togglePlayerStatus(player.id, e)}
-                      className="text-zinc-400 hover:text-[#FF3366] transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
-                      title={player.isActive !== false ? "Arquivar Jogador" : "Desarquivar Jogador"}
+                      onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id, player.nickname); }}
+                      className="text-zinc-400 hover:text-red-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
+                      title="Excluir Jogador"
                     >
-                      {player.isActive !== false ? <Archive className="w-4 h-4" /> : <ArchiveRestore className="w-4 h-4" />}
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 )}
                 
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1 pr-16">
+                  <div className="flex items-center gap-2">
                     <h3 className="text-xl font-bold text-zinc-900 dark:text-white leading-tight">{player.nickname}</h3>
-                    <span className={cn(
-                      "text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider",
-                      player.status === 'Titular' 
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
-                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
-                    )}>
-                      {player.status || 'Reserva'}
-                    </span>
+                    {!isPlayerMode && (
+                      <button 
+                        onClick={(e) => togglePlayerStatus(player.id, e)}
+                        className="text-zinc-400 hover:text-amber-500 transition-colors p-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-sm" 
+                        title={player.isActive !== false ? "Arquivar Jogador" : "Desarquivar Jogador"}
+                      >
+                        {player.isActive !== false ? <Archive className="w-3.5 h-3.5" /> : <ArchiveRestore className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
                   </div>
                   {player.tags && player.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
@@ -247,22 +248,6 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                     <Award className="w-4 h-4 text-[#FFCC00]" />
                     Comfort Picks
                   </h4>
-                  {!isPlayerMode && (
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onClick={() => setEditingPlayer(player)}
-                        className="text-xs text-blue-500 hover:underline font-medium flex items-center gap-1"
-                      >
-                        <Edit2 className="w-3 h-3" /> Editar
-                      </button>
-                      <button 
-                        onClick={() => handleDeletePlayer(player.id, player.nickname)}
-                        className="text-xs text-red-500 hover:underline font-medium flex items-center gap-1"
-                      >
-                        <Trash2 className="w-3 h-3" /> Excluir
-                      </button>
-                    </div>
-                  )}
                 </div>
                 
                 {comfortBrawlers.length > 0 ? (
@@ -282,12 +267,22 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                   </div>
                 )}
 
-                <div className="mt-auto pt-4 flex flex-wrap gap-2 cursor-pointer" onClick={() => setSelectedPlayer(player)}>
-                  {player.tags?.map((tag, idx) => (
-                    <span key={idx} className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-[#FFCC00]/10 text-amber-600 dark:text-[#FFCC00] border border-[#FFCC00]/20">
-                      {tag}
-                    </span>
-                  ))}
+                <div className="mt-auto pt-4 flex items-center justify-between cursor-pointer" onClick={() => setSelectedPlayer(player)}>
+                  <div className="flex flex-wrap gap-2">
+                    {player.tags?.map((tag, idx) => (
+                      <span key={idx} className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-[#FFCC00]/10 text-amber-600 dark:text-[#FFCC00] border border-[#FFCC00]/20">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <span className={cn(
+                    "text-[10px] px-2 py-1 rounded-full border font-bold uppercase tracking-wider shrink-0",
+                    player.status === 'Titular' 
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
+                  )}>
+                    {player.status || 'Reserva'}
+                  </span>
                 </div>
               </div>
             </div>

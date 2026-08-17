@@ -4,6 +4,7 @@ import { toDbResult, fromDbResult, toDbTeam, fromDbTeam } from '../lib/utils';
 import { brawlerService } from './brawlerService';
 import { mapService } from './mapService';
 import { playerService } from './playerService';
+import { sessionService } from './sessionService';
 
 // Armazenamento local de fallback caso o Supabase não responda
 const LOCAL_STORAGE_MATCHES_KEY = 'tbk_hub_matches';
@@ -29,18 +30,25 @@ function setLocalData<T>(key: string, data: T[]): void {
 
 export const analyticsService = {
   /**
-   * Grava uma nova partida no banco de dados (matches, match_picks, match_bans)
+   * Grava uma nova partida no banco de dados (matches, match_picks, match_bans).
+   * Vincula automaticamente à sessão de treino ativa, se houver.
+   * Se não houver treino ativo, session_id fica null (partida avulsa).
    */
   recordScrim: async (data: MatchRecordData): Promise<Match> => {
     const matchId = crypto.randomUUID();
     const matchDate = new Date().toISOString();
 
+    // Detecta sessão de treino ativa para vincular a partida
+    const activeSession = sessionService.getActiveSession();
+    const sessionId = data.sessionId !== undefined ? data.sessionId : (activeSession?.id || null);
+
     const matchRow: Match = {
       id: matchId,
+      session_id: sessionId,
       match_date: matchDate,
       map_id: data.mapId,
       result: data.result,
-      opponent_name: data.opponentName || 'Inimigo',
+      opponent_name: data.opponentName || (activeSession?.opponent_name) || 'Inimigo',
       notes: data.notes || ''
     };
 
@@ -208,6 +216,7 @@ export const analyticsService = {
       const enemyBans = bBans.filter(bn => bn.team === 'enemy');
 
       const tbkPicks = bPicks.filter(p => p.team === 'tbk');
+      const enemyPicksCount = bPicks.filter(p => p.team === 'enemy').length;
       let wins = 0;
       tbkPicks.forEach(p => {
         const match = matchesMap.get(p.match_id);
@@ -230,6 +239,9 @@ export const analyticsService = {
         tbkBan: tbkBans.length,  // apenas nossos bans
         enemyBan: enemyBans.length, // apenas bans do inimigo
         tbkPickCount: tbkPicks.length,
+        enemyPickCount: enemyPicksCount,
+        tbkWins: wins,
+        tbkLosses: tbkPicks.length - wins,
         winrate
       };
     });
@@ -307,15 +319,19 @@ export const analyticsService = {
       }
     });
 
-    const comfortStats = Object.entries(playerPicksCount).map(([pId, data]) => {
-      const player = players.find(p => p.id === pId);
-      const wr = data.total > 0 ? Math.round((data.wins / data.total) * 100) : 0;
-      return {
-        playerName: player?.nickname || player?.name || 'Atleta',
-        matches: data.total,
-        winrate: wr
-      };
-    }).sort((a, b) => b.matches - a.matches);
+    // Players who marked as comfort pick
+    const comfortStats = players
+      .filter(p => p.comfortBrawlers && p.comfortBrawlers.includes(brawlerId))
+      .map(p => {
+        const data = playerPicksCount[p.id] || { total: 0, wins: 0 };
+        const wr = data.total > 0 ? Math.round((data.wins / data.total) * 100) : 0;
+        return {
+          playerName: p.nickname || p.name || 'Atleta',
+          matches: data.total,
+          winrate: wr,
+          isComfort: true
+        };
+      }).sort((a, b) => b.matches - a.matches);
 
     // Sinergias (Melhores Parceiros TBK)
     const partnerCounts: Record<string, number> = {};
@@ -627,6 +643,8 @@ export const analyticsService = {
     return Object.entries(modeStats).map(([mode, data]) => ({
       name: mode,
       value: data.total,
+      total: data.total,
+      wins: data.wins,
       winrate: data.total > 0 ? Math.round((data.wins / data.total) * 100) : 0,
       color: modeColors[mode] || '#6B7280'
     }));
@@ -636,22 +654,58 @@ export const analyticsService = {
    * Retorna desempenho real por mapa (vitórias, derrotas, winrate)
    * Usada pelo Dashboard no bloco "Desempenho por Modo"
    */
+
+  getMapRotationAlerts: async (daysThreshold = 10) => {
+    const matches = await analyticsService.getAllMatches();
+    const maps = await mapService.getMaps();
+    const alerts: { map: any, daysSince: number, lastPlayed: Date | null }[] = [];
+    const now = new Date();
+
+    const lastPlayedMap = new Map<string, Date>();
+    matches.forEach(m => {
+      const date = new Date(m.match_date);
+      const current = lastPlayedMap.get(m.map_id);
+      if (!current || date > current) {
+        lastPlayedMap.set(m.map_id, date);
+      }
+    });
+
+    maps.forEach(map => {
+      // Ignore if map is not active (if map has an active flag, assuming all are active for now)
+      const lastPlayed = lastPlayedMap.get(map.id);
+
+      if (lastPlayed) {
+        const diffTime = Math.abs(now.getTime() - lastPlayed.getTime());
+        const daysSince = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (daysSince >= daysThreshold) {
+          alerts.push({
+            map,
+            daysSince,
+            lastPlayed: lastPlayed
+          });
+        }
+      }
+    });
+
+    return alerts.sort((a, b) => b.daysSince - a.daysSince);
+  },
+
   getMapPerformance: async () => {
     const [matches, maps] = await Promise.all([
       analyticsService.getAllMatches(),
       mapService.getMaps()
     ]);
 
-    const mapsMap = new Map<string, GameMap>(maps.map(m => [m.id, m]));
-
     const mapStats: Record<string, { map: GameMap; wins: number; total: number }> = {};
 
+    // Inicializa todos os mapas com 0 partidas
+    maps.forEach(map => {
+      mapStats[map.id] = { map, wins: 0, total: 0 };
+    });
+
     matches.forEach(match => {
-      const gameMap = mapsMap.get(match.map_id);
-      if (gameMap) {
-        if (!mapStats[match.map_id]) {
-          mapStats[match.map_id] = { map: gameMap, wins: 0, total: 0 };
-        }
+      if (mapStats[match.map_id]) {
         mapStats[match.map_id].total++;
         if (match.result === 'victory') mapStats[match.map_id].wins++;
       }
@@ -663,7 +717,10 @@ export const analyticsService = {
       total,
       losses: total - wins,
       winrate: total > 0 ? Math.round((wins / total) * 100) : 0
-    }));
+    })).sort((a, b) => {
+      if (b.total !== a.total) return b.total - a.total;
+      return b.winrate - a.winrate;
+    });
   },
 
   /**
@@ -677,7 +734,7 @@ export const analyticsService = {
 
     // Agrupar partidas por data (ou semana simples)
     const sorted = [...matches].sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
-    
+
     // Divide em até 6 grupos para gerar a curva temporal real
     const total = sorted.length;
     const chunkSize = Math.max(1, Math.ceil(total / 6));
@@ -753,5 +810,23 @@ export const analyticsService = {
         };
       })
       .sort((a, b) => b.matches - a.matches);
+  },
+
+  deleteAllMatches: async (): Promise<void> => {
+    if (supabase) {
+      try {
+        await supabase.from('match_bans').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('match_picks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } catch (e) {
+        console.error('Erro ao deletar matches no Supabase', e);
+      }
+    }
+    localStorage.removeItem(LOCAL_STORAGE_MATCHES_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_PICKS_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_BANS_KEY);
+
+    // Also remove the old tbk_matches hack key
+    localStorage.removeItem('tbk_matches');
   },
 };

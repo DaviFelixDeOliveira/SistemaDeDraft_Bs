@@ -1,3 +1,4 @@
+import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from "../BrawlerFilters";
 import { getBrawlerBgColor } from "../../lib/utils";
 import React from "react";
 import { X } from 'lucide-react';
@@ -52,6 +53,8 @@ interface DetailsModalProps {
 
 export function DetailsModal({ player, isOpen, onClose, stats }: DetailsModalProps) {
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
+  const [showWinrateDetails, setShowWinrateDetails] = useState(false);
+  const brawlerFilters = useBrawlerFilters();
   const [brawlerStats, setBrawlerStats] = useState<Array<{
     brawlerId: string;
     brawlerName: string;
@@ -209,6 +212,7 @@ interface EditModalProps {
 }
 
 export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
+  const brawlerFilters = useBrawlerFilters();
   const [formData, setFormData] = useState<Partial<Player>>({
     name: "",
     nickname: "",
@@ -263,14 +267,25 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
     }
   };
 
+  const handleTagInput = (val: string) => {
+    val = val.trim();
+    if (val && !(formData.tags || []).includes(val.toUpperCase())) {
+      setFormData(prev => ({ ...prev, tags: [...(prev.tags || []), val.toUpperCase()] }));
+    }
+  };
+
   const addTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const val = e.currentTarget.value.trim();
-      if (val && !(formData.tags || []).includes(val)) {
-        setFormData({ ...formData, tags: [...(formData.tags || []), val.toUpperCase()] });
-      }
+      handleTagInput(e.currentTarget.value);
       e.currentTarget.value = '';
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value.trim()) {
+      handleTagInput(e.target.value);
+      e.target.value = '';
     }
   };
 
@@ -333,6 +348,7 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                 <input 
                   type="text" 
                   onKeyDown={addTag}
+                  onBlur={handleBlur}
                   placeholder="Ex: POCKET PICK"
                   className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#FFCC00] transition-colors mb-2"
                 />
@@ -353,26 +369,22 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                 <span className="text-xs font-normal text-zinc-500">{(formData.comfortBrawlers || []).length}</span>
               </label>
               <div className="mb-2">
-                <input
-                  type="text"
-                  placeholder="Buscar brawler (pressione Enter p/ adicionar)..."
-                  value={brawlerSearch}
-                  onChange={(e) => setBrawlerSearch(e.target.value)}
+                <BrawlerFilterBar 
+                  filters={brawlerFilters} 
+                  compact
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       if (filteredComfortBrawlers.length > 0) {
                         const target = filteredComfortBrawlers[0];
                         toggleBrawler(target.id);
-                        setBrawlerSearch('');
                       }
                     }
                   }}
-                  className="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg focus:outline-none focus:border-[#FF3366] text-zinc-900 dark:text-white"
                 />
               </div>
               <div className="flex-1 bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-3 overflow-y-auto max-h-[300px]">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2">
                    {filteredComfortBrawlers.map(b => {
                      const isSelected = (formData.comfortBrawlers || []).includes(b.id);
                      return (
@@ -405,13 +417,13 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
              <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2.5 rounded-lg font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="px-6 py-3 rounded-lg font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-lg font-bold bg-[#FF3366] hover:bg-[#E62E5C] text-white transition-colors"
+                className="px-6 py-3 rounded-lg font-bold bg-[#FF3366] hover:bg-[#E62E5C] text-white transition-colors"
               >
                 {isEditing ? 'Salvar Alterações' : 'Adicionar Jogador'}
               </button>
