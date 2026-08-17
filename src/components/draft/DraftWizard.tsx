@@ -63,31 +63,34 @@ export function DraftWizard() {
     }
   });
 
-  
   const latestDraftState = useRef(draftState);
+  const latestStep = useRef(step);
   useEffect(() => {
     latestDraftState.current = draftState;
-  }, [draftState]);
+    latestStep.current = step;
+  }, [draftState, step]);
 
   // Track state changes to push to history
   const setDraftStateWithHistory = useCallback((value: React.SetStateAction<DraftState>) => {
     const prev = latestDraftState.current;
+    const currentStepVal = latestStep.current;
     const nextState = typeof value === 'function' ? (value as Function)(prev) : value;
     
     if (JSON.stringify(prev) !== JSON.stringify(nextState)) {
       setDraftHistory(h => {
-        const newHistory = [...h, { state: prev, step }];
-        localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
+        const newHistory = [...h.slice(-29), { state: prev, step: currentStepVal }];
+        try {
+          localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
+        } catch (e) {
+          console.warn('Erro ao salvar histórico do draft:', e);
+        }
         return newHistory;
       });
-      window.history.pushState({ isDraftUndo: true }, '');
       setDraftState(nextState);
     }
-  }, [step]);
+  }, []);
 
-  
-  // Custom undo action
-
+  // Custom undo action instantânea e granular
   const performUndo = useCallback(() => {
     setDraftHistory(prevHistory => {
       if (prevHistory.length === 0) return prevHistory;
@@ -97,44 +100,38 @@ export function DraftWizard() {
       if (last) {
         setDraftState(last.state);
         setStep(last.step);
-        localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
+        try {
+          localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
+        } catch (e) {
+          console.warn('Erro ao atualizar histórico após undo:', e);
+        }
       }
       return newHistory;
     });
   }, []);
 
-  // Custom undo action triggered by UI or Ctrl+Z
   const handleUndo = useCallback(() => {
-    setDraftHistory(prevHistory => {
-      if (prevHistory.length > 0) {
-        // Trigger browser back, which will fire popstate and call performUndo
-        window.history.back();
-      }
-      return prevHistory;
-    });
-  }, []);
+    performUndo();
+  }, [performUndo]);
 
-  // Sync with mobile back button
-  useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      if (e.state && e.state.isDraftUndo) {
-        // This is theoretically not possible because if they pop, the state is gone.
-        // Actually, if they press back, the current state becomes the PREVIOUS state.
-        // So we just pop our draft history.
-      }
-      performUndo();
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [handleUndo]);
-
-  // Global Ctrl+Z listener
+  // Global Keydown listener: Ctrl+Z para desfazer, ESC para fechar modais
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        // Prevent default only if we have something to undo (and not typing in an input unless we want to override it)
+      // Tecla ESC fecha modais abertos
+      if (e.key === 'Escape') {
+        if (confirmResetOpen) {
+          e.preventDefault();
+          setConfirmResetOpen(false);
+          return;
+        }
+      }
+
+      // Atalho Ctrl+Z / Cmd+Z
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        // Ignora se estiver digitando em campo de texto ou se modal estiver aberto
+        if (confirmResetOpen) return;
         if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-          return; // Allow native undo in inputs
+          return; // Mantém undo nativo dos inputs
         }
         e.preventDefault();
         handleUndo();
@@ -142,7 +139,7 @@ export function DraftWizard() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleUndo]);
+  }, [handleUndo, confirmResetOpen]);
 
 
   // Persiste draftState e step no localStorage a cada alteração (Item 2)
@@ -160,9 +157,12 @@ export function DraftWizard() {
       setIsLoading(true);
       setTimeout(() => {
         setDraftHistory(h => {
-          const newHistory = [...h, { state: draftState, step }];
-          localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
-          window.history.pushState({ isDraftUndo: true }, '');
+          const newHistory = [...h.slice(-29), { state: draftState, step }];
+          try {
+            localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
+          } catch (e) {
+            console.warn('Erro ao salvar histórico do draft:', e);
+          }
           return newHistory;
         });
         setStep((s) => (s + 1) as 1 | 2 | 3);
@@ -174,10 +174,13 @@ export function DraftWizard() {
   const handlePrevStep = () => {
     if (step > 1) {
       setDraftHistory(h => {
-        const newHistory = [...h, { state: draftState, step }];
-        localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
-          window.history.pushState({ isDraftUndo: true }, '');
-          return newHistory;
+        const newHistory = [...h.slice(-29), { state: draftState, step }];
+        try {
+          localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
+        } catch (e) {
+          console.warn('Erro ao salvar histórico do draft:', e);
+        }
+        return newHistory;
       });
       setStep((s) => (s - 1) as 1 | 2 | 3);
     }
@@ -186,10 +189,13 @@ export function DraftWizard() {
   // Item 4: Limpar campos do draft de uma só vez
   const resetDraft = () => {
     setDraftHistory(h => {
-      const newHistory = [...h, { state: draftState, step }];
-      localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
-          window.history.pushState({ isDraftUndo: true }, '');
-          return newHistory;
+      const newHistory = [...h.slice(-29), { state: draftState, step }];
+      try {
+        localStorage.setItem(DRAFT_HISTORY_KEY, JSON.stringify(newHistory));
+      } catch (e) {
+        console.warn('Erro ao salvar histórico do draft:', e);
+      }
+      return newHistory;
     });
     setDraftState({
       mapId: '',
