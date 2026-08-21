@@ -104,6 +104,10 @@ Backlog de melhorias ordenado da **mais necessária** para a **menos necessária
 - [ ] **20. Busca Global de Mapa com Troca Automática de Modo**
   O filtro de buscar mapa deve funcionar para todos os mapas na tela de mapas e modos, não só para o modo selecionado. Exemplo: se procurar "Mina Rochosa" (mapa de Pique-Gema) mas estiver no modo Nocaute, o sistema deve mostrar o mapa "Mina Rochosa" e mudar automaticamente para o modo Pique-Gema.
 
+- [ ] **21. Adicionar função de editar partidas**
+  Implementar uma nova tela ou adicionar essa função numa tela existente, onde ficam o histórico de partidas que jogamos (mesmo que estejam agrupadas ou nao em treinos, mostra as partidas individuais) com registro de qual player fez cada brawler, bans, picks e mapas, modo e dia do treino. A partir disso o usuário poderá editar qualquer coisa que quiser na partida, como por exemplo, adicionar um brawler que faltou adicionar, retirar um que foi adicionado por engano, trocar a ordem dos jogadores, etc. e ao fazer isso, atualizar o histórico de partidas, de treinos e as winrates, bans, picks e etc.
+- [ ] **22. Adicionar função de player complete**
+  No caso de em algum treino um dos jogadores não puderem participar, será possível registrar um "jogador complete", um jogador que não é do time mas que ajudou a completar nossa equipe para concluir o treino. Também existe o caso de estarmos testando um jogador para decidirmos se chamamos pra equipe ou não, então poderemos marcar um jogador como "Teste", e ao fazer isso, ao mostrar o histórico de partidas e treinos, esse jogador será exibido em uma cor diferente, com uma label "Complete" ou "Teste" abaixo do nome. 
 ---
 
 ##  FASE 2: Média Prioridade
@@ -141,6 +145,15 @@ Backlog de melhorias ordenado da **mais necessária** para a **menos necessária
 
 - [ ] **23. Interface de Seleção em Massa por Mapa (Edição em Lote)**
   Na tela de edição do Mapa, criar uma grade/lista interativa para permitir ao usuário marcar ou desmarcar múltiplos brawlers de uma só vez como "Recomendados (Bons)" ou "Não Recomendados (Ruins)", sem precisar abrir modal item por item.
+
+- [ ] **24. Adicionar função de compartilhar resultado de treinos**
+  Adicionar um botão de compartilhar aquele treino na tela de histórico, onde, quando eu clico, o sistema pede para selecionar o tipo de arquivo a ser compartilhado, aí compartilha o documento seja em imagem ou pdf, no formato mobile e web.
+
+- [ ] **25. Adicionar função de compartilhar ou baixar arquivo de dados da Dashboard**
+  Adicionar um botão na tela de dashboard que, quando clicado, gera um arquivo de imagem e/ou pdf para compartilhar alguma informação desejada
+  Exemplo: Brawlers mais escolhidos da semana.
+  Quando eu seleciono esse dado, gera um arquivo contendo essa informação
+  
 
 ---
 
@@ -184,3 +197,8 @@ Backlog de melhorias ordenado da **mais necessária** para a **menos necessária
     3. Jogadores escalados da nossa equipe (puxando os perfis cadastrados no sistema).
     4. Placar Geral (ex: `TBK 5 x 2 Rival · 71% WR`).
     5. Lista visual de partidas jogadas com: Mapa/Modo selecionado, Brawlers banidos por cada lado, e Composições escolhidas (3 Brawlers de cada time com os nomesdos atletas).
+
+- [ ] **22. Criar uma landing page de apresentação do projeto"**
+
+Criar uma landing page de apresentação do projeto, com informações sobre o projeto, como funciona, como usar, etc. Algo bem bonito e chamativo, com prints das telas, explicações do algoritmos, das funções do sistema e etc, para quando o sistema estiver pronto e disponível para venda, ou até mesmo para divulgar o projeto.
+  

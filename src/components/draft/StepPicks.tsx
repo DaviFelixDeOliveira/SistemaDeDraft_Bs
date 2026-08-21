@@ -234,6 +234,24 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         score += 250;
       }
 
+      // 4.1 Matchup Híbrido com Curadoria Manual (Ele Countera vs Sofre Para)
+      // Identifica quais picks do time inimigo este brawler countera ou sofre para
+      const activeEnemyCountersList: string[] = []; // Inimigos que ele countera
+      const activeEnemySufferingList: string[] = []; // Inimigos para os quais ele sofre
+
+      enemyBrawlers.forEach(enemy => {
+        // Verifica se o nosso brawler tem esse inimigo na lista 'counters' (ou se o inimigo tem o nosso na lista 'counteredBy')
+        if (brawler.counters?.includes(enemy.id) || enemy.counteredBy?.includes(brawler.id)) {
+          activeEnemyCountersList.push(enemy.name);
+          score += 350; // Bônus por ter vantagem estratégica sobre o pick inimigo
+        }
+        // Verifica se o nosso brawler sofre para esse inimigo
+        if (brawler.counteredBy?.includes(enemy.id) || enemy.counters?.includes(brawler.id)) {
+          activeEnemySufferingList.push(enemy.name);
+          score -= 300; // Penalidade ponderada, mas NUNCA esconde o brawler
+        }
+      });
+
       // Sinergia com picks do time TBK
       if (tbkBrawlers.length > 0) {
         const hasTank = tbkBrawlers.some(b => b.type.includes('Tanque'));
@@ -265,12 +283,10 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         }
       }
 
-      // 6. Penalidade de Matchup Específico (1.3)
-      // Aplica penalidade se o brawler tem ameaças históricas já no time inimigo
+      // 6. Penalidade de Matchup Específico Histórico (1.3)
       score += computeMatchupPenalty(brawler.id, enemyTeamIds, threatsCache);
 
       // 7. Aviso Preditivo de Counter-Threat (1.4 — não afeta score)
-      // Verifica se as ameaças históricas deste brawler ainda estão disponíveis para o inimigo
       let counterThreatWarning: string | undefined;
       const brawlerThreats = threatsCache.get(brawler.id) ?? [];
       const availableThreats = brawlerThreats.filter(t => !allUsedIds.has(t.brawlerId));
@@ -296,6 +312,8 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         mapPicksCount,
         modeFit,
         counterThreatWarning,
+        activeEnemyCountersList,
+        activeEnemySufferingList,
       };
     });
 
@@ -601,6 +619,20 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                       <div className="text-[10px] text-amber-400 font-semibold mt-1 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded leading-tight flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                         Pick de conforto, mas fraco neste modo
+                      </div>
+                    )}
+                    {/* Badge Positivo: Countera Picks Inimigos */}
+                    {rec.activeEnemyCountersList && rec.activeEnemyCountersList.length > 0 && (
+                      <div className="text-[10px] text-emerald-400 font-semibold mt-1 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded leading-tight flex items-center gap-1">
+                        <Swords className="w-3 h-3 flex-shrink-0 text-emerald-400" />
+                        <span>⚔️ Countera {rec.activeEnemyCountersList.join(', ')}</span>
+                      </div>
+                    )}
+                    {/* Badge de Alerta: Sofre Para Picks Inimigos (mas continua sugerido normalmente) */}
+                    {rec.activeEnemySufferingList && rec.activeEnemySufferingList.length > 0 && (
+                      <div className="text-[10px] text-red-400 font-semibold mt-1 bg-red-500/10 border border-red-500/30 px-1.5 py-0.5 rounded leading-tight flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 flex-shrink-0 text-red-400" />
+                        <span>⚠️ Sofre para {rec.activeEnemySufferingList.join(', ')}</span>
                       </div>
                     )}
                     {rec.counterThreatWarning && (

@@ -97,8 +97,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
         } else {
           const remaining = MAX_ATTEMPTS - newAttempts;
           setError(
-            `Código de acesso inválido. Tente novamente.${
-              remaining === 1 ? ' (Última tentativa antes do bloqueio)' : ''
+            `Código de acesso inválido. Tente novamente.${remaining === 1 ? ' (Última tentativa antes do bloqueio)' : ''
             }`
           );
           setTimeout(() => inputRef.current?.focus(), 50);
@@ -205,28 +204,18 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
                 isLockedOut || !code.trim()
                   ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
                   : isLoading
-                  ? 'bg-white/10 text-white/50 cursor-wait border border-white/10'
-                  : 'bg-white hover:bg-[#FF3366] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(255,51,102,0.3)]'
+                    ? 'bg-white/10 text-white/50 cursor-wait border border-white/10'
+                    : 'bg-white hover:bg-[#FF3366] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(255,51,102,0.3)]'
               )}
             >
-              {isLoading ? 'Verificando...' : 'Entrar'}
+              {isLoading ? 'Autenticando...' : 'Login'}
             </button>
 
-            <div className="pt-2 border-t border-white/[0.05] text-center">
-              <button
-                type="button"
-                onClick={() => handleAuthenticate('player')}
-                className="text-xs text-zinc-400 hover:text-white underline flex items-center justify-center gap-1.5 mx-auto py-1"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-[#FFCC00]" />
-                Entrar direto como Jogador (Modo Visualização)
-              </button>
-            </div>
           </div>
 
           <div className="px-8 pb-6 text-center">
             <p className="text-zinc-600 text-xs">
-              Admin: <strong>não público</strong> &bull; Player: <strong>não público</strong>
+              {/* Admin: <strong>não público</strong> &bull; Player: <strong>não público</strong> */}
             </p>
           </div>
         </div>

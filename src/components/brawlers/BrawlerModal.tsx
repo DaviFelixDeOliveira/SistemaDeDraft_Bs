@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Search, ShieldAlert, Swords, Plus } from 'lucide-react';
 import { Brawler, Tier, BrawlerClass } from '../../types';
 import { cn } from '../../lib/utils';
 
@@ -8,6 +8,7 @@ interface BrawlerModalProps {
   onClose: () => void;
   onSave: (brawler: Partial<Brawler>) => void;
   brawler?: Brawler | null;
+  allBrawlers?: Brawler[];
 }
 
 const AVAILABLE_CLASSES = [
@@ -20,7 +21,7 @@ const AVAILABLE_CLASSES = [
   'Suporte'
 ];
 
-export function BrawlerModal({ isOpen, onClose, onSave, brawler }: BrawlerModalProps) {
+export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [] }: BrawlerModalProps) {
   const [formData, setFormData] = useState<Partial<Brawler>>({
     name: '',
     tier: 'C',
@@ -30,12 +31,21 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler }: BrawlerModalP
     rarity: 'Comum',
     health: 'Média',
     walksOnWater: false,
-    breaksWalls: false
+    breaksWalls: false,
+    counters: [],
+    counteredBy: []
   });
+
+  const [counterSearch, setCounterSearch] = useState('');
+  const [counteredBySearch, setCounteredBySearch] = useState('');
 
   useEffect(() => {
     if (brawler) {
-      setFormData(brawler);
+      setFormData({
+        ...brawler,
+        counters: brawler.counters || [],
+        counteredBy: brawler.counteredBy || []
+      });
     } else {
       setFormData({
         name: '',
@@ -46,9 +56,13 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler }: BrawlerModalP
         rarity: 'Comum',
         health: 'Média',
         walksOnWater: false,
-        breaksWalls: false
+        breaksWalls: false,
+        counters: [],
+        counteredBy: []
       });
     }
+    setCounterSearch('');
+    setCounteredBySearch('');
   }, [brawler, isOpen]);
 
   if (!isOpen) return null;
@@ -63,6 +77,38 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler }: BrawlerModalP
       }
     });
   };
+
+  const toggleCounter = (brawlerId: string) => {
+    setFormData(prev => {
+      const current = prev.counters || [];
+      if (current.includes(brawlerId)) {
+        return { ...prev, counters: current.filter(id => id !== brawlerId) };
+      } else {
+        return { ...prev, counters: [...current, brawlerId] };
+      }
+    });
+  };
+
+  const toggleCounteredBy = (brawlerId: string) => {
+    setFormData(prev => {
+      const current = prev.counteredBy || [];
+      if (current.includes(brawlerId)) {
+        return { ...prev, counteredBy: current.filter(id => id !== brawlerId) };
+      } else {
+        return { ...prev, counteredBy: [...current, brawlerId] };
+      }
+    });
+  };
+
+  const availableBrawlers = allBrawlers.filter(b => !brawler || b.id !== brawler.id);
+
+  const filteredCountersList = availableBrawlers.filter(b => 
+    b.name.toLowerCase().includes(counterSearch.toLowerCase())
+  );
+
+  const filteredCounteredByList = availableBrawlers.filter(b => 
+    b.name.toLowerCase().includes(counteredBySearch.toLowerCase())
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
@@ -98,7 +144,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler }: BrawlerModalP
                  onChange={e => {
                    const val = e.target.value.replace(/\D/g, '');
                    if (val) {
-                     setFormData({ ...formData, iconUrl: `https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/emoji/${val}.png` });
+                     setFormData({ ...formData, iconUrl: `https://cdn.brawlify.com/brawlers/emoji/${val}.png` });
                    } else {
                      setFormData({ ...formData, iconUrl: '' });
                    }
@@ -132,7 +178,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler }: BrawlerModalP
                  onChange={e => {
                    const val = e.target.value.replace(/\D/g, '');
                    if (val) {
-                     setFormData({ ...formData, imageUrl: `https://raw.githubusercontent.com/Brawlify/CDN/master/brawlers/portraits/${val}.png` });
+                     setFormData({ ...formData, imageUrl: `https://cdn.brawlify.com/brawlers/borders/${val}.png` });
                    } else {
                      setFormData({ ...formData, imageUrl: '' });
                    }
@@ -220,9 +266,143 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler }: BrawlerModalP
              </div>
           </div>
 
+          {/* ═══ ⚔️ ELE COUNTERA (Vantagem sobre) ═══ */}
+          <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <Swords className="w-3.5 h-3.5" />
+                ⚔️ Ele Countera (Vantagem Sobre)
+              </label>
+              <span className="text-[10px] text-zinc-400">
+                {(formData.counters || []).length} selecionado(s)
+              </span>
+            </div>
+
+            {/* Brawlers selecionados */}
+            {(formData.counters || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-black/20 rounded-lg">
+                {(formData.counters || []).map(id => {
+                  const br = allBrawlers.find(b => b.id === id);
+                  if (!br) return null;
+                  return (
+                    <span key={id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30">
+                      {br.iconUrl && <img src={br.iconUrl} alt={br.name} className="w-4 h-4 rounded-full object-cover" />}
+                      {br.name}
+                      <button type="button" onClick={() => toggleCounter(id)} className="hover:text-white ml-0.5">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Busca rápida */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input
+                type="text"
+                value={counterSearch}
+                onChange={e => setCounterSearch(e.target.value)}
+                placeholder="Buscar brawler para adicionar..."
+                className="w-full pl-8 pr-3 py-1.5 bg-zinc-900 border border-zinc-700/60 rounded-lg text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            {/* Grid de seleção */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-32 overflow-y-auto p-1 bg-black/20 rounded-lg">
+              {filteredCountersList.slice(0, 20).map(br => {
+                const isSelected = (formData.counters || []).includes(br.id);
+                return (
+                  <button
+                    key={br.id}
+                    type="button"
+                    onClick={() => toggleCounter(br.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 p-1.5 rounded-lg text-xs text-left transition-all border",
+                      isSelected 
+                        ? "bg-emerald-500/20 border-emerald-500 text-white font-bold"
+                        : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                    )}
+                  >
+                    {br.iconUrl && <img src={br.iconUrl} alt={br.name} className="w-4 h-4 rounded-full shrink-0" />}
+                    <span className="truncate">{br.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ═══ 🛡️ SOFRE PARA (Desvantagem contra) ═══ */}
+          <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                🛡️ Sofre Para (Desvantagem Contra)
+              </label>
+              <span className="text-[10px] text-zinc-400">
+                {(formData.counteredBy || []).length} selecionado(s)
+              </span>
+            </div>
+
+            {/* Brawlers selecionados */}
+            {(formData.counteredBy || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1 bg-black/20 rounded-lg">
+                {(formData.counteredBy || []).map(id => {
+                  const br = allBrawlers.find(b => b.id === id);
+                  if (!br) return null;
+                  return (
+                    <span key={id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/20 text-red-300 text-xs font-semibold border border-red-500/30">
+                      {br.iconUrl && <img src={br.iconUrl} alt={br.name} className="w-4 h-4 rounded-full object-cover" />}
+                      {br.name}
+                      <button type="button" onClick={() => toggleCounteredBy(id)} className="hover:text-white ml-0.5">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Busca rápida */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <input
+                type="text"
+                value={counteredBySearch}
+                onChange={e => setCounteredBySearch(e.target.value)}
+                placeholder="Buscar brawler para adicionar..."
+                className="w-full pl-8 pr-3 py-1.5 bg-zinc-900 border border-zinc-700/60 rounded-lg text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500"
+              />
+            </div>
+
+            {/* Grid de seleção */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-32 overflow-y-auto p-1 bg-black/20 rounded-lg">
+              {filteredCounteredByList.slice(0, 20).map(br => {
+                const isSelected = (formData.counteredBy || []).includes(br.id);
+                return (
+                  <button
+                    key={br.id}
+                    type="button"
+                    onClick={() => toggleCounteredBy(br.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 p-1.5 rounded-lg text-xs text-left transition-all border",
+                      isSelected 
+                        ? "bg-red-500/20 border-red-500 text-white font-bold"
+                        : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                    )}
+                  >
+                    {br.iconUrl && <img src={br.iconUrl} alt={br.name} className="w-4 h-4 rounded-full shrink-0" />}
+                    <span className="truncate">{br.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="pt-4 flex justify-end gap-3 border-t border-zinc-100 dark:border-[#2A2A2A]">
             <button 
-              onClick={onClose}
+              onClick={onClose} 
               className="px-4 py-2 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
             >
               Cancelar

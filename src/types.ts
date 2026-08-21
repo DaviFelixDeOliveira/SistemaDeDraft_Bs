@@ -17,6 +17,8 @@ export interface Brawler {
   iconUrl?: string;
   isHotPick?: boolean;
   is_active?: boolean;
+  counters?: string[]; // IDs de brawlers que ele countera (vantagem sobre)
+  counteredBy?: string[]; // IDs de brawlers para os quais ele sofre (desvantagem contra)
 }
 
 export type MapTerrain = 'Aberto' | 'Semi-Aberto' | 'Fechado' | 'Misto';

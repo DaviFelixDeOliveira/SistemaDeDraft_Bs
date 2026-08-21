@@ -31,6 +31,8 @@ function mapFromSupabase(data: any): Brawler {
     iconUrl: icon,
     isHotPick: !!data.is_hot_pick,
     is_active: data.is_active ?? true,
+    counters: data.counters || [],
+    counteredBy: data.countered_by || [],
   };
 }
 
@@ -51,6 +53,8 @@ function mapToSupabase(brawler: Partial<Brawler>): any {
   if (brawler.iconUrl !== undefined) row.icon_url = brawler.iconUrl;
   if (brawler.isHotPick !== undefined) row.is_hot_pick = brawler.isHotPick;
   if (brawler.is_active !== undefined) row.is_active = brawler.is_active;
+  if (brawler.counters !== undefined) row.counters = brawler.counters;
+  if (brawler.counteredBy !== undefined) row.countered_by = brawler.counteredBy;
   return row;
 }
 

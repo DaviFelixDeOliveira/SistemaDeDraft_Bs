@@ -10,7 +10,7 @@ import { Composition } from '../../types';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 function DashboardContent() {
-  
+
   const CustomBrawlerTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -148,7 +148,7 @@ function DashboardContent() {
       </div>
 
 
-      
+
       {/* Alerta de Rotação de Mapas */}
       {mapAlerts.length > 0 && (
         <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
@@ -165,14 +165,14 @@ function DashboardContent() {
             </div>
           </div>
           {mapAlerts[0].map.imageUrl && (
-            <div 
-              className="relative group shrink-0 self-center sm:self-auto cursor-pointer rounded-lg overflow-hidden border border-amber-200 dark:border-amber-500/20 shadow-sm" 
+            <div
+              className="relative group shrink-0 self-center sm:self-auto cursor-pointer rounded-lg overflow-hidden border border-amber-200 dark:border-amber-500/20 shadow-sm"
               onClick={() => setSelectedMapImage(mapAlerts[0].map.imageUrl)}
             >
-               <img src={mapAlerts[0].map.imageUrl} alt={mapAlerts[0].map.name} className="w-24 h-16 sm:w-32 sm:h-20 object-cover" />
-               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                 <Eye className="w-5 h-5 text-white" />
-               </div>
+              <img src={mapAlerts[0].map.imageUrl} alt={mapAlerts[0].map.name} className="w-24 h-16 sm:w-32 sm:h-20 object-cover" />
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Eye className="w-5 h-5 text-white" />
+              </div>
             </div>
           )}
         </div>
@@ -414,11 +414,11 @@ function DashboardContent() {
           <h3 className="font-bold text-slate-900 dark:text-white mb-6">Top Brawlers (Picks vs Bans)</h3>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={(brawlerStats || []).slice().sort((a,b) => (b.tbkPickCount || 0) - (a.tbkPickCount || 0)).slice(0, 5)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={(brawlerStats || []).slice().sort((a, b) => (b.tbkPickCount || 0) - (a.tbkPickCount || 0)).slice(0, 5)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
                 <XAxis dataKey="name" stroke="#52525B" fontSize={12} tickLine={false} axisLine={false} tick={<CustomXAxisTick />} />
                 <YAxis stroke="#52525B" fontSize={12} tickLine={false} axisLine={false} />
-                <RechartsTooltip content={<CustomBrawlerTooltip />} cursor={{fill: '#2A2A2A'}} />
+                <RechartsTooltip content={<CustomBrawlerTooltip />} cursor={{ fill: '#2A2A2A' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="tbkPickCount" name="Nossos Picks" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="ban" name="Bans" fill="#FF3366" radius={[4, 4, 0, 0]} />
@@ -437,10 +437,10 @@ function DashboardContent() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {activeHotBrawlers.map((b, i) => {
               const wr = b.winrate || 0;
-              const wrColor = wr > 50 
-                ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" 
-                : wr >= 30 
-                  ? "text-amber-500 bg-amber-500/10 border-amber-500/20" 
+              const wrColor = wr > 50
+                ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+                : wr >= 30
+                  ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
                   : "text-red-500 bg-red-500/20 border-red-500/40 font-black animate-pulse";
               return (
                 <div
@@ -458,7 +458,7 @@ function DashboardContent() {
                       <span className={cn("text-xs px-1.5 py-0.5 rounded border font-bold", wrColor)}>{wr}% WR</span>
                       <div className="flex flex-col items-center mt-1 text-[10px] text-slate-500 font-bold leading-none gap-0.5">
                         <span><span className="text-blue-500">{b.tbkPickCount || 0}</span> picks nossos</span>
-                        <span><span className="text-red-500">{b.enemyPickCount || 0}</span> picks ini.</span>
+                        <span><span className="text-red-500">{b.enemyPickCount || 0}</span> picks inimigos</span>
                       </div>
                     </div>
                   </div>
@@ -605,123 +605,123 @@ function DashboardContent() {
         const currentModeStats = (modeWinrate || []).find(m => m.name === selectedMode);
         const currentModeWr = currentModeStats?.winrate !== undefined ? currentModeStats.winrate : (currentModeStats?.value || 0);
         return (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-slate-200 dark:border-[#2A2A2A] flex justify-between items-center bg-slate-50 dark:bg-[#0A0A0A]">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-emerald-500" />
-                  Mapas de {selectedMode}
-                </h3>
-                <div className="flex gap-4 mt-2">
-                  <div className="text-sm">
-                    <span className="text-slate-500 dark:text-zinc-400">WR Global: </span>
-                    <span className={cn("font-bold", stats.winrate >= 60 ? "text-emerald-500" : stats.winrate >= 40 ? "text-amber-500" : "text-red-500")}>
-                      {stats.winrate}%
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-slate-500 dark:text-zinc-400">WR {selectedMode}: </span>
-                    <span className={cn("font-bold", currentModeWr >= 60 ? "text-emerald-500" : currentModeWr >= 40 ? "text-amber-500" : "text-red-500")}>
-                      {currentModeWr}%
-                    </span>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+              <div className="p-6 border-b border-slate-200 dark:border-[#2A2A2A] flex justify-between items-center bg-slate-50 dark:bg-[#0A0A0A]">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-emerald-500" />
+                    Mapas de {selectedMode}
+                  </h3>
+                  <div className="flex gap-4 mt-2">
+                    <div className="text-sm">
+                      <span className="text-slate-500 dark:text-zinc-400">WR Global: </span>
+                      <span className={cn("font-bold", stats.winrate >= 60 ? "text-emerald-500" : stats.winrate >= 40 ? "text-amber-500" : "text-red-500")}>
+                        {stats.winrate}%
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-slate-500 dark:text-zinc-400">WR {selectedMode}: </span>
+                      <span className={cn("font-bold", currentModeWr >= 60 ? "text-emerald-500" : currentModeWr >= 40 ? "text-amber-500" : "text-red-500")}>
+                        {currentModeWr}%
+                      </span>
+                    </div>
                   </div>
                 </div>
+                <button
+                  onClick={() => setSelectedMode(null)}
+                  className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-zinc-800 p-2 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-sm transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setSelectedMode(null)}
-                className="text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-zinc-800 p-2 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-sm transition-colors"
-              >
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto bg-white dark:bg-[#121212] flex-1 space-y-4">
-              {(mapPerformance || []).filter(m => m?.map?.mode === selectedMode).map(item => {
-                const mStats = mapDetailStatsMap[item.map.id] || {};
-                return (
-                  <div key={item.map.id} className="border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 bg-slate-50 dark:bg-[#0A0A0A] flex flex-col sm:flex-row gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-3">
-                        <MapIcon className="w-4 h-4 text-emerald-500" />
-                        <h4 className="font-bold text-slate-900 dark:text-white text-lg">{item.map?.name}</h4>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm font-medium">
-                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300">
-                          <Trophy className="w-4 h-4 text-emerald-500" /> {mStats.wins || 0}V
+              <div className="p-6 overflow-y-auto bg-white dark:bg-[#121212] flex-1 space-y-4">
+                {(mapPerformance || []).filter(m => m?.map?.mode === selectedMode).map(item => {
+                  const mStats = mapDetailStatsMap[item.map.id] || {};
+                  return (
+                    <div key={item.map.id} className="border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 bg-slate-50 dark:bg-[#0A0A0A] flex flex-col sm:flex-row gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-3">
+                          <MapIcon className="w-4 h-4 text-emerald-500" />
+                          <h4 className="font-bold text-slate-900 dark:text-white text-lg">{item.map?.name}</h4>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300">
-                          <XCircle className="w-4 h-4 text-red-500" /> {(mStats.totalMatches || 0) - (mStats.wins || 0)}D
+                        <div className="flex items-center gap-4 text-sm font-medium">
+                          <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300">
+                            <Trophy className="w-4 h-4 text-emerald-500" /> {mStats.wins || 0}V
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-300">
+                            <XCircle className="w-4 h-4 text-red-500" /> {(mStats.totalMatches || 0) - (mStats.wins || 0)}D
+                          </div>
+                          <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                            WR: {mStats.totalMatches > 0 ? `${mStats.winrate}%` : '0%'}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                          WR: {mStats.totalMatches > 0 ? `${mStats.winrate}%` : '0%'}
+                        <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${mStats.winrate || 0}%` }} />
                         </div>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full mt-3 overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${mStats.winrate || 0}%` }} />
-                      </div>
-                    </div>
 
-                    <div className="flex gap-6 sm:w-1/2">
-                      <div className="flex-1">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider mb-2">Top Bans</div>
-                        <div className="space-y-1.5">
-                          {mStats.topTotalBans && mStats.topTotalBans.length > 0 ? (
-                            mStats.topTotalBans.map((tb: any, i: number) => (
-                              <div key={i} className="text-xs font-medium text-slate-700 dark:text-zinc-300 flex items-center gap-2">
-                                <span className="w-4 text-slate-400">#{i + 1}</span> {tb.brawler?.name} ({tb.count}x)
-                              </div>
-                            ))
-                          ) : (
-                            <span className="text-xs text-slate-500 italic">Sem bans ainda</span>
-                          )}
+                      <div className="flex gap-6 sm:w-1/2">
+                        <div className="flex-1">
+                          <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider mb-2">Top Bans</div>
+                          <div className="space-y-1.5">
+                            {mStats.topTotalBans && mStats.topTotalBans.length > 0 ? (
+                              mStats.topTotalBans.map((tb: any, i: number) => (
+                                <div key={i} className="text-xs font-medium text-slate-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <span className="w-4 text-slate-400">#{i + 1}</span> {tb.brawler?.name} ({tb.count}x)
+                                </div>
+                              ))
+                            ) : (
+                              <span className="text-xs text-slate-500 italic">Sem bans ainda</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider mb-2">Top Picks</div>
-                        <div className="space-y-1.5">
-                          {mStats.topTbkPicks && mStats.topTbkPicks.length > 0 ? (
-                            mStats.topTbkPicks.map((tp: any, i: number) => (
-                              <div key={i} className="text-xs font-medium text-slate-700 dark:text-zinc-300 flex items-center gap-2">
-                                <span className="w-4 text-slate-400">#{i + 1}</span> {tp.brawler?.name} ({tp.picks}x)
-                              </div>
-                            ))
-                          ) : (
-                            <span className="text-xs text-slate-500 italic">Sem picks ainda</span>
-                          )}
+                        <div className="flex-1">
+                          <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-wider mb-2">Top Picks</div>
+                          <div className="space-y-1.5">
+                            {mStats.topTbkPicks && mStats.topTbkPicks.length > 0 ? (
+                              mStats.topTbkPicks.map((tp: any, i: number) => (
+                                <div key={i} className="text-xs font-medium text-slate-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <span className="w-4 text-slate-400">#{i + 1}</span> {tp.brawler?.name} ({tp.picks}x)
+                                </div>
+                              ))
+                            ) : (
+                              <span className="text-xs text-slate-500 italic">Sem picks ainda</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-              {(mapPerformance || []).filter(m => m?.map?.mode === selectedMode).length === 0 && (
-                <div className="text-center text-slate-500 py-8">Nenhum mapa registrado para este modo.</div>
-              )}
+                  );
+                })}
+                {(mapPerformance || []).filter(m => m?.map?.mode === selectedMode).length === 0 && (
+                  <div className="text-center text-slate-500 py-8">Nenhum mapa registrado para este modo.</div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
         );
       })()}
 
       {selectedMapImage && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" 
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setSelectedMapImage(null)}
         >
-          <div 
+          <div
             className="relative w-full max-w-4xl max-h-full flex items-center justify-center animate-in zoom-in-95 duration-200"
             onClick={e => e.stopPropagation()}
           >
-            <button 
-              onClick={() => setSelectedMapImage(null)} 
+            <button
+              onClick={() => setSelectedMapImage(null)}
               className="absolute -top-12 right-0 sm:-right-12 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-all"
             >
               <X className="w-6 h-6 sm:w-8 sm:h-8" />
             </button>
-            <img 
-              src={selectedMapImage} 
-              alt="Visualização do Mapa" 
-              className="w-full max-h-[85vh] object-contain rounded-xl shadow-2xl" 
+            <img
+              src={selectedMapImage}
+              alt="Visualização do Mapa"
+              className="w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
             />
           </div>
         </div>

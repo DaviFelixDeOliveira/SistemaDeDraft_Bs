@@ -83,9 +83,9 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
         }
       } else {
         if (selectedMap.terrain === 'Aberto') {
-          reason = 'A TBK tem o First Pick num Mapa Aberto. Bana Assassinos (Algozes) que possam ser counters do nosso pick.';
+          reason = 'Nós temos o First Pick num Mapa Aberto. Foque em banir assassinos (algozes) que possam ser counters do nosso pick.';
         } else {
-          reason = 'A TBK tem o First Pick. Elimine os counters mais versáteis ou Algozes para proteger sua escolha.';
+          reason = 'Nós temos o First Pick. Elimine os counters mais versáteis ou algozes para proteger sua escolha.';
         }
       }
 
@@ -124,8 +124,8 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
   // banRecs agora é estado async (ver useEffect acima) — removido o useMemo estático
 
 
-  const canProceed = draftState.mapId !== '' && 
-    draftState.tbkBans.every(b => b !== null) && 
+  const canProceed = draftState.mapId !== '' &&
+    draftState.tbkBans.every(b => b !== null) &&
     draftState.enemyBans.every(b => b !== null);
 
   const mapDropdownRef = useRef<HTMLDivElement>(null);
@@ -142,7 +142,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
+
       {/* TOAST MESSAGE */}
       {toastMessage && (
         <div className="fixed top-20 right-4 md:right-8 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-right duration-300">
@@ -154,7 +154,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
       <div className="space-y-4 relative">
         <label className="block text-sm font-medium text-slate-500 dark:text-zinc-400">Mapa</label>
         <div className="relative" ref={mapDropdownRef}>
-          <div 
+          <div
             className={cn(
               "flex items-center justify-between w-full bg-slate-50 dark:bg-[#0A0A0A] border rounded-lg px-4 py-3 cursor-pointer transition-all duration-300",
               selectedMap ? "border-slate-200 dark:border-[#2A2A2A]" : "border-slate-300 dark:border-zinc-700 hover:border-zinc-400"
@@ -193,7 +193,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                   />
                 </div>
               </div>
-              
+
               {Object.entries(groupedMaps).map(([mode, mapsList]) => {
                 const filteredMaps = (mapsList as GameMap[]).filter(m => fuzzySearch(mapSearch, m.name));
 
@@ -213,7 +213,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                         }}
                       >
                         <span>{map.name}</span>
-                        <button 
+                        <button
                           className="p-1 hover:bg-[#FF3366]/20 rounded-md text-slate-500 dark:text-zinc-500 hover:text-[#FF3366]"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -242,8 +242,8 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
             onClick={() => setDraftState(prev => ({ ...prev, tbkStarts: true }))}
             className={cn(
               "flex-1 py-4 rounded-lg font-medium border transition-all duration-200",
-              draftState.tbkStarts 
-                ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]" 
+              draftState.tbkStarts
+                ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                 : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-zinc-700"
             )}
           >
@@ -253,8 +253,8 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
             onClick={() => setDraftState(prev => ({ ...prev, tbkStarts: false }))}
             className={cn(
               "flex-1 py-4 rounded-lg font-medium border transition-all duration-200",
-              !draftState.tbkStarts 
-                ? "bg-red-500/10 border-red-500/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.1)]" 
+              !draftState.tbkStarts
+                ? "bg-red-500/10 border-red-500/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
                 : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-zinc-700"
             )}
           >
@@ -271,24 +271,24 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-[#FFCC00] text-sm mb-1">Sugestão Inteligente de Bans</h3>
               {isSuggestionsLoading ? (
-                 <div className="py-4 flex flex-col items-center justify-center">
-                   <div className="w-6 h-6 rounded-full border-2 border-[#FFCC00]/20 border-t-[#FFCC00] animate-spin mb-2" />
-                   <span className="text-xs text-[#FFCC00] font-medium">Analisando mapa e composições...</span>
-                 </div>
+                <div className="py-4 flex flex-col items-center justify-center">
+                  <div className="w-6 h-6 rounded-full border-2 border-[#FFCC00]/20 border-t-[#FFCC00] animate-spin mb-2" />
+                  <span className="text-xs text-[#FFCC00] font-medium">Analisando mapa e composições...</span>
+                </div>
               ) : (
                 <>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-3">{banRecs.reason}</p>
-                  
+
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {banRecs.brawlers.map(b => (
                       <div key={b.id} className="flex items-center gap-2 bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-lg p-2 pr-4 flex-shrink-0">
-                         <div className="w-8 h-8 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
-                           {b.iconUrl && <img src={b.iconUrl} alt="" className="w-full h-full object-cover" />}
-                         </div>
-                         <div>
-                           <div className="text-sm font-medium text-slate-900 dark:text-white leading-tight">{b.name}</div>
-                           <div className="text-[10px] text-slate-500 dark:text-zinc-500">Tier {b.tier}</div>
-                         </div>
+                        <div className="w-8 h-8 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
+                          {b.iconUrl && <img src={b.iconUrl} alt="" className="w-full h-full object-cover" />}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-slate-900 dark:text-white leading-tight">{b.name}</div>
+                          <div className="text-[10px] text-slate-500 dark:text-zinc-500">Tier {b.tier}</div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -304,7 +304,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
         <div className="space-y-4 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
           <div className="flex items-center gap-2 mb-2">
             <Ban className="w-4 h-4 text-emerald-400" />
-            <h3 className="font-semibold text-emerald-400">Bans da TBK</h3>
+            <h3 className="font-semibold text-emerald-400">Nossos Bans</h3>
           </div>
           {[0, 1, 2].map(index => (
             <BrawlerSelectDropdown icon={<Ban className="w-3 h-3 text-red-500/70 ml-1" />}
@@ -322,7 +322,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
             />
           ))}
         </div>
-        
+
         <div className="space-y-4 p-4 rounded-xl border border-red-500/20 bg-red-500/5">
           <div className="flex items-center gap-2 mb-2">
             <Ban className="w-4 h-4 text-red-400" />

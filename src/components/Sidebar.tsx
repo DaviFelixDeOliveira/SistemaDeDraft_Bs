@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Map as MapIcon, 
-  Swords, 
+import {
+  LayoutDashboard,
+  Users,
+  Map as MapIcon,
+  Swords,
   LogOut,
   Target,
   PanelLeftClose,
@@ -43,7 +43,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
     }
     return false;
   });
-  
+
   const [snapshotInfo, setSnapshotInfo] = useState<BackupSnapshotInfo | null>(null);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
 
@@ -98,11 +98,11 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
   const handleSaveBackup = async () => {
     setConfirmConfig({
       isOpen: true,
-      title: 'Salvar Snapshot de Backup',
-      message: 'Deseja salvar um novo snapshot completo do estado atual do sistema no banco de dados Supabase?\nEste snapshot poderá ser restaurado a qualquer momento com 1 clique.',
-      processingText: 'Salvando snapshot no banco...',
-      successText: 'Snapshot de backup salvo com sucesso!',
-      confirmText: 'Salvar Snapshot',
+      title: 'Salvar Backup',
+      message: 'Deseja salvar um novo arquivo completo do estado atual do sistema?\nEste arquivo poderá ser restaurado a qualquer momento com 1 clique.',
+      processingText: 'Salvando arquivo...',
+      successText: 'Arquivo de backup salvo com sucesso!',
+      confirmText: 'Salvar Arquivo',
       variant: 'primary',
       action: async () => {
         const res = await backupRestoreService.saveSnapshotToDatabase();
@@ -120,11 +120,11 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
   const handleDownloadBackup = () => {
     setConfirmConfig({
       isOpen: true,
-      title: 'Baixar Backup JSON',
-      message: 'Deseja gerar e baixar um arquivo .json com todos os dados atuais do sistema para guardá-lo fora da plataforma?',
+      title: 'Gerar Backup',
+      message: 'Deseja gerar e baixar um arquivo com todos os dados atuais do sistema para guardá-los no armazenamento do seu dispositivo?',
       processingText: 'Gerando arquivo de backup...',
-      successText: 'Arquivo de backup baixado!',
-      confirmText: 'Baixar .JSON',
+      successText: 'Arquivo de backup gerado com sucesso!',
+      confirmText: 'Gerar Backup',
       variant: 'primary',
       action: async () => {
         await backupRestoreService.exportBackupJSON();
@@ -249,14 +249,14 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden transition-opacity" 
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden transition-opacity"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar Container */}
-      <div className={cn("cursor-pointer touch-manipulation", 
+      <div className={cn("cursor-pointer touch-manipulation",
         "fixed md:static inset-y-0 left-0 z-50 bg-white dark:bg-[#121212] border-r border-zinc-200 dark:border-[#2A2A2A] h-screen flex flex-col transform transition-all duration-300 ease-in-out",
         isCollapsed ? "w-64 md:w-20" : "w-64",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -299,10 +299,10 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
               </button>
             </>
           )}
-          
+
           {/* Botão Fechar (mobile) */}
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="md:hidden text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <PanelLeftClose className="w-6 h-6" />
@@ -314,17 +314,17 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
-            
+
             return (
               <button
                 key={item.id}
                 onClick={() => onChangeView(item.id)}
                 title={isCollapsed ? item.label : undefined}
-                className={cn("cursor-pointer touch-manipulation", 
+                className={cn("cursor-pointer touch-manipulation",
                   "w-full flex items-center rounded-lg text-sm font-medium transition-all",
                   isCollapsed ? "md:justify-center md:px-0 md:py-3 px-4 py-3 md:gap-0 gap-3" : "gap-3 px-4 py-3",
-                  isActive 
-                    ? "bg-[#FF3366]/10 text-[#FF3366] shadow-[inset_2px_0_0_0_#FF3366]" 
+                  isActive
+                    ? "bg-[#FF3366]/10 text-[#FF3366] shadow-[inset_2px_0_0_0_#FF3366]"
                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                 )}
               >
@@ -337,28 +337,28 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
 
         {/* ═══ FOOTER ═══ */}
         <div className={cn("p-4 border-t border-zinc-200 dark:border-[#2A2A2A] space-y-3", isCollapsed && "md:p-2 md:space-y-2")}>
-          
+
           {/* ── Badge de Nível de Acesso ── */}
           {isCollapsed ? (
             /* Modo colapsado (desktop): só ícone + title */
-            <div 
+            <div
               className="hidden md:flex items-center justify-center py-2"
-              title={`Logado como ${userRole === 'admin' ? 'Admin' : 'Player'}`}
+              title={`Entrou como ${userRole === 'admin' ? 'Admin' : 'Player'}`}
             >
               <div className={cn(
                 "w-9 h-9 rounded-xl flex items-center justify-center",
-                userRole === 'admin' 
-                  ? "bg-[#FF3366]/10 border border-[#FF3366]/20" 
+                userRole === 'admin'
+                  ? "bg-[#FF3366]/10 border border-[#FF3366]/20"
                   : "bg-blue-500/10 border border-blue-500/20"
               )}>
-                {userRole === 'admin' 
-                  ? <Shield className="w-4 h-4 text-[#FF3366]" /> 
+                {userRole === 'admin'
+                  ? <Shield className="w-4 h-4 text-[#FF3366]" />
                   : <UserIcon className="w-4 h-4 text-blue-500" />
                 }
               </div>
             </div>
           ) : null}
-          
+
           {/* Modo expandido: badge completo (sempre visível no mobile) */}
           <div className={cn(
             "flex items-center justify-between px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400",
@@ -370,7 +370,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
               ) : (
                 <UserIcon className="w-4 h-4 text-blue-500" />
               )}
-              <span className="text-zinc-700 dark:text-zinc-300">Logado como</span>
+              <span className="text-zinc-700 dark:text-zinc-300">Entrou como</span>
             </div>
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider",
@@ -411,15 +411,15 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
                     title="Opções de restauração de backup"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    Restaurar
+                    Restaurar Backup
                   </button>
-                  <button 
+                  <button
                     onClick={handleDownloadBackup}
                     className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] rounded-lg text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-colors"
                     title="Baixar arquivo JSON com backup completo"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    Baixar .JSON
+                    Baixar Backup
                   </button>
                 </div>
 
@@ -468,7 +468,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
           )}
 
           {/* ── Botão Sair ── */}
-          <button 
+          <button
             onClick={onLogout}
             title={isCollapsed ? "Sair do Sistema" : undefined}
             className={cn(
@@ -490,7 +490,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
               <Upload className="w-5 h-5 text-indigo-500" /> Escolha como deseja Restaurar
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Selecione a origem dos dados para a restauração. Ambas as opções realizam a substituição completa dos dados atuais.
+              Selecione a origem dos dados para a restauração. Ambas as opções realizam a substituição COMPLETA dos dados atuais.
             </p>
 
             <div className="space-y-3 pt-2">
@@ -503,7 +503,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
                 <div>
                   <div className="font-bold text-sm text-zinc-900 dark:text-white">Restaurar do último backup salvo</div>
                   <div className="text-xs text-zinc-500 mt-0.5">
-                    {snapshotInfo?.savedAt ? `Snapshot de ${formatSnapshotDate(snapshotInfo.savedAt)} (${snapshotInfo.matchCount} partidas)` : 'Nenhum snapshot salvo disponível no banco.'}
+                    {snapshotInfo?.savedAt ? `Bakcup realizado dia ${formatSnapshotDate(snapshotInfo.savedAt)} (${snapshotInfo.matchCount} partidas)` : 'Nenhum backup salvo disponível no banco.'}
                   </div>
                 </div>
               </button>

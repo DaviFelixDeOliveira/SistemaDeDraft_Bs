@@ -63,7 +63,7 @@ code = code.replace(
   /<span className="text-\[10px\] text-slate-500 font-bold">\{b\.tbkPickCount \|\| b\.pick\} picks<\/span>/,
   `<div className="flex flex-col items-center mt-1 text-[10px] text-slate-500 font-bold leading-none gap-0.5">
                         <span><span className="text-blue-500">{b.tbkPickCount || 0}</span> picks nossos</span>
-                        <span><span className="text-red-500">{b.enemyPickCount || 0}</span> picks ini.</span>
+                        <span><span className="text-red-500">{b.enemyPickCount || 0}</span> picks inimigos</span>
                       </div>`
 );
 

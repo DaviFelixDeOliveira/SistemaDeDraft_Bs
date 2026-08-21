@@ -28,7 +28,7 @@ const advancedFilterDesign = `
           <div className="flex flex-col gap-2">
             <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Classe</label>
             <div className="flex flex-wrap gap-1.5">
-              {['Algoz', 'Controle', 'Destruidor', 'Suporte', 'Tanque', 'Tiro Preciso', 'Artilharia'].map(c => (
+              {['Algoz', 'Controle', 'Destruidor', 'Suporte', 'Tanque', 'Tiro Preciso'].map(c => (
                 <button
                   key={c}
                   onClick={() => filters.setBrawlerClass(filters.brawlerClass === c ? '' : c)}
@@ -49,9 +49,8 @@ const advancedFilterDesign = `
             <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Raridade</label>
             <div className="flex flex-wrap gap-1.5">
               {[
-                { name: 'CaminhoTrof', label: 'C. Troféus', color: 'hover:border-blue-300 hover:text-blue-300', active: 'bg-blue-400 border-blue-400 text-white' },
                 { name: 'Raro', label: 'Raro', color: 'hover:border-green-400 hover:text-green-400', active: 'bg-green-500 border-green-500 text-white' },
-                { name: 'Super Raro', label: 'S. Raro', color: 'hover:border-blue-500 hover:text-blue-500', active: 'bg-blue-600 border-blue-600 text-white' },
+                { name: 'Super Raro', label: 'Super Raro', color: 'hover:border-blue-500 hover:text-blue-500', active: 'bg-blue-600 border-blue-600 text-white' },
                 { name: 'Épico', label: 'Épico', color: 'hover:border-purple-400 hover:text-purple-400', active: 'bg-purple-500 border-purple-500 text-white' },
                 { name: 'Mítico', label: 'Mítico', color: 'hover:border-red-400 hover:text-red-400', active: 'bg-red-500 border-red-500 text-white' },
                 { name: 'Lendário', label: 'Lendário', color: 'hover:border-yellow-400 hover:text-yellow-400', active: 'bg-yellow-500 border-yellow-500 text-black' }
@@ -117,7 +116,7 @@ code = code.replace(
   advancedFilterDesign
 );
 
-if(!code.includes('import { cn }')) {
+if (!code.includes('import { cn }')) {
   code = `import { cn } from '../lib/utils';\n` + code;
 }
 

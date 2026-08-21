@@ -58,8 +58,8 @@ export function DraftTacticsBanner({ mapId, tbkStarts, step }: DraftTacticsBanne
       {/* Card da Sugestão First/Last Pick */}
       <div className={cn(
         "border rounded-xl p-3 sm:p-4 flex gap-3 sm:items-center items-start",
-        tbkStarts 
-          ? "bg-[#FFCC00]/10 border-[#FFCC00]/20 text-amber-600 dark:text-amber-500" 
+        tbkStarts
+          ? "bg-[#FFCC00]/10 border-[#FFCC00]/20 text-amber-600 dark:text-amber-500"
           : "bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-400"
       )}>
         <div className={cn(
@@ -73,9 +73,9 @@ export function DraftTacticsBanner({ mapId, tbkStarts, step }: DraftTacticsBanne
             {tbkStarts ? '💡 Dica de First Pick (Nossa Vez Primeiro)' : '💡 Dica de Last Pick (Inimigo Começa)'}
           </h4>
           <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-            {tbkStarts 
-              ? 'Garanta os brawlers Tier S, "quebrados" no meta, ou snipers fortes em mapas abertos. Foque em banir os counters diretos desses brawlers.' 
-              : 'Foque em banir os Tier S gerais do meta. Tente reservar o último pick (6º pick) para um counter-pick surpresa que destrua a composição inimiga.'}
+            {tbkStarts
+              ? 'Garanta os brawlers fortes no meta, ou fortes em mapas abertos(se for o caso). Foque em banir os counters diretos desses brawlers.'
+              : 'Foque em banir os Tier S gerais do meta. Tente reservar o último pick (6º pick) para um counter que destrua a composição inimiga.'}
           </p>
         </div>
       </div>

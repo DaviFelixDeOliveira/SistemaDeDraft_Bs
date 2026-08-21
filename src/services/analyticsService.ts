@@ -333,9 +333,9 @@ export const analyticsService = {
         };
       }).sort((a, b) => b.matches - a.matches);
 
-    // Sinergias (Melhores Parceiros TBK)
-    const partnerCounts: Record<string, number> = {};
-    const enemyCounterCounts: Record<string, number> = {}; // Brawlers inimigos que foram derrotados por este
+    // Sinergias (Melhores Parceiros TBK baseados em Winrate real da dupla)
+    const partnerGames: Record<string, { total: number; wins: number }> = {};
+    const enemyCounterCounts: Record<string, number> = {}; // Brawlers inimigos derrotados por este
     const threatCounts: Record<string, number> = {}; // Brawlers inimigos que venceram contra este
 
     tbkPicks.forEach(p => {
@@ -346,10 +346,13 @@ export const analyticsService = {
       const tbkPartners = sameMatchPicks.filter(pk => pk.team === 'tbk' && pk.brawler_id !== brawlerId);
       const enemyEnemies = sameMatchPicks.filter(pk => pk.team === 'enemy');
 
+      tbkPartners.forEach(partner => {
+        if (!partnerGames[partner.brawler_id]) partnerGames[partner.brawler_id] = { total: 0, wins: 0 };
+        partnerGames[partner.brawler_id].total++;
+        if (match.result === 'victory') partnerGames[partner.brawler_id].wins++;
+      });
+
       if (match.result === 'victory') {
-        tbkPartners.forEach(partner => {
-          partnerCounts[partner.brawler_id] = (partnerCounts[partner.brawler_id] || 0) + 1;
-        });
         enemyEnemies.forEach(e => {
           enemyCounterCounts[e.brawler_id] = (enemyCounterCounts[e.brawler_id] || 0) + 1;
         });
@@ -360,26 +363,59 @@ export const analyticsService = {
       }
     });
 
-    const partners = Object.entries(partnerCounts)
-      .map(([id, count]) => ({ brawler: brawlersMap.get(id), count }))
+    const targetBrawler = brawlersMap.get(brawlerId);
+
+    // Parceiros por WR ponderado (mínimo 2 partidas juntos para prioridade)
+    const realPartners = Object.entries(partnerGames)
+      .map(([id, stats]) => {
+        const wr = stats.total > 0 ? (stats.wins / stats.total) : 0;
+        return { brawler: brawlersMap.get(id), count: stats.total, wins: stats.wins, wr };
+      })
       .filter(item => item.brawler)
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => {
+        // Ordena por WR e número de jogos
+        if (b.wr !== a.wr) return b.wr - a.wr;
+        return b.count - a.count;
+      })
       .slice(0, 3)
       .map(item => item.brawler as Brawler);
 
-    const counters = Object.entries(enemyCounterCounts)
+    // Counters: dados reais de vitórias + curadoria manual
+    const realCounters = Object.entries(enemyCounterCounts)
       .map(([id, count]) => ({ brawler: brawlersMap.get(id), count }))
       .filter(item => item.brawler)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 3)
       .map(item => item.brawler as Brawler);
 
-    const threats = Object.entries(threatCounts)
+    const manualCounters = (targetBrawler?.counters || [])
+      .map(id => brawlersMap.get(id))
+      .filter(Boolean) as Brawler[];
+
+    // Une sem duplicatas (priorizando os manuais cadastrados)
+    const combinedCountersMap = new Map<string, Brawler>();
+    manualCounters.forEach(b => combinedCountersMap.set(b.id, b));
+    realCounters.forEach(b => {
+      if (!combinedCountersMap.has(b.id)) combinedCountersMap.set(b.id, b);
+    });
+    const counters = Array.from(combinedCountersMap.values()).slice(0, 6);
+
+    // Ameaças: dados reais de derrotas + curadoria manual (Sofre para)
+    const realThreats = Object.entries(threatCounts)
       .map(([id, count]) => ({ brawler: brawlersMap.get(id), count }))
       .filter(item => item.brawler)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 3)
       .map(item => item.brawler as Brawler);
+
+    const manualThreats = (targetBrawler?.counteredBy || [])
+      .map(id => brawlersMap.get(id))
+      .filter(Boolean) as Brawler[];
+
+    const combinedThreatsMap = new Map<string, Brawler>();
+    manualThreats.forEach(b => combinedThreatsMap.set(b.id, b));
+    realThreats.forEach(b => {
+      if (!combinedThreatsMap.has(b.id)) combinedThreatsMap.set(b.id, b);
+    });
+    const threats = Array.from(combinedThreatsMap.values()).slice(0, 6);
 
     return {
       totalBans,
@@ -390,7 +426,7 @@ export const analyticsService = {
       enemyPicksCount: enemyPicks.length,
       totalPicksCount: brawlerPicks.length,
       comfortStats,
-      partners,
+      partners: realPartners,
       counters,
       threats
     };

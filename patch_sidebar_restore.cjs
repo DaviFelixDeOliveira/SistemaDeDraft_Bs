@@ -73,8 +73,8 @@ code = code.replace(
 );
 
 code = code.replace(
-  /<span className="text-zinc-700 dark:text-zinc-300">Logado como<\/span>/,
-  `<span className={cn("text-zinc-700 dark:text-zinc-300", isCollapsed ? "md:hidden" : "")}>Logado como</span>`
+  /<span className="text-zinc-700 dark:text-zinc-300">Entrou como<\/span>/,
+  `<span className={cn("text-zinc-700 dark:text-zinc-300", isCollapsed ? "md:hidden" : "")}>Entrou como</span>`
 );
 
 code = code.replace(

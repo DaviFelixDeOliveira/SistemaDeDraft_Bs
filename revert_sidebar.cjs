@@ -160,7 +160,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
               ) : (
                 <UserIcon className="w-4 h-4 text-blue-500" />
               )}
-              <span className="text-zinc-700 dark:text-zinc-300">Logado como</span>
+              <span className="text-zinc-700 dark:text-zinc-300">Entrou como</span>
             </div>
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider",

@@ -25,7 +25,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [viewActive, setViewActive] = useState(true);
 
-  const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean, action: (() => void) | null, title: string, message: string, processingText?: string, successText?: string}>({ isOpen: false, action: null, title: '', message: '' });
+  const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean, action: (() => void) | null, title: string, message: string, processingText?: string, successText?: string }>({ isOpen: false, action: null, title: '', message: '' });
 
   const [playerStatsMap, setPlayerStatsMap] = useState<Record<string, any>>({});
 
@@ -63,7 +63,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
     const player = players.find(p => p.id === playerId);
     if (!player) return;
     const isArchiving = player.isActive !== false;
-    
+
     setConfirmConfig({
       isOpen: true,
       title: isArchiving ? 'Arquivar Jogador' : 'Desarquivar Jogador',
@@ -124,9 +124,9 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-zinc-900 dark:text-white">Gestão de Elenco</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm">Gerencie os atletas e seus pools de conforto.</p>
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm">Gerencie os atletas e seus picks de conforto.</p>
         </div>
-        
+
         <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
           <div className="flex bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-lg">
             <button
@@ -149,7 +149,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
             </button>
           </div>
           {!isPlayerMode && (
-            <button 
+            <button
               onClick={() => setIsAddModalOpen(true)}
               className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 w-fit"
             >
@@ -164,40 +164,40 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
         {filteredPlayers.map(player => {
           const stats = getPlayerStats(player.id);
           const comfortBrawlers = (player.comfortBrawlers || []).map(id => brawlers.find(b => b.id === id)).filter(Boolean);
-          
+
           return (
             <div key={player.id} className="bg-white dark:bg-[#121212] rounded-xl border border-zinc-200 dark:border-[#2A2A2A] shadow-sm hover:shadow-md dark:shadow-none transition-shadow overflow-hidden flex flex-col group">
               {/* Card Header */}
-              <div 
+              <div
                 className="p-5 border-b border-zinc-100 dark:border-[#2A2A2A] relative cursor-pointer"
                 onClick={() => setSelectedPlayer(player)}
               >
                 {!isPlayerMode && (
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); }}
-                      className="text-zinc-400 hover:text-blue-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
+                      className="text-zinc-400 hover:text-blue-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm"
                       title="Editar Jogador"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id, player.nickname); }}
-                      className="text-zinc-400 hover:text-red-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm" 
+                      className="text-zinc-400 hover:text-red-500 transition-colors p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm"
                       title="Excluir Jogador"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 )}
-                
+
                 <div className="flex flex-col gap-1 pr-16">
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-bold text-zinc-900 dark:text-white leading-tight">{player.nickname}</h3>
                     {!isPlayerMode && (
-                      <button 
+                      <button
                         onClick={(e) => togglePlayerStatus(player.id, e)}
-                        className="text-zinc-400 hover:text-amber-500 transition-colors p-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-sm" 
+                        className="text-zinc-400 hover:text-amber-500 transition-colors p-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-sm"
                         title={player.isActive !== false ? "Arquivar Jogador" : "Desarquivar Jogador"}
                       >
                         {player.isActive !== false ? <Archive className="w-3.5 h-3.5" /> : <ArchiveRestore className="w-3.5 h-3.5" />}
@@ -227,8 +227,8 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                   <div className="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold mb-2">Forma Recente</div>
                   <div className="flex gap-1 justify-center">
                     {stats.recentMatches.map((isWin, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         className={cn(
                           "w-4 h-4 rounded-sm flex items-center justify-center text-[10px] font-bold text-white",
                           isWin ? "bg-emerald-500" : "bg-red-500"
@@ -249,7 +249,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                     Comfort Picks
                   </h4>
                 </div>
-                
+
                 {comfortBrawlers.length > 0 ? (
                   <div className="flex gap-3 overflow-x-auto pb-2 cursor-pointer" onClick={() => setSelectedPlayer(player)}>
                     {comfortBrawlers.map(b => (
@@ -277,8 +277,8 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                   </div>
                   <span className={cn(
                     "text-[10px] px-2 py-1 rounded-full border font-bold uppercase tracking-wider shrink-0",
-                    player.status === 'Titular' 
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" 
+                    player.status === 'Titular'
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
                   )}>
                     {player.status || 'Reserva'}
@@ -289,30 +289,30 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
           );
         })}
       </div>
-      
+
       {/* Draft Integration Callout */}
       <div className="mt-8 bg-zinc-50 dark:bg-[#1A1A1A] border border-zinc-200 dark:border-blue-500/20 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <div className="w-12 h-12 rounded-full bg-blue-500/10 flex flex-shrink-0 items-center justify-center">
           <Zap className="w-6 h-6 text-blue-500" />
         </div>
         <div>
-          <h3 className="text-zinc-900 dark:text-white font-bold mb-1">Integração com Draft Engine Ativa</h3>
+          <h3 className="text-zinc-900 dark:text-white font-bold mb-1"> Picks Confortos Ativo</h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Os Comfort Picks atribuídos aos jogadores Titulares concedem automaticamente <strong>+15 pts de Sinergia</strong> no algoritmo de recomendação durante a fase de Draft.
+            Os Picks Confortos atribuídos aos jogadores  concedem automaticamente <strong>+15 pts de Sinergia</strong> no algoritmo de recomendação durante a fase de Draft.
           </p>
         </div>
       </div>
 
-      <DetailsModal 
-        isOpen={!!selectedPlayer} 
-        onClose={() => setSelectedPlayer(null)} 
+      <DetailsModal
+        isOpen={!!selectedPlayer}
+        onClose={() => setSelectedPlayer(null)}
         player={selectedPlayer}
         stats={selectedPlayer ? getPlayerStats(selectedPlayer.id) : { winrate: 0, matches: 0, recentMatches: [] }}
       />
-      
-      <EditModal 
-        isOpen={!!editingPlayer || isAddModalOpen} 
-        onClose={() => { setEditingPlayer(null); setIsAddModalOpen(false); }} 
+
+      <EditModal
+        isOpen={!!editingPlayer || isAddModalOpen}
+        onClose={() => { setEditingPlayer(null); setIsAddModalOpen(false); }}
         player={editingPlayer}
         onSave={handleSave}
       />

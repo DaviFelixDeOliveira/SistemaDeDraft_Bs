@@ -2,7 +2,7 @@ const fs = require('fs');
 let code = fs.readFileSync('src/components/Sidebar.tsx', 'utf8');
 
 code = code.replace(
-  /<div className="flex items-center justify-between px-3 py-2\.5 bg-zinc-100 dark:bg-\[#1A1A1A\] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400">[\s\S]*?Logado como<\/span>\s*<\/div>\s*<span className=\{cn\(\s*"px-2 py-0\.5 rounded-full text-\[10px\] uppercase font-black tracking-wider",\s*userRole === 'admin' \? "bg-\[#FF3366\]\/10 text-\[#FF3366\] border border-\[#FF3366\]\/20" : "bg-blue-500\/10 text-blue-500 border border-blue-500\/20"\s*\)\}>\s*\{userRole === 'admin' \? 'Admin' : 'Player'\}\s*<\/span>\s*<\/div>/,
+  /<div className="flex items-center justify-between px-3 py-2\.5 bg-zinc-100 dark:bg-\[#1A1A1A\] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400">[\s\S]*?Entrou como<\/span>\s*<\/div>\s*<span className=\{cn\(\s*"px-2 py-0\.5 rounded-full text-\[10px\] uppercase font-black tracking-wider",\s*userRole === 'admin' \? "bg-\[#FF3366\]\/10 text-\[#FF3366\] border border-\[#FF3366\]\/20" : "bg-blue-500\/10 text-blue-500 border border-blue-500\/20"\s*\)\}>\s*\{userRole === 'admin' \? 'Admin' : 'Player'\}\s*<\/span>\s*<\/div>/,
   `<div className={cn("flex items-center px-3 py-2.5 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400", isCollapsed ? "md:justify-center justify-between" : "justify-between")}>
             <div className="flex items-center gap-2">
               {userRole === 'admin' ? (
@@ -10,7 +10,7 @@ code = code.replace(
               ) : (
                 <UserIcon className="w-4 h-4 text-blue-500 shrink-0" />
               )}
-              <span className={cn("text-zinc-700 dark:text-zinc-300", isCollapsed ? "md:hidden" : "")}>Logado como</span>
+              <span className={cn("text-zinc-700 dark:text-zinc-300", isCollapsed ? "md:hidden" : "")}>Entrou como</span>
             </div>
             <span className={cn(
               "rounded-full text-[10px] uppercase font-black tracking-wider",

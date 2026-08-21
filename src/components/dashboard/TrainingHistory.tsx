@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { History, Calendar, Clock, Map as MapIcon, Crosshair, Users, Trophy, Download, FileText, Image as ImageIcon, X, ChevronDown, Shield, Swords, Ban, FileImage } from 'lucide-react';
+import { History, Calendar, Clock, Map as MapIcon, Crosshair, Users, Trophy, Download, FileText, Image as ImageIcon, X, ChevronDown, Shield, Swords, Ban, FileImage, Trash2, CheckSquare, Square } from 'lucide-react';
 import { sessionService, TrainingSession } from '../../services/sessionService';
 import { analyticsService } from '../../services/analyticsService';
 import { Match, MatchPick, MatchBan, Brawler, Player } from '../../types';
@@ -30,13 +30,15 @@ export function TrainingHistory() {
   const [mapsMap, setMapsMap] = useState<Record<string, any>>({});
   const [brawlersMap, setBrawlersMap] = useState<Record<string, Brawler>>({});
   const [playersMap, setPlayersMap] = useState<Record<string, Player>>({});
-  const [confirmConfig, setConfirmConfig] = useState<{isOpen: boolean, action: (() => void) | null, title: string, message: string}>({ isOpen: false, action: null, title: '', message: '' });
+  const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean, action: (() => void) | null, title: string, message: string }>({ isOpen: false, action: null, title: '', message: '' });
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<string[]>([]);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [selectedExportSession, setSelectedExportSession] = useState<string>('');
   const [selectedMatchForDetails, setSelectedMatchForDetails] = useState<Match | null>(null);
   const [exportingFormat, setExportingFormat] = useState<'png' | 'jpg' | 'pdf' | null>(null);
   const reportCardRef = useRef<HTMLDivElement>(null);
+  const reportPagesRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     loadData();
@@ -51,59 +53,6 @@ export function TrainingHistory() {
     };
   }, []);
 
-  const generateMockSession = async () => {
-    const mapKeys = Object.keys(mapsMap);
-    const brawlerKeys = Object.keys(brawlersMap);
-    if(mapKeys.length === 0 || brawlerKeys.length < 6) {
-      alert("É necessário ter mapas e pelo menos 6 brawlers cadastrados para gerar treino.");
-      return;
-    }
-
-    const sessionId = crypto.randomUUID();
-    const newSession = {
-      id: sessionId,
-      start_date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      end_date: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    };
-
-    const mockMatches: Match[] = [];
-    const mockPicks: MatchPick[] = [];
-    const mockBans: MatchBan[] = [];
-
-    const addMockMatch = (offsetMins: number, result: 'victory'|'defeat', mapIdx: number, opp: string) => {
-      const matchId = crypto.randomUUID();
-      mockMatches.push({
-        id: matchId,
-        session_id: sessionId,
-        match_date: new Date(Date.now() - offsetMins * 60 * 1000).toISOString(),
-        map_id: mapKeys[mapIdx],
-        result,
-        opponent_name: opp,
-        notes: 'Mock match'
-      });
-
-      const shuffled = [...brawlerKeys].sort(() => 0.5 - Math.random());
-      const tbkP = shuffled.slice(0, 3);
-      const enmP = shuffled.slice(3, 6);
-      const tbkB = shuffled.slice(6, 9);
-      const enmB = shuffled.slice(9, 12);
-
-      tbkP.forEach(b => mockPicks.push({ match_id: matchId, team: 'tbk', brawler_id: b }));
-      enmP.forEach(b => mockPicks.push({ match_id: matchId, team: 'enemy', brawler_id: b }));
-      tbkB.forEach(b => mockBans.push({ match_id: matchId, team: 'tbk', brawler_id: b }));
-      enmB.forEach(b => mockBans.push({ match_id: matchId, team: 'enemy', brawler_id: b }));
-    };
-
-    addMockMatch(110, 'victory', 0, 'Mock Team 1');
-    addMockMatch(90, 'defeat', Math.min(1, mapKeys.length - 1), 'Mock Team 2');
-    addMockMatch(70, 'victory', 0, 'Mock Team 3');
-
-    setSessions(prev => [newSession, ...prev]);
-    setMatches(prev => [...mockMatches, ...prev]);
-    setPicks(prev => [...mockPicks, ...prev]);
-    setBans(prev => [...mockBans, ...prev]);
-  };
-
   const loadData = async () => {
     const rawSessions = await sessionService.getSessions();
     const m = await analyticsService.getAllMatches();
@@ -112,7 +61,7 @@ export function TrainingHistory() {
     const maps = await mapService.getMaps();
     const brwls = await brawlerService.getBrawlers();
     const plyrs = await playerService.getPlayers();
-    
+
     const mMap: Record<string, any> = {};
     maps.forEach(map => { mMap[map.id] = map; });
 
@@ -164,7 +113,7 @@ export function TrainingHistory() {
       const end = session.end_date ? parseTs(session.end_date).getTime() : new Date().getTime();
       const matchTime = parseTs(m.match_date).getTime();
       return matchTime >= start && matchTime <= end;
-    }).sort((a, b) => parseTs(b.match_date).getTime() - parseTs(a.match_date).getTime());
+    }).sort((a, b) => parseTs(a.match_date).getTime() - parseTs(b.match_date).getTime());
   };
 
   const getSessionPlayers = (sessionMatches: Match[]) => {
@@ -174,7 +123,22 @@ export function TrainingHistory() {
     return uniquePlayerIds.map(id => playersMap[id]).filter(Boolean);
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const toggleSelectSession = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedSessionIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedSessionIds.length === sessions.length) {
+      setSelectedSessionIds([]);
+    } else {
+      setSelectedSessionIds(sessions.map(s => s.id));
+    }
+  };
+
+  const handleDeleteSingle = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setConfirmConfig({
       isOpen: true,
@@ -182,62 +146,73 @@ export function TrainingHistory() {
       message: 'Deseja excluir este registro de treino? (As partidas continuarão salvas no histórico)',
       action: async () => {
         await sessionService.deleteSession(id);
+        setSelectedSessionIds(prev => prev.filter(item => item !== id));
         await loadData();
       }
     });
   };
 
-  const handleResetHistory = () => {
+  const handleDeleteSelected = () => {
+    if (selectedSessionIds.length === 0) return;
+    const count = selectedSessionIds.length;
     setConfirmConfig({
       isOpen: true,
-      title: 'Resetar Todo o Histórico',
-      message: 'ATENÇÃO: Deseja apagar todas as sessões E todas as partidas jogadas no sistema? Esta ação é irreversível.',
+      title: `Excluir ${count} Treino${count > 1 ? 's' : ''}`,
+      message: `Deseja excluir ${count === 1 ? 'o treino selecionado' : `os ${count} treinos selecionados`}? (As partidas continuarão salvas no histórico)`,
       action: async () => {
-        const allSessions = await sessionService.getSessions();
-        for (const s of allSessions) {
-          await sessionService.deleteSession(s.id);
+        for (const id of selectedSessionIds) {
+          await sessionService.deleteSession(id);
         }
-        await analyticsService.deleteAllMatches();
+        setSelectedSessionIds([]);
         await loadData();
       }
     });
   };
 
   const handleExportImage = async (format: 'png' | 'jpg') => {
-    if (!reportCardRef.current) return;
+    const pages = reportPagesRef.current.filter(Boolean);
+    if (pages.length === 0) return;
+
     try {
       setExportingFormat(format);
-      const element = reportCardRef.current;
-      
-      const options = {
-        scale: 2.5,
-        backgroundColor: '#0d0e12',
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        features: {
-          removeControlCharacter: true
-        }
-      };
 
-      let imgData: string;
-      if (format === 'png') {
-        imgData = await domToPng(element, options);
-      } else {
-        imgData = await domToJpeg(element, { ...options, quality: 0.96 });
-      }
-      
       const now = new Date();
       const day = String(now.getDate()).padStart(2, '0');
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const year = now.getFullYear();
       const dateStr = `${day}-${month}-${year}`;
 
-      const link = document.createElement('a');
-      link.download = `tbk_hub_relatorio_treino_${dateStr}.${format}`;
-      link.href = imgData;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      for (let i = 0; i < pages.length; i++) {
+        const pageEl = pages[i];
+        if (!pageEl) continue;
+
+        const options = {
+          scale: 2.5,
+          backgroundColor: '#0d0e12',
+          width: 760,
+          height: pageEl.offsetHeight || pageEl.scrollHeight,
+          features: { removeControlCharacter: true }
+        };
+
+        let imgData: string;
+        if (format === 'png') {
+          imgData = await domToPng(pageEl, options);
+        } else {
+          imgData = await domToJpeg(pageEl, { ...options, quality: 0.96 });
+        }
+
+        const fileNameSuffix = pages.length > 1 ? `_pagina${i + 1}` : '';
+        const link = document.createElement('a');
+        link.download = `tbk_hub_relatorio_treino_${dateStr}${fileNameSuffix}.${format}`;
+        link.href = imgData;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        if (pages.length > 1) {
+          await new Promise(res => setTimeout(res, 400));
+        }
+      }
     } catch (err: any) {
       console.error('Erro ao exportar imagem:', err);
       alert(`Ocorreu um erro ao gerar a imagem: ${err?.message || err}`);
@@ -247,33 +222,15 @@ export function TrainingHistory() {
   };
 
   const handleExportPDF = async () => {
-    if (!reportCardRef.current) return;
+    const pages = reportPagesRef.current.filter(Boolean);
+    if (pages.length === 0) return;
+
     try {
       setExportingFormat('pdf');
-      const element = reportCardRef.current;
 
-      // Renderiza o elemento em um canvas de alta fidelidade
-      const canvas = await domToCanvas(element, {
-        scale: 2,
-        backgroundColor: '#0d0e12',
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        features: {
-          removeControlCharacter: true
-        }
-      });
-
+      // A4 padrão em pontos
       const a4WidthPt = 595.28;
       const a4HeightPt = 841.89;
-      const margin = 16;
-      const printableWidthPt = a4WidthPt - (margin * 2);
-      const printableHeightPt = a4HeightPt - (margin * 2);
-
-      // Altura em pixels do canvas correspondente a 1 folha A4
-      const scaleFactor = printableWidthPt / canvas.width;
-      const pageCanvasHeight = printableHeightPt / scaleFactor;
-
-      const totalPages = Math.ceil(canvas.height / pageCanvasHeight);
 
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -281,28 +238,20 @@ export function TrainingHistory() {
         format: 'a4'
       });
 
-      for (let i = 0; i < totalPages; i++) {
-        const sourceY = i * pageCanvasHeight;
-        const sourceHeight = Math.min(pageCanvasHeight, canvas.height - sourceY);
+      for (let i = 0; i < pages.length; i++) {
+        const pageEl = pages[i];
+        if (!pageEl) continue;
 
-        // Canvas temporário para fatiar o trecho correspondente à página
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sourceHeight;
+        const FIXED_PAGE_WIDTH = 760;
+        const canvas = await domToCanvas(pageEl, {
+          scale: 2.5,
+          backgroundColor: '#0f1117',
+          width: FIXED_PAGE_WIDTH,
+          height: pageEl.offsetHeight || pageEl.scrollHeight,
+          features: { removeControlCharacter: true }
+        });
 
-        const ctx = pageCanvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#0d0e12';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(
-            canvas,
-            0, sourceY, canvas.width, sourceHeight,
-            0, 0, canvas.width, sourceHeight
-          );
-        }
-
-        const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
-        const renderedHeightPt = sourceHeight * scaleFactor;
+        const pageImgData = canvas.toDataURL('image/jpeg', 0.98);
 
         if (i > 0) {
           pdf.addPage('a4', 'portrait');
@@ -311,25 +260,16 @@ export function TrainingHistory() {
         pdf.addImage(
           pageImgData,
           'JPEG',
-          margin,
-          margin,
-          printableWidthPt,
-          renderedHeightPt,
+          0,
+          0,
+          a4WidthPt,
+          a4HeightPt,
           undefined,
           'FAST'
         );
-
-        // Rodapé de paginação elegante se tiver múltiplas páginas
-        if (totalPages > 1) {
-          pdf.setFontSize(8);
-          pdf.setTextColor(140, 140, 150);
-          pdf.text(
-            `Página ${i + 1} de ${totalPages}`,
-            a4WidthPt - margin - 50,
-            a4HeightPt - 8
-          );
-        }
       }
+
+      const finalPdf: jsPDF = pdf;
 
       const now = new Date();
       const day = String(now.getDate()).padStart(2, '0');
@@ -337,10 +277,10 @@ export function TrainingHistory() {
       const year = now.getFullYear();
       const dateStr = `${day}-${month}-${year}`;
 
-      pdf.save(`tbk_hub_relatorio_treino_${dateStr}.pdf`);
+      finalPdf.save(`tbk_hub_relatorio_treino_${dateStr}.pdf`);
     } catch (err: any) {
       console.error('Erro ao exportar PDF:', err);
-      alert(`Ocorreu um erro ao gerar o arquivo PDF: ${err?.message || err}`);
+      alert(`Ocorreu um erro ao gerar o PDF: ${err?.message || err}`);
     } finally {
       setExportingFormat(null);
     }
@@ -355,18 +295,35 @@ export function TrainingHistory() {
           </h2>
           <p className="text-slate-500 dark:text-zinc-400 text-sm mt-1">Visualize as sessões de scrims, desempenho e composições utilizadas.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button 
+        <div className="flex flex-wrap items-center gap-2.5">
+          {sessions.length > 0 && (
+            <button
+              onClick={toggleSelectAll}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] transition-colors border border-zinc-200 dark:border-[#2A2A2A]"
+            >
+              {selectedSessionIds.length === sessions.length ? (
+                <CheckSquare className="w-4 h-4 text-indigo-500" />
+              ) : (
+                <Square className="w-4 h-4 text-zinc-400" />
+              )}
+              {selectedSessionIds.length === sessions.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
+            </button>
+          )}
+
+          {selectedSessionIds.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors border border-red-200 dark:border-red-500/20 animate-in fade-in"
+            >
+              <Trash2 className="w-4 h-4" /> Excluir ({selectedSessionIds.length})
+            </button>
+          )}
+
+          <button
             onClick={() => setIsExportModalOpen(true)}
             className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors border border-indigo-200 dark:border-indigo-500/20"
           >
             <Download className="w-4 h-4" /> Exportar
-          </button>
-          <button 
-            onClick={generateMockSession}
-            className="bg-zinc-100 dark:bg-[#1A1A1A] hover:bg-zinc-200 dark:hover:bg-[#2A2A2A] text-zinc-700 dark:text-zinc-300 px-4 py-2 rounded-xl text-sm font-bold transition-colors border border-zinc-200 dark:border-[#2A2A2A]"
-          >
-            Gerar Treino de Exemplo
           </button>
         </div>
       </div>
@@ -386,64 +343,97 @@ export function TrainingHistory() {
             const losses = sessionMatches.length - wins;
             const wr = sessionMatches.length > 0 ? Math.round((wins / sessionMatches.length) * 100) : 0;
             const isExpanded = expandedSession === session.id;
-            
+            const isSelected = selectedSessionIds.includes(session.id);
+
             const startDate = parseTs(session.start_date);
-            
+
             return (
-              <div key={session.id} className="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden shadow-sm transition-all hover:border-indigo-500/30">
-                <div 
+              <div
+                key={session.id}
+                className={cn(
+                  "bg-white dark:bg-[#1A1A1A] border rounded-xl overflow-hidden shadow-sm transition-all",
+                  isSelected
+                    ? "border-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/10"
+                    : "border-slate-200 dark:border-[#2A2A2A] hover:border-indigo-500/30"
+                )}
+              >
+                <div
                   className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer relative"
                   onClick={() => setExpandedSession(isExpanded ? null : session.id)}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shadow-sm", session.end_date ? "bg-indigo-50 dark:bg-indigo-500/10" : "bg-emerald-500/10")}>
-                      <Clock className={cn("w-6 h-6", session.end_date ? "text-indigo-500" : "text-emerald-500")} />
+                  <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                    {/* Checkbox de seleção */}
+                    <button
+                      type="button"
+                      onClick={(e) => toggleSelectSession(session.id, e)}
+                      className="p-1 text-zinc-400 hover:text-indigo-500 transition-colors shrink-0"
+                      title={isSelected ? 'Desmarcar treino' : 'Selecionar treino'}
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-5 h-5 text-indigo-500" />
+                      ) : (
+                        <Square className="w-5 h-5 text-zinc-400 dark:text-zinc-600" />
+                      )}
+                    </button>
+
+                    <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0", session.end_date ? "bg-indigo-50 dark:bg-indigo-500/10" : "bg-emerald-500/10")}>
+                      <Clock className={cn("w-5 h-5 sm:w-6 sm:h-6", session.end_date ? "text-indigo-500" : "text-emerald-500")} />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-900 dark:text-white text-lg">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg truncate">
                           Treino de {startDate.toLocaleDateString()}
                         </h4>
                         {!session.end_date && (
-                          <span className="bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase px-2 py-0.5 rounded-full animate-pulse">
+                          <span className="bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase px-2 py-0.5 rounded-full animate-pulse shrink-0">
                             Em Andamento
                           </span>
                         )}
                         {session.opponent_name && (
-                          <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-semibold px-2 py-0.5 rounded-md">
+                          <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-semibold px-2 py-0.5 rounded-md truncate max-w-[150px]">
                             vs {session.opponent_name}
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
-                        {startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} 
-                        {session.end_date ? ` - ${parseTs(session.end_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : ' - ...'}
+                      <div className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-0.5 font-mono">
+                        {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {session.end_date ? ` - ${parseTs(session.end_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ' - ...'}
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-6 w-full sm:w-auto">
-                    <div className="flex items-center gap-6 flex-1 sm:flex-none justify-between sm:justify-start">
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-[#2A2A2A]">
+                    <div className="grid grid-cols-3 gap-3 sm:flex sm:items-center sm:gap-6 flex-1 sm:flex-none">
                       <div className="text-center">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Partidas</div>
-                        <div className="font-bold text-slate-900 dark:text-white">{sessionMatches.length}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Partidas</div>
+                        <div className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">{sessionMatches.length}</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Resultado</div>
-                        <div className="font-bold text-slate-900 dark:text-white">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Resultado</div>
+                        <div className="font-bold text-slate-900 dark:text-white text-sm sm:text-base whitespace-nowrap">
                           <span className="text-emerald-500">{wins}V</span> - <span className="text-red-500">{losses}D</span>
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">WR</div>
-                        <div className={cn("font-black", wr >= 60 ? "text-emerald-500" : wr >= 40 ? "text-amber-500" : "text-red-500")}>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">WR</div>
+                        <div className={cn("font-black text-sm sm:text-base", wr >= 60 ? "text-emerald-500" : wr >= 40 ? "text-amber-500" : "text-red-500")}>
                           {wr}%
                         </div>
                       </div>
                     </div>
+
+                    {/* Botão individual de exclusão */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteSingle(session.id, e)}
+                      className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
+                      title="Excluir este treino"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                
+
                 {isExpanded && (
                   <div className="border-t border-slate-200 dark:border-[#2A2A2A] bg-slate-50 dark:bg-[#0A0A0A] p-4 sm:p-5 space-y-5">
                     {/* Atletas que jogaram no treino */}
@@ -467,33 +457,59 @@ export function TrainingHistory() {
                       <h5 className="font-bold text-sm text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                         <MapIcon className="w-4 h-4" /> Partidas da Sessão
                       </h5>
-                      
+
                       {sessionMatches.length === 0 ? (
                         <p className="text-sm text-slate-500 italic">Nenhuma partida registrada nesta sessão.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {sessionMatches.map((m) => {
-                            const map = mapsMap[m.map_id];
-                            const mDate = new Date(m.match_date);
-                            return (
-                              <div key={m.id} onClick={() => setSelectedMatchForDetails(m)} className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-lg p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-colors group">
-                                <div className="flex flex-col">
-                                  <span className="font-bold text-sm text-slate-900 dark:text-white truncate max-w-[150px] group-hover:text-indigo-500 transition-colors">
-                                    {map ? map.name : 'Mapa Desconhecido'}
-                                  </span>
-                                  <span className="text-xs text-slate-500">{mDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                      ) : (() => {
+                        // Agrupar partidas por modo, mantendo ordem cronológica dentro de cada grupo
+                        const modeGroups: Record<string, Match[]> = {};
+                        sessionMatches.forEach(m => {
+                          const mapData = mapsMap[m.map_id];
+                          const modeName = mapData?.mode || 'Outros';
+                          if (!modeGroups[modeName]) modeGroups[modeName] = [];
+                          modeGroups[modeName].push(m);
+                        });
+                        // Ordenar os grupos pela data da primeira partida de cada grupo
+                        const sortedModes = Object.keys(modeGroups).sort((a, b) => {
+                          const aTime = parseTs(modeGroups[a][0].match_date).getTime();
+                          const bTime = parseTs(modeGroups[b][0].match_date).getTime();
+                          return aTime - bTime;
+                        });
+                        return (
+                          <div className="space-y-4">
+                            {sortedModes.map(modeName => (
+                              <div key={modeName}>
+                                <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                  {modeName} ({modeGroups[modeName].length} {modeGroups[modeName].length === 1 ? 'partida' : 'partidas'})
                                 </div>
-                                <span className={cn(
-                                  "text-xs font-bold px-2 py-1 rounded-md uppercase",
-                                  m.result === 'victory' ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
-                                )}>
-                                  {m.result === 'victory' ? 'Vitória' : 'Derrota'}
-                                </span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {modeGroups[modeName].map((m) => {
+                                    const map = mapsMap[m.map_id];
+                                    const mDate = parseTs(m.match_date);
+                                    return (
+                                      <div key={m.id} onClick={() => setSelectedMatchForDetails(m)} className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-lg p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500/50 transition-colors group">
+                                        <div className="flex flex-col">
+                                          <span className="font-bold text-sm text-slate-900 dark:text-white truncate max-w-[150px] group-hover:text-indigo-500 transition-colors">
+                                            {map ? map.name : 'Mapa Desconhecido'}
+                                          </span>
+                                          <span className="text-xs text-slate-500">{mDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                        <span className={cn(
+                                          "text-xs font-bold px-2 py-1 rounded-md uppercase",
+                                          m.result === 'victory' ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
+                                        )}>
+                                          {m.result === 'victory' ? 'Vitória' : 'Derrota'}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
@@ -502,7 +518,7 @@ export function TrainingHistory() {
           })
         )}
       </div>
-            <ConfirmModal
+      <ConfirmModal
         isOpen={confirmConfig.isOpen}
         title={confirmConfig.title}
         message={confirmConfig.message}
@@ -566,293 +582,344 @@ export function TrainingHistory() {
                 </div>
               </div>
 
-              {/* Report Preview Body (Estilo Folha de Documento / A4 Card com ref) */}
-              <div className="overflow-y-auto flex-1 p-6 bg-slate-100 dark:bg-[#0A0A0A] flex justify-center">
+              {/* Report Preview Body (Visualização com Scroll e Páginas Distribuídas com Perfeição) */}
+              <div className="overflow-x-auto overflow-y-auto flex-1 p-3 sm:p-6 bg-slate-200 dark:bg-[#07080b] flex flex-col items-center gap-6 w-full">
                 {!exportSession ? (
                   <div className="text-center py-16">
                     <Calendar className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
                     <p className="text-zinc-500 font-bold text-base">Nenhum treino concluído com partidas registradas.</p>
                     <p className="text-zinc-400 text-sm mt-1">Realize e encerre um treino com partidas para visualizar o relatório.</p>
                   </div>
-                ) : (
-                  /* Folha de Relatório Profissional / Esports Dark Document */
-                  <div 
-                    ref={reportCardRef} 
-                    className="w-full max-w-[760px] bg-[#0f1117] border border-[#232738] rounded-2xl shadow-2xl p-7 sm:p-9 space-y-6 text-white select-none relative overflow-hidden"
-                    style={{ minHeight: 'auto', boxSizing: 'border-box' }}
-                  >
-                    {/* Background Glow sutil */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-                    <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+                ) : (() => {
+                  // Divisão equilibrada: exatamente até 2 partidas por folha A4
+                  const pagesData: Match[][] = [];
+                  for (let i = 0; i < expMatches.length; i += 2) {
+                    pagesData.push(expMatches.slice(i, i + 2));
+                  }
 
-                    {/* Header do Documento */}
-                    <div className="relative z-10 flex justify-between items-start border-b border-[#232738] pb-6">
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                          <Trophy className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-black text-[10px] uppercase tracking-wider">TBK Esports</span>
-                            <span className="text-[11px] font-bold text-zinc-400">Scrims Analysis</span>
-                          </div>
-                          <h1 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">RELATÓRIO DE TREINO</h1>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-zinc-300 font-mono">{parseTs(exportSession.start_date).toLocaleDateString()}</div>
-                        {exportSession.opponent_name ? (
-                          <div className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1 bg-[#1a1d28] border border-[#2e3448] text-indigo-300 text-xs font-bold rounded-lg shadow-sm">
-                            <Swords className="w-3.5 h-3.5 text-indigo-400" /> vs {exportSession.opponent_name}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-zinc-500 italic">Treino Interno</span>
-                        )}
-                      </div>
-                    </div>
+                  const totalDocPages = pagesData.length;
 
-                    {/* Overview Cards (Métricas Chave) */}
-                    <div className="relative z-10 grid grid-cols-3 gap-3.5">
-                      <div className="bg-[#161822] border border-[#262a3c] rounded-xl p-4 text-center shadow-inner">
-                        <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">PARTIDAS</div>
-                        <div className="text-3xl font-black text-white">{expMatches.length}</div>
-                        <div className="text-[10px] font-semibold text-zinc-500 mt-0.5">Disputadas</div>
-                      </div>
-                      <div className="bg-[#161822] border border-[#262a3c] rounded-xl p-4 text-center shadow-inner">
-                        <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">WIN RATE</div>
-                        <div className={cn("text-3xl font-black", expWr >= 50 ? "text-emerald-400" : "text-red-400")}>
-                          {expWr}%
-                        </div>
-                        <div className="text-[10px] font-semibold text-zinc-500 mt-0.5">Aproveitamento</div>
-                      </div>
-                      <div className="bg-[#161822] border border-[#262a3c] rounded-xl p-4 text-center shadow-inner">
-                        <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">PLACAR</div>
-                        <div className="text-3xl font-black text-white">
-                          <span className="text-emerald-400">{expWins}</span><span className="text-zinc-600 mx-1">-</span><span className="text-red-400">{expLosses}</span>
-                        </div>
-                        <div className="text-[10px] font-semibold text-zinc-500 mt-0.5">V - D</div>
-                      </div>
-                    </div>
+                  return pagesData.map((pageMatches, pageIndex) => {
+                    const isFirstPage = pageIndex === 0;
 
-                    {/* Barra Sequencial de Desempenho */}
-                    <div className="relative z-10 bg-[#161822] border border-[#262a3c] rounded-xl p-4 space-y-2.5">
-                      <div className="flex justify-between items-center text-xs font-bold">
-                        <span className="text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <Crosshair className="w-3.5 h-3.5 text-indigo-400" /> Linha do Treino
-                        </span>
-                        <span className="text-zinc-300 font-mono text-[11px]">
-                          <span className="text-emerald-400 font-bold">{expWins}V</span> / <span className="text-red-400 font-bold">{expLosses}D</span>
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 h-3 rounded-full overflow-hidden bg-[#0d0e14] p-0.5 border border-[#232738]">
-                        {expMatches.map((m, i) => (
-                          <div 
-                            key={i} 
-                            className={cn(
-                              "h-full flex-1 rounded-sm transition-all", 
-                              m.result === 'victory' ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-red-500 to-red-400'
-                            )} 
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    return (
+                      <div
+                        key={`report-page-${pageIndex}`}
+                        ref={el => { reportPagesRef.current[pageIndex] = el; }}
+                        className="bg-[#0f1117] border border-[#232738] rounded-2xl shadow-2xl p-7 sm:p-9 text-white select-none relative overflow-hidden shrink-0 flex flex-col justify-between"
+                        style={{ width: '760px', minWidth: '760px', maxWidth: '760px', minHeight: '1075px', boxSizing: 'border-box' }}
+                      >
+                        {/* Background Glow sutil */}
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+                        <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
-                    {/* Atletas Escalados */}
-                    {expPlayers.length > 0 && (
-                      <div className="relative z-10 bg-[#161822] border border-[#262a3c] rounded-xl p-4">
-                        <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-indigo-400" /> Atletas Escalados ({expPlayers.length})
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {expPlayers.map(pl => (
-                            <span key={pl.id} className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#1f2333] border border-[#2e344a] rounded-lg text-xs font-bold text-zinc-200 whitespace-nowrap shrink-0">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50 shrink-0" />
-                              <span className="leading-none">{pl.nickname || pl.name}</span>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                        <div className="space-y-4 relative z-10">
 
-                    {/* Partidas do Treino */}
-                    <div className="relative z-10 space-y-4 pt-1">
-                      <div className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                        <Swords className="w-4 h-4 text-indigo-400" /> Histórico de Partidas ({expMatches.length})
-                      </div>
-
-                      <div className="space-y-3.5">
-                        {expMatches.map((m, idx) => {
-                          const map = mapsMap[m.map_id];
-                          const mPicks = picks.filter(p => p.match_id === m.id);
-                          const mBans = bans.filter(b => b.match_id === m.id);
-                          const tbkP = mPicks.filter(p => p.team === 'tbk');
-                          const enmP = mPicks.filter(p => p.team === 'enemy');
-                          const tbkB = mBans.filter(b => b.team === 'tbk');
-                          const enmB = mBans.filter(b => b.team === 'enemy');
-                          const mDate = parseTs(m.match_date);
-
-                          return (
-                            <div 
-                              key={m.id} 
-                              className={cn(
-                                "border rounded-xl p-4.5 space-y-3.5 bg-[#141620] transition-all",
-                                m.result === 'victory'
-                                  ? 'border-emerald-500/30 shadow-sm shadow-emerald-500/5'
-                                  : 'border-red-500/30 shadow-sm shadow-red-500/5'
-                              )}
-                            >
-                              {/* Header da Partida */}
-                              <div className="flex justify-between items-center pb-2.5 border-b border-[#232738] flex-nowrap gap-2">
-                                <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
-                                  <span className="text-xs font-black text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30 whitespace-nowrap shrink-0">
-                                    Jogo #{idx + 1}
-                                  </span>
-                                  <span className="font-bold text-sm text-white whitespace-nowrap">{map?.name || 'Mapa Desconhecido'}</span>
-                                  {map?.mode && (
-                                    <span className="text-[11px] px-2 py-0.5 rounded bg-[#1f2333] text-zinc-300 font-semibold border border-[#2e344a] whitespace-nowrap shrink-0">
-                                      {map.mode}
-                                    </span>
-                                  )}
+                          {/* ═══ CABEÇALHO ═══ */}
+                          {isFirstPage ? (
+                            /* Cabeçalho Principal Completo na Página 1 */
+                            <div className="relative z-10 flex justify-between items-start border-b border-[#232738] pb-5">
+                              <div className="flex items-center gap-3.5">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                                  <Trophy className="w-6 h-6 text-white" />
                                 </div>
-                                <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
-                                  <span className="text-[11px] text-zinc-400 font-mono whitespace-nowrap">{mDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                                  <span className={cn(
-                                    "text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap shrink-0",
-                                    m.result === 'victory' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                  )}>
-                                    {m.result === 'victory' ? 'Vitória' : 'Derrota'}
-                                  </span>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-black text-[10px] uppercase tracking-wider">TBK Esports</span>
+                                    <span className="text-[11px] font-bold text-zinc-400">Análises de Scrim</span>
+                                  </div>
+                                  <h1 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">RELATÓRIO DE TREINO</h1>
                                 </div>
                               </div>
-
-                              {/* Picks e Bans Grid */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
-                                {/* Time TBK */}
-                                <div className="bg-[#191c28] rounded-xl p-3.5 border border-[#2b3044]">
-                                  <div className="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
-                                    <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-indigo-400" /> Nossa Composição</span>
-                                    <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[9px]">TBK</span>
+                              <div className="text-right">
+                                <div className="text-sm font-bold text-zinc-300 font-mono">{parseTs(exportSession.start_date).toLocaleDateString()}</div>
+                                {exportSession.opponent_name ? (
+                                  <div className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1 bg-[#1a1d28] border border-[#2e3448] text-indigo-300 text-xs font-bold rounded-lg shadow-sm">
+                                    <Swords className="w-3.5 h-3.5 text-indigo-400" /> vs {exportSession.opponent_name}
                                   </div>
-                                  
-                                  {/* Picks TBK */}
-                                  <div className="flex gap-2.5 flex-wrap">
-                                    {tbkP.length > 0 ? tbkP.map((p, i) => {
-                                      const b = brawlersMap[p.brawler_id];
-                                      const player = p.player_id ? playersMap[p.player_id] : null;
-                                      return b ? (
-                                        <div key={i} className="flex flex-col items-center gap-1 w-16 bg-[#13151f] p-1.5 rounded-lg border border-[#232738]">
-                                          <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} className="w-10 h-10 rounded-md object-cover border border-[#2e344a] bg-zinc-900" />
-                                          <span className="text-[9px] font-bold text-zinc-200 truncate w-full text-center">{b.name}</span>
-                                          {player && (
-                                            <span className="text-[8px] font-black text-indigo-400 truncate w-full text-center bg-indigo-500/10 px-1 rounded">
-                                              {player.nickname || player.name}
-                                            </span>
-                                          )}
-                                        </div>
-                                      ) : null;
-                                    }) : <span className="text-xs text-zinc-500 italic">—</span>}
-                                  </div>
-
-                                  {/* Bans TBK */}
-                                  {tbkB.length > 0 && (
-                                    <div className="mt-3 pt-2.5 border-t border-[#232738] flex items-center gap-2">
-                                      <div className="text-[9px] font-black text-red-400 uppercase flex items-center gap-1"><Ban className="w-3 h-3" /> Bans:</div>
-                                      <div className="flex gap-1.5">
-                                        {tbkB.map((ban, i) => {
-                                          const b = brawlersMap[ban.brawler_id];
-                                          return b ? (
-                                            <div key={i} className="relative w-6 h-6 rounded overflow-hidden border border-red-500/40 opacity-75">
-                                              <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} title={b.name} className="w-full h-full object-cover grayscale" />
-                                              <div className="absolute inset-0 bg-red-600/30 flex items-center justify-center"><X className="w-3 h-3 text-red-300" /></div>
-                                            </div>
-                                          ) : null;
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Time Inimigo */}
-                                <div className="bg-[#191c28] rounded-xl p-3.5 border border-[#2b3044]">
-                                  <div className="text-[10px] font-black text-red-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
-                                    <span className="flex items-center gap-1.5"><Swords className="w-3.5 h-3.5 text-red-400" /> Composição Inimiga</span>
-                                    <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 text-[9px]">Adversário</span>
-                                  </div>
-
-                                  {/* Picks Inimigo */}
-                                  <div className="flex gap-2.5 flex-wrap">
-                                    {enmP.length > 0 ? enmP.map((p, i) => {
-                                      const b = brawlersMap[p.brawler_id];
-                                      return b ? (
-                                        <div key={i} className="flex flex-col items-center gap-1 w-16 bg-[#13151f] p-1.5 rounded-lg border border-[#232738]">
-                                          <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} className="w-10 h-10 rounded-md object-cover border border-[#2e344a] bg-zinc-900" />
-                                          <span className="text-[9px] font-bold text-zinc-200 truncate w-full text-center">{b.name}</span>
-                                          <span className="text-[8px] text-zinc-500 font-semibold truncate w-full text-center">Inimigo</span>
-                                        </div>
-                                      ) : null;
-                                    }) : <span className="text-xs text-zinc-500 italic">—</span>}
-                                  </div>
-
-                                  {/* Bans Inimigo */}
-                                  {enmB.length > 0 && (
-                                    <div className="mt-3 pt-2.5 border-t border-[#232738] flex items-center gap-2">
-                                      <div className="text-[9px] font-black text-red-400 uppercase flex items-center gap-1"><Ban className="w-3 h-3" /> Bans:</div>
-                                      <div className="flex gap-1.5">
-                                        {enmB.map((ban, i) => {
-                                          const b = brawlersMap[ban.brawler_id];
-                                          return b ? (
-                                            <div key={i} className="relative w-6 h-6 rounded overflow-hidden border border-red-500/40 opacity-75">
-                                              <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} title={b.name} className="w-full h-full object-cover grayscale" />
-                                              <div className="absolute inset-0 bg-red-600/30 flex items-center justify-center"><X className="w-3 h-3 text-red-300" /></div>
-                                            </div>
-                                          ) : null;
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
+                                ) : (
+                                  <span className="text-xs text-zinc-500 italic">Treino Interno</span>
+                                )}
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                          ) : (
+                            /* Mini Cabeçalho nas Páginas Seguintes */
+                            <div className="relative z-10 flex justify-between items-center border-b border-[#232738] pb-3.5 text-xs text-zinc-400 font-bold">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                                <span className="text-white uppercase tracking-wider font-black">TBK ESPORTS</span>
+                                <span className="text-zinc-600">—</span>
+                                <span className="text-indigo-400 uppercase tracking-wider">RELATÓRIO DE TREINO</span>
+                              </div>
+                              <div className="text-zinc-400 font-mono text-[11px]">
+                                {parseTs(exportSession.start_date).toLocaleDateString()} • {exportSession.opponent_name ? `vs ${exportSession.opponent_name}` : 'Treino Interno'}
+                              </div>
+                            </div>
+                          )}
 
-                    {/* Rodapé da Folha */}
-                    <div className="relative z-10 pt-5 border-t border-[#232738] flex justify-between items-center text-[10px] text-zinc-400 font-mono">
-                      <span className="flex items-center gap-1 text-zinc-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" /> Gerado via TBK Hub — Sistema de Draft Brawl Stars
-                      </span>
-                      <span className="text-zinc-500">Documento Oficial de Treino</span>
-                    </div>
-                  </div>
-                )}
+                          {/* ═══ MÉTRICAS E LINHA DO TREINO (Apenas na Página 1) ═══ */}
+                          {isFirstPage && (
+                            <>
+                              {/* Overview Cards (Métricas Chave) */}
+                              <div className="relative z-10 grid grid-cols-3 gap-3.5">
+                                <div className="bg-[#161822] border border-[#262a3c] rounded-xl p-4 text-center shadow-inner">
+                                  <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">PARTIDAS</div>
+                                  <div className="text-3xl font-black text-white">{expMatches.length}</div>
+                                  <div className="text-[10px] font-semibold text-zinc-500 mt-0.5">Disputadas</div>
+                                </div>
+                                <div className="bg-[#161822] border border-[#262a3c] rounded-xl p-4 text-center shadow-inner">
+                                  <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">WIN RATE</div>
+                                  <div className={cn("text-3xl font-black", expWr >= 50 ? "text-emerald-400" : "text-red-400")}>
+                                    {expWr}%
+                                  </div>
+                                  <div className="text-[10px] font-semibold text-zinc-500 mt-0.5">Aproveitamento</div>
+                                </div>
+                                <div className="bg-[#161822] border border-[#262a3c] rounded-xl p-4 text-center shadow-inner">
+                                  <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">PLACAR</div>
+                                  <div className="text-3xl font-black text-white">
+                                    <span className="text-emerald-400">{expWins}</span><span className="text-zinc-600 mx-1">-</span><span className="text-red-400">{expLosses}</span>
+                                  </div>
+                                  <div className="text-[10px] font-semibold text-zinc-500 mt-0.5">V - D</div>
+                                </div>
+                              </div>
+
+                              {/* Barra Sequencial de Desempenho */}
+                              <div className="relative z-10 bg-[#161822] border border-[#262a3c] rounded-xl p-4 space-y-2.5">
+                                <div className="flex justify-between items-center text-xs font-bold">
+                                  <span className="text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Crosshair className="w-3.5 h-3.5 text-indigo-400" /> Linha do Treino
+                                  </span>
+                                  <span className="text-zinc-300 font-mono text-[11px] whitespace-nowrap">
+                                    <span className="text-emerald-400 font-bold">{expWins}V</span> / <span className="text-red-400 font-bold">{expLosses}D</span>
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 h-3 rounded-full overflow-hidden bg-[#0d0e14] p-0.5 border border-[#232738]">
+                                  {expMatches.map((m, i) => (
+                                    <div
+                                      key={i}
+                                      className={cn(
+                                        "h-full flex-1 rounded-sm transition-all",
+                                        m.result === 'victory' ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-red-500 to-red-400'
+                                      )}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Atletas Escalados */}
+                              {expPlayers.length > 0 && (
+                                <div className="relative z-10 bg-[#161822] border border-[#262a3c] rounded-xl p-3.5">
+                                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <Users className="w-3.5 h-3.5 text-indigo-400" /> Atletas Escalados ({expPlayers.length})
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {expPlayers.map(pl => (
+                                      <span key={pl.id} className="inline-flex items-center gap-2 px-3 py-1 bg-[#1f2333] border border-[#2e344a] rounded-lg text-xs font-bold text-zinc-200 whitespace-nowrap shrink-0">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50 shrink-0" />
+                                        <span className="leading-none">{pl.nickname || pl.name}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+
+                          {/* ═══ HISTÓRICO DE PARTIDAS (Blocos Indivisíveis) ═══ */}
+                          <div className="relative z-10 space-y-4 pt-1">
+                            <div className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                              <span className="flex items-center gap-2">
+                                <Swords className="w-4 h-4 text-indigo-400" />
+                                {isFirstPage ? `Histórico de Partidas (${expMatches.length})` : `Continuação do Histórico`}
+                              </span>
+                              {totalDocPages > 1 && (
+                                <span className="text-[10px] text-zinc-500 font-mono">Folha {pageIndex + 1} de {totalDocPages}</span>
+                              )}
+                            </div>
+
+                            <div className="space-y-4">
+                              {pageMatches.map((m) => {
+                                const matchGlobalIndex = expMatches.findIndex(x => x.id === m.id);
+                                const map = mapsMap[m.map_id];
+                                const mPicks = picks.filter(p => p.match_id === m.id);
+                                const mBans = bans.filter(b => b.match_id === m.id);
+                                const tbkP = mPicks.filter(p => p.team === 'tbk');
+                                const enmP = mPicks.filter(p => p.team === 'enemy');
+                                const tbkB = mBans.filter(b => b.team === 'tbk');
+                                const enmB = mBans.filter(b => b.team === 'enemy');
+                                const mDate = parseTs(m.match_date);
+
+                                return (
+                                  <div
+                                    key={m.id}
+                                    className={cn(
+                                      "border rounded-xl p-4 sm:p-5 space-y-3.5 bg-[#141620] transition-all",
+                                      m.result === 'victory'
+                                        ? 'border-emerald-500/30 shadow-sm shadow-emerald-500/5'
+                                        : 'border-red-500/30 shadow-sm shadow-red-500/5'
+                                    )}
+                                  >
+                                    {/* Header da Partida */}
+                                    <div className="flex justify-between items-center pb-2.5 border-b border-[#232738] flex-nowrap gap-2">
+                                      <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
+                                        <span className="text-xs font-black text-indigo-300 bg-indigo-500/20 px-2.5 py-1 rounded border border-indigo-500/30 whitespace-nowrap shrink-0">
+                                          Jogo #{matchGlobalIndex + 1}
+                                        </span>
+                                        <span className="font-bold text-sm sm:text-base text-white whitespace-nowrap">{map?.name || 'Mapa Desconhecido'}</span>
+                                        {map?.mode && (
+                                          <span className="text-[11px] px-2.5 py-0.5 rounded bg-[#1f2333] text-zinc-300 font-semibold border border-[#2e344a] whitespace-nowrap shrink-0">
+                                            {map.mode}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2.5 flex-nowrap shrink-0">
+                                        <span className="text-[11px] text-zinc-400 font-mono whitespace-nowrap">{mDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <span className={cn(
+                                          "text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap shrink-0",
+                                          m.result === 'victory' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                        )}>
+                                          {m.result === 'victory' ? 'Vitória' : 'Derrota'}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Picks e Bans Grid */}
+                                    <div className="grid grid-cols-2 gap-4 text-xs">
+                                      {/* Time TBK */}
+                                      <div className="bg-[#191c28] rounded-xl p-3.5 border border-[#2b3044]">
+                                        <div className="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                                          <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-indigo-400" /> Nossa Composição</span>
+                                          <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[9px]">TBK</span>
+                                        </div>
+
+                                        {/* Picks TBK */}
+                                        <div className="flex gap-2.5 flex-wrap">
+                                          {tbkP.length > 0 ? tbkP.map((p, i) => {
+                                            const b = brawlersMap[p.brawler_id];
+                                            const player = p.player_id ? playersMap[p.player_id] : null;
+                                            return b ? (
+                                              <div key={i} className="flex flex-col items-center gap-1 w-16 bg-[#13151f] p-1.5 rounded-lg border border-[#232738]">
+                                                <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} className="w-10 h-10 rounded-md object-cover border border-[#2e344a] bg-zinc-900" />
+                                                <span className="text-[9px] font-bold text-zinc-200 truncate w-full text-center">{b.name}</span>
+                                                <span className="text-[8px] font-black text-indigo-400 truncate w-full text-center bg-indigo-500/10 px-1 py-0.5 rounded">
+                                                  {player ? (player.nickname || player.name) : 'TBK'}
+                                                </span>
+                                              </div>
+                                            ) : null;
+                                          }) : <span className="text-xs text-zinc-500 italic">—</span>}
+                                        </div>
+
+                                        {/* Bans TBK */}
+                                        {tbkB.length > 0 && (
+                                          <div className="mt-3 pt-2.5 border-t border-[#232738] flex items-center gap-2">
+                                            <div className="text-[9px] font-black text-red-400 uppercase flex items-center gap-1 shrink-0"><Ban className="w-3 h-3" /> Bans:</div>
+                                            <div className="flex gap-2">
+                                              {tbkB.map((ban, i) => {
+                                                const b = brawlersMap[ban.brawler_id];
+                                                return b ? (
+                                                  <div key={i} className="flex flex-col items-center gap-0.5 w-10">
+                                                    <div className="relative w-7 h-7 rounded overflow-hidden border border-red-500/40 opacity-80 bg-zinc-900">
+                                                      <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} title={b.name} className="w-full h-full object-cover grayscale" />
+                                                      <div className="absolute inset-0 bg-red-600/30 flex items-center justify-center"><X className="w-3.5 h-3.5 text-red-300" /></div>
+                                                    </div>
+                                                    <span className="text-[7.5px] font-bold text-zinc-400 truncate w-full text-center">{b.name}</span>
+                                                  </div>
+                                                ) : null;
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Time Inimigo */}
+                                      <div className="bg-[#191c28] rounded-xl p-3.5 border border-[#2b3044]">
+                                        <div className="text-[10px] font-black text-red-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                                          <span className="flex items-center gap-1.5"><Swords className="w-3.5 h-3.5 text-red-400" /> Composição Inimiga</span>
+                                          <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 text-[9px]">Adversário</span>
+                                        </div>
+
+                                        {/* Picks Inimigo */}
+                                        <div className="flex gap-2.5 flex-wrap">
+                                          {enmP.length > 0 ? enmP.map((p, i) => {
+                                            const b = brawlersMap[p.brawler_id];
+                                            return b ? (
+                                              <div key={i} className="flex flex-col items-center gap-1 w-16 bg-[#13151f] p-1.5 rounded-lg border border-[#232738]">
+                                                <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} className="w-10 h-10 rounded-md object-cover border border-[#2e344a] bg-zinc-900" />
+                                                <span className="text-[9px] font-bold text-zinc-200 truncate w-full text-center">{b.name}</span>
+                                                <span className="text-[8px] text-zinc-500 font-semibold truncate w-full text-center">Inimigo</span>
+                                              </div>
+                                            ) : null;
+                                          }) : <span className="text-xs text-zinc-500 italic">—</span>}
+                                        </div>
+
+                                        {/* Bans Inimigo */}
+                                        {enmB.length > 0 && (
+                                          <div className="mt-3 pt-2.5 border-t border-[#232738] flex items-center gap-2">
+                                            <div className="text-[9px] font-black text-red-400 uppercase flex items-center gap-1 shrink-0"><Ban className="w-3 h-3" /> Bans:</div>
+                                            <div className="flex gap-2">
+                                              {enmB.map((ban, i) => {
+                                                const b = brawlersMap[ban.brawler_id];
+                                                return b ? (
+                                                  <div key={i} className="flex flex-col items-center gap-0.5 w-10">
+                                                    <div className="relative w-7 h-7 rounded overflow-hidden border border-red-500/40 opacity-80 bg-zinc-900">
+                                                      <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} title={b.name} className="w-full h-full object-cover grayscale" />
+                                                      <div className="absolute inset-0 bg-red-600/30 flex items-center justify-center"><X className="w-3.5 h-3.5 text-red-300" /></div>
+                                                    </div>
+                                                    <span className="text-[7.5px] font-bold text-zinc-400 truncate w-full text-center">{b.name}</span>
+                                                  </div>
+                                                ) : null;
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ═══ RODAPÉ DA FOLHA ═══ */}
+                        <div className="relative z-10 pt-4 mt-6 border-t border-[#232738] flex justify-between items-center text-[10px] text-zinc-400 font-mono">
+                          <span className="flex items-center gap-1 text-zinc-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" /> Gerado via TBK Hub — Sistema de Draft Brawl Stars
+                          </span>
+                          <span className="text-zinc-400">
+                            {totalDocPages > 1 ? `Página ${pageIndex + 1} de ${totalDocPages}` : 'Documento Oficial de Treino'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
 
               {/* Rodapé do Modal com Botões de Exportação */}
-              <div className="p-5 border-t border-zinc-100 dark:border-[#2A2A2A] flex flex-col sm:flex-row justify-between items-center gap-3">
-                <span className="text-xs text-zinc-400">Escolha o formato para exportação do documento:</span>
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div className="p-4 sm:p-5 border-t border-zinc-100 dark:border-[#2A2A2A] flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-white dark:bg-[#121212] rounded-b-2xl">
+                <span className="text-xs text-zinc-400 text-center sm:text-left">Escolha o formato para exportação do documento:</span>
+                <div className="grid grid-cols-3 sm:flex sm:flex-wrap sm:items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => handleExportImage('png')}
                     disabled={!exportSession || exportingFormat !== null}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    className="px-3 sm:px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
-                    <FileImage className="w-3.5 h-3.5 text-emerald-500" /> {exportingFormat === 'png' ? 'Gerando PNG...' : 'Baixar PNG'}
+                    <FileImage className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> <span className="truncate">{exportingFormat === 'png' ? 'Gerando Imagem PNG...' : 'Imagem PNG'}</span>
                   </button>
                   <button
                     onClick={() => handleExportImage('jpg')}
                     disabled={!exportSession || exportingFormat !== null}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    className="px-3 sm:px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
-                    <FileImage className="w-3.5 h-3.5 text-blue-500" /> {exportingFormat === 'jpg' ? 'Gerando JPG...' : 'Baixar JPG'}
+                    <FileImage className="w-3.5 h-3.5 text-blue-500 shrink-0" /> <span className="truncate">{exportingFormat === 'jpg' ? 'Gerando Imagem JPG...' : 'Imagem JPG'}</span>
                   </button>
                   <button
                     onClick={handleExportPDF}
                     disabled={!exportSession || exportingFormat !== null}
-                    className="flex-1 sm:flex-none px-5 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    className="px-4 sm:px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/20 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
-                    <FileText className="w-3.5 h-3.5" /> {exportingFormat === 'pdf' ? 'Gerando PDF A4...' : 'Baixar PDF'}
+                    <FileText className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{exportingFormat === 'pdf' ? 'Gerando PDF...' : 'Arquivo PDF'}</span>
                   </button>
                 </div>
               </div>
@@ -866,10 +933,10 @@ export function TrainingHistory() {
         const match = selectedMatchForDetails;
         const map = mapsMap[match.map_id];
         const mDate = parseTs(match.match_date);
-        
+
         const matchPicks = picks.filter(p => p.match_id === match.id);
         const matchBans = bans.filter(b => b.match_id === match.id);
-        
+
         const tbkPicks = matchPicks.filter(p => p.team === 'tbk');
         const enemyPicks = matchPicks.filter(p => p.team === 'enemy');
         const tbkBans = matchBans.filter(b => b.team === 'tbk');
@@ -884,7 +951,7 @@ export function TrainingHistory() {
                     Detalhes da Partida
                   </h3>
                   <p className="text-sm text-zinc-500 mt-1">
-                    {mDate.toLocaleDateString()} às {mDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • 
+                    {mDate.toLocaleDateString()} às {mDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} •
                     <span className={cn("ml-2 font-bold", match.result === 'victory' ? "text-emerald-500" : "text-red-500")}>
                       {match.result === 'victory' ? 'VITÓRIA' : 'DERROTA'}
                     </span>
@@ -894,7 +961,7 @@ export function TrainingHistory() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <div className="overflow-y-auto p-4 sm:p-6 space-y-6">
                 {/* Map Section */}
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -915,10 +982,10 @@ export function TrainingHistory() {
                       )}
                     </div>
                     {match.opponent_name && match.opponent_name !== 'Inimigo' && (
-                       <div className="mt-4 text-sm">
-                         <span className="text-zinc-500">Adversário: </span>
-                         <span className="font-bold text-zinc-900 dark:text-white">{match.opponent_name}</span>
-                       </div>
+                      <div className="mt-4 text-sm">
+                        <span className="text-zinc-500">Adversário: </span>
+                        <span className="font-bold text-zinc-900 dark:text-white">{match.opponent_name}</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -931,7 +998,7 @@ export function TrainingHistory() {
                       Nossa Composição
                       <span className="text-[10px] bg-indigo-100 dark:bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-600 dark:text-indigo-400">TBK</span>
                     </h5>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <div className="text-[10px] uppercase text-zinc-500 font-bold mb-2">Picks ({tbkPicks.length})</div>
@@ -949,7 +1016,7 @@ export function TrainingHistory() {
                           }) : <span className="text-xs text-zinc-500 italic">Sem picks salvos</span>}
                         </div>
                       </div>
-                      
+
                       {tbkBans.length > 0 && (
                         <div>
                           <div className="text-[10px] uppercase text-zinc-500 font-bold mb-2">Nossos Bans</div>
@@ -977,7 +1044,7 @@ export function TrainingHistory() {
                       Composição Inimiga
                       <span className="text-[10px] bg-red-100 dark:bg-red-500/20 px-2 py-0.5 rounded text-red-600 dark:text-red-400">Inimigo</span>
                     </h5>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <div className="text-[10px] uppercase text-zinc-500 font-bold mb-2">Picks ({enemyPicks.length})</div>
@@ -993,7 +1060,7 @@ export function TrainingHistory() {
                           }) : <span className="text-xs text-zinc-500 italic">Sem picks salvos</span>}
                         </div>
                       </div>
-                      
+
                       {enemyBans.length > 0 && (
                         <div>
                           <div className="text-[10px] uppercase text-zinc-500 font-bold mb-2">Bans Inimigos</div>
