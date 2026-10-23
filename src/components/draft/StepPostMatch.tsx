@@ -5,7 +5,7 @@ import { DraftState } from './DraftWizard';
 
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { cn } from '../../lib/utils';
-import { Trophy, XCircle, ArrowRight, User, MapPinned, Eye, RefreshCw, RotateCcw, CheckCircle2, AlertTriangle, ArrowLeftRight } from 'lucide-react';
+import { Trophy, XCircle, ArrowRight, User, MapPinned, Eye, RefreshCw, RotateCcw, CheckCircle2, AlertTriangle, ArrowLeftRight, BookmarkCheck } from 'lucide-react';
 
 import { analyticsService } from '../../services/analyticsService';
 import { brawlerService } from '../../services/brawlerService';
@@ -513,54 +513,38 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         </div>
       )}
 
-      {/* Save Buttons for Victory */}
+      {/* Ações depois da vitória */}
       {result === 'victory' && (
-        <div className="flex flex-col sm:flex-row justify-center mt-4 gap-4">
-          <button
-            onClick={handleSaveVictory}
-            className={cn(
-              "flex-1 border p-4 sm:p-6 rounded-xl transition-all duration-200 flex flex-col items-center justify-center text-center h-auto min-h-[100px]",
-              allPlayersAssigned
-                ? "bg-white dark:bg-[#1A1A1A] border-emerald-500/30 hover:border-emerald-500 text-emerald-400 cursor-pointer"
-                : "bg-white dark:bg-[#1A1A1A] border-amber-500/30 hover:border-amber-500 text-emerald-400 cursor-pointer"
-            )}
-          >
-            <span className="font-bold text-[15px] mb-2 block">Salvar Vitória da Scrim</span>
-            <span className={cn("text-xs font-normal leading-tight block max-w-xs mx-auto", allPlayersAssigned ? "text-slate-500 dark:text-zinc-400" : "text-amber-400/70")}>
-              {allPlayersAssigned ? 'Registra no histórico e atualiza stats no Dashboard' : 'Salvará sem vínculos de jogadores'}
-            </span>
-          </button>
-          <button
-            onClick={handleSaveAsMapMeta}
-            disabled={isSavingMeta || allyPicks.length < 3}
-            className={cn(
-              "flex-1 p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px] cursor-pointer",
-              metaSaved
-                ? "bg-emerald-500/10 border-2 border-emerald-500 text-emerald-400"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:cursor-not-allowed"
-            )}
-          >
-            {isSavingMeta ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-2" />
-                <span className="font-bold text-[15px] block">Salvando...</span>
-              </>
-            ) : metaSaved ? (
-              <>
-                <span className="text-2xl mb-1">✅</span>
-                <span className="font-bold text-[15px] block">Meta Salva!</span>
-                <span className="text-xs font-normal leading-tight block max-w-xs mx-auto text-emerald-300">Composição registrada na biblioteca de Mapas</span>
-              </>
-            ) : (
-              <>
-                <span className="font-bold text-[15px] mb-2 block">Salvar como Meta do Mapa</span>
-                <span className="text-xs text-emerald-100 font-normal leading-tight block max-w-xs mx-auto">Define como trio referência na biblioteca de Mapas</span>
-              </>
-            )}
-          </button>
-        </div>
+        <section className="mx-auto max-w-4xl space-y-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#151720] p-4 sm:p-6">
+          <div className="text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Boa partida!</p>
+            <h4 className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">Como deseja registrar a vitória?</h4>
+            <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">Escolha entre salvar apenas a partida ou guardar a composição como referência.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button type="button" onClick={handleSaveVictory}
+              className="group flex min-h-[116px] flex-col items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-4 text-emerald-700 dark:text-emerald-300 transition-all hover:border-emerald-400 hover:bg-emerald-500/10 focus-visible:ring-2 focus-visible:ring-emerald-400">
+              <Trophy className="h-6 w-6 transition-transform group-hover:scale-110" aria-hidden="true" />
+              <span className="text-sm font-extrabold">Salvar vitória da scrim</span>
+              <span className="max-w-xs text-center text-xs text-emerald-700/75 dark:text-emerald-200/70">
+                {allPlayersAssigned ? 'Registra no histórico e atualiza as estatísticas' : 'Registra no histórico; vínculos de jogadores são opcionais'}
+              </span>
+            </button>
+            <button type="button" onClick={handleSaveAsMapMeta}
+              disabled={isSavingMeta || allyPicks.length < 3}
+              className={cn(
+                "group flex min-h-[116px] flex-col items-center justify-center gap-2 rounded-xl border p-4 transition-all focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:cursor-not-allowed disabled:opacity-50",
+                metaSaved
+                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                  : "border-indigo-500 bg-indigo-600 text-white shadow-lg shadow-indigo-600/15 hover:bg-indigo-500"
+              )}>
+              <BookmarkCheck className="h-6 w-6 transition-transform group-hover:scale-110" aria-hidden="true" />
+              <span className="text-sm font-extrabold">{isSavingMeta ? 'Salvando...' : metaSaved ? 'Meta salva!' : 'Salvar como meta do mapa'}</span>
+              <span className="max-w-xs text-center text-xs opacity-80">Registra a vitória e adiciona o trio à biblioteca de mapas</span>
+            </button>
+          </div>
+        </section>
       )}
-
 
       {showMapPreview && map && <MapPreviewModal map={map} onClose={() => setShowMapPreview(false)} />}
 
