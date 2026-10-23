@@ -59,13 +59,13 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
 
       // Calcula scores de ban para todos os brawlers disponíveis
       const available = brawlers.filter(
-        b => !draftState.tbkBans.includes(b.id) && !draftState.enemyBans.includes(b.id)
+        b => !draftState.allyBans.includes(b.id) && !draftState.enemyBans.includes(b.id)
       );
 
       const scored = available
         .map(b => ({
           brawler: b,
-          score: computeBanScore(b, selectedMap.terrain, draftState.tbkStarts, enemyPickStats),
+          score: computeBanScore(b, selectedMap.terrain, draftState.allyStarts, enemyPickStats),
         }))
         .sort((a, b) => b.score - a.score);
 
@@ -75,7 +75,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
       let reason: string;
       if (hasHistoricalData) {
         reason = `Baseado em ${totalMapMatches} partida${totalMapMatches !== 1 ? 's' : ''} neste mapa — brawlers com alto winrate inimigo no mapa recebem prioridade de ban.`;
-      } else if (!draftState.tbkStarts) {
+      } else if (!draftState.allyStarts) {
         if (selectedMap.terrain === 'Aberto') {
           reason = 'O Inimigo tem o First Pick num Mapa Aberto. Priorize banir Snipers ou Brawlers Tier S.';
         } else {
@@ -94,7 +94,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
     }).catch(() => {
       setIsSuggestionsLoading(false);
     });
-  }, [draftState.mapId, draftState.tbkStarts, draftState.tbkBans, draftState.enemyBans, brawlers, maps]);
+  }, [draftState.mapId, draftState.allyStarts, draftState.allyBans, draftState.enemyBans, brawlers, maps]);
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 3000);
@@ -105,7 +105,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
       showToast("Selecione um mapa para continuar!");
       return;
     }
-    if (draftState.tbkBans.some(b => b === null) || draftState.enemyBans.some(b => b === null)) {
+    if (draftState.allyBans.some(b => b === null) || draftState.enemyBans.some(b => b === null)) {
       showToast("Preencha todos os banimentos antes de avançar!");
       return;
     }
@@ -125,7 +125,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
 
 
   const canProceed = draftState.mapId !== '' &&
-    draftState.tbkBans.every(b => b !== null) &&
+    draftState.allyBans.every(b => b !== null) &&
     draftState.enemyBans.every(b => b !== null);
 
   const mapDropdownRef = useRef<HTMLDivElement>(null);
@@ -239,21 +239,21 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
         <p className="text-xs text-slate-500 dark:text-zinc-500 -mt-3 mb-2">O primeiro time escolhe 1 brawler, depois alterna 2-2-1 (snake draft).</p>
         <div className="flex gap-4">
           <button
-            onClick={() => setDraftState(prev => ({ ...prev, tbkStarts: true }))}
+            onClick={() => setDraftState(prev => ({ ...prev, allyStarts: true }))}
             className={cn(
               "flex-1 py-4 rounded-lg font-medium border transition-all duration-200",
-              draftState.tbkStarts
+              draftState.allyStarts
                 ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                 : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-zinc-700"
             )}
           >
-            TBK começa
+            Nossa equipe começa
           </button>
           <button
-            onClick={() => setDraftState(prev => ({ ...prev, tbkStarts: false }))}
+            onClick={() => setDraftState(prev => ({ ...prev, allyStarts: false }))}
             className={cn(
               "flex-1 py-4 rounded-lg font-medium border transition-all duration-200",
-              !draftState.tbkStarts
+              !draftState.allyStarts
                 ? "bg-red-500/10 border-red-500/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
                 : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-zinc-700"
             )}
@@ -308,15 +308,15 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
           </div>
           {[0, 1, 2].map(index => (
             <BrawlerSelectDropdown icon={<Ban className="w-3 h-3 text-red-500/70 ml-1" />}
-              key={`tbk-ban-${index}`}
+              key={`ally-ban-${index}`}
               placeholder={`Ban ${index + 1}`}
-              value={draftState.tbkBans[index]}
+              value={draftState.allyBans[index]}
               onChange={(brawlerId) => {
-                const newBans = [...draftState.tbkBans];
+                const newBans = [...draftState.allyBans];
                 newBans[index] = brawlerId;
-                setDraftState(prev => ({ ...prev, tbkBans: newBans }));
+                setDraftState(prev => ({ ...prev, allyBans: newBans }));
               }}
-              disabledBrawlers={draftState.tbkBans.filter((b, i) => b !== null && i !== index) as string[]}
+              disabledBrawlers={draftState.allyBans.filter((b, i) => b !== null && i !== index) as string[]}
               suggestedBrawlers={banRecs.brawlers.map(b => b.id)}
               allBrawlers={brawlers}
             />
