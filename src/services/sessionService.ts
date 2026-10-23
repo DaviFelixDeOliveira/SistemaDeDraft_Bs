@@ -138,18 +138,11 @@ export const sessionService = {
       opponent_name: opponentName || ''
     };
 
-    // 2. Persiste primeiro no Supabase
-    try {
-      const { error } = await supabase.from('training_sessions').insert([newSession]);
-      if (error) {
-        console.error('Erro ao inserir sessão no Supabase:', error);
-        throw new Error(`Falha ao registrar sessão no banco: ${error.message}`);
-      }
-    } catch (err: any) {
-      if (err.message?.includes('Falha ao registrar')) {
-        throw err;
-      }
-      console.warn('Erro de rede ao salvar sessão no Supabase:', err);
+    // 2. O treino só é válido se realmente foi salvo pela equipe autenticada.
+    const { error: insertError } = await supabase.from('training_sessions').insert([newSession]);
+    if (insertError) {
+      console.error('Falha ao registrar sessão:', insertError);
+      throw new Error('Não foi possível iniciar o treino no banco. Verifique a conexão e tente novamente.');
     }
 
     // 3. Atualiza cache local com a sessão recém-criada
