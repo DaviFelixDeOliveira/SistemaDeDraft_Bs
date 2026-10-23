@@ -96,30 +96,34 @@ export const analyticsService = {
       }
     });
 
-    // Tenta persistir no Supabase
-    // ATENÇÃO: o banco usa português ('vitoria'/'derrota', 'nos'/'inimigo').
-    // Usamos as funções de mapeamento de utils.ts para converter antes do insert.
+    // Confirma as três gravações antes de considerar a partida salva.
+    // Falha não pode produzir histórico fictício no navegador.
     try {
-      const matchRowDb = { ...matchRow, result: toDbResult(matchRow.result) };
-      const { error: matchError } = await supabase.from('matches').insert([matchRowDb]);
-      if (matchError) console.warn('Erro ao inserir partida no Supabase:', matchError);
+      const { error: matchError } = await supabase.from('matches')
+        .insert([{ ...matchRow, result: toDbResult(matchRow.result) }]);
+      if (matchError) throw matchError;
 
       if (pickRows.length > 0) {
-        const pickRowsDb = pickRows.map(p => ({ ...p, team: toDbTeam(p.team as 'ally' | 'enemy') }));
-        const { error: pickError } = await supabase.from('match_picks').insert(pickRowsDb);
-        if (pickError) console.warn('Erro ao inserir picks no Supabase:', pickError);
+        const rows = pickRows.map(p => ({ ...p, team: toDbTeam(p.team as 'ally' | 'enemy') }));
+        const { error } = await supabase.from('match_picks').insert(rows);
+        if (error) throw error;
       }
 
       if (banRows.length > 0) {
-        const banRowsDb = banRows.map(b => ({ ...b, team: toDbTeam(b.team as 'ally' | 'enemy') }));
-        const { error: banError } = await supabase.from('match_bans').insert(banRowsDb);
-        if (banError) console.warn('Erro ao inserir bans no Supabase:', banError);
+        const rows = banRows.map(b => ({ ...b, team: toDbTeam(b.team as 'ally' | 'enemy') }));
+        const { error } = await supabase.from('match_bans').insert(rows);
+        if (error) throw error;
       }
     } catch (err) {
-      console.error('Erro ao conectar com Supabase ao gravar partida:', err);
+      // Limpeza compensatória caso apenas parte do registro tenha sido persistida.
+      // Foreign keys com ON DELETE CASCADE removem seus picks e bans vinculados.
+      const { error: cleanupError } = await supabase.from('matches').delete().eq('id', matchId);
+      if (cleanupError) console.error('Falha ao desfazer partida parcial:', cleanupError);
+      console.error('Erro ao salvar partida:', err);
+      throw new Error('Não foi possível salvar a partida no Supabase. Verifique sua conexão e tente novamente.');
     }
 
-    // Sempre salva em fallback local para resiliência
+    // Cópia de uso local APENAS após confirmação de persistência no banco
     const localMatches = getLocalData<Match>(LOCAL_STORAGE_MATCHES_KEY);
     const localPicks = getLocalData<MatchPick>(LOCAL_STORAGE_PICKS_KEY);
     const localBans = getLocalData<MatchBan>(LOCAL_STORAGE_BANS_KEY);
