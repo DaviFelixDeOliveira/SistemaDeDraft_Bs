@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
 import { Brawler } from '../types';
-import { mockBrawlers } from '../data/mockData';
 
 // Converte do formato do banco (snake_case) para o formato do app (camelCase)
 function mapFromSupabase(data: any): Brawler {
@@ -60,41 +59,57 @@ function mapToSupabase(brawler: Partial<Brawler>): any {
 
 export const brawlerService = {
   getBrawlers: async (): Promise<Brawler[]> => {
-    try {
-      const { data, error } = await supabase.from('brawlers').select('*').order('name');
-      if (error) throw error;
+    const [{ data, error }, { data: settings, error: settingsError }] = await Promise.all([
+      supabase.from('brawlers').select('*').order('name'),
+      supabase.from('team_brawler_settings').select('*'),
+    ]);
+    if (error) throw error;
+    if (settingsError) throw settingsError;
 
-      // Se a tabela estiver vazia, faz o seed automático com mockBrawlers
-      // Catálogo global é gerenciado em rotina de sincronização confiável, não por visitantes.
-      if (!data) return [];
-
-      return data.map(mapFromSupabase);
-    } catch (err) {
-      console.error('Erro ao buscar brawlers do Supabase, usando dados locais de fallback:', err);
-      return mockBrawlers;
-    }
+    const overrides = new Map((settings || []).map(p => [p.brawler_id, p]));
+    return (data || []).map(row => {
+      const own = overrides.get(row.id);
+      if (!own) return mapFromSupabase(row);
+      const merged: Record<string, any> = { ...row };
+      for (const key of [
+        'tier', 'is_active', 'is_hot_pick', 'counters', 'countered_by', 'rarity',
+        'health', 'health_value', 'type', 'walks_on_water', 'breaks_walls',
+        'how_breaks_walls', 'image_url', 'icon_url'
+      ]) {
+        if (own[key] !== null && own[key] !== undefined) merged[key] = own[key];
+      }
+      return mapFromSupabase(merged);
+    });
   },
 
-  createBrawler: async (brawler: Omit<Brawler, 'id'>): Promise<Brawler> => {
-    const id = (16000000 + Math.floor(Math.random() * 900000)).toString();
-    const newBrawler = { ...brawler, id } as Brawler;
-    const row = mapToSupabase(newBrawler);
-
-    const { error } = await supabase.from('brawlers').insert(row);
-    if (error) console.error('Erro ao criar brawler no Supabase:', error);
-
-    return newBrawler;
+  createBrawler: async (_brawler: Omit<Brawler, 'id'>): Promise<Brawler> => {
+    throw new Error('Novos brawlers serão adicionados na atualização do catálogo global. Por enquanto, personalize os existentes.');
   },
 
   updateBrawler: async (id: string, changes: Partial<Brawler>): Promise<Brawler | null> => {
-    const row = mapToSupabase(changes);
-    const { error } = await supabase.from('brawlers').update(row).eq('id', id);
-    if (error) console.error('Erro ao atualizar brawler no Supabase:', error);
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) throw new Error('Faça login para personalizar brawlers.');
+
+    // Apenas as configurações particulares são gravadas; o catálogo global permanece intacto.
+    const allowed = new Set([
+      'tier', 'is_active', 'is_hot_pick', 'counters', 'countered_by',
+      'rarity', 'health', 'health_value', 'type', 'walks_on_water',
+      'breaks_walls', 'how_breaks_walls', 'image_url', 'icon_url'
+    ]);
+    const mapped = mapToSupabase(changes);
+    const payload: Record<string, any> = {};
+    for (const [key, value] of Object.entries(mapped)) {
+      if (allowed.has(key)) payload[key] = value;
+    }
+    const { error } = await supabase.from('team_brawler_settings').upsert(
+      { ...payload, team_id: auth.user.id, brawler_id: id },
+      { onConflict: 'team_id,brawler_id' }
+    );
+    if (error) throw error;
     return null;
   },
 
   deleteBrawler: async (id: string): Promise<void> => {
-    const { error } = await supabase.from('brawlers').delete().eq('id', id);
-    if (error) console.error('Erro ao excluir brawler no Supabase:', error);
+    await brawlerService.updateBrawler(id, { is_active: false });
   }
 };
