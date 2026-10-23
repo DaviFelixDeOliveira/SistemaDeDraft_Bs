@@ -259,7 +259,7 @@ export function DraftWizard() {
               <div
                 className={`flex flex-1 sm:flex-none items-center justify-center sm:justify-start min-w-[100px] gap-2 px-2 py-1.5 transition-all duration-300 ${
                   step === s.id
-                    ? 'text-[#FF3366] font-bold'
+                    ? 'text-[#6366F1] font-bold'
                     : step > s.id
                     ? 'text-emerald-500 dark:text-emerald-400 font-semibold'
                     : 'text-slate-400 dark:text-zinc-500 font-medium'
@@ -268,7 +268,7 @@ export function DraftWizard() {
                 <div
                   className={`w-6 h-6 rounded-full flex flex-shrink-0 items-center justify-center text-sm font-bold transition-all duration-300 ${
                     step === s.id
-                      ? 'bg-[#FF3366] text-white shadow-md shadow-[#FF3366]/20'
+                      ? 'bg-[#6366F1] text-white shadow-md shadow-[#6366F1]/20'
                       : step > s.id
                       ? 'bg-emerald-500/10 sm:bg-emerald-500/20 text-emerald-500 dark:text-emerald-400'
                       : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500'
@@ -312,7 +312,7 @@ export function DraftWizard() {
       <div className="bg-white dark:bg-[#121212] rounded-xl border border-slate-200 dark:border-[#2A2A2A] p-4 sm:p-6 shadow-sm sm:shadow-xl transition-all duration-500 ease-in-out relative min-h-[500px]">
         {isLoading && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 dark:bg-[#121212]/80 backdrop-blur-sm rounded-xl animate-in fade-in duration-300">
-            <div className="w-16 h-16 rounded-full border-4 border-transparent border-t-[#FF3366] border-r-fuchsia-500 border-b-violet-500 animate-spin" />
+            <div className="w-16 h-16 rounded-full border-4 border-transparent border-t-[#6366F1] border-r-fuchsia-500 border-b-violet-500 animate-spin" />
             <div className="mt-4 font-bold text-slate-700 dark:text-zinc-300 animate-pulse text-sm uppercase tracking-widest">
               Processando IA...
             </div>
