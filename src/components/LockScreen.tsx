@@ -11,8 +11,8 @@ export const ACCESS_CODE_PLAYER = '180703';
 
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_SECONDS = 30;
-const SESSION_KEY = 'tbk_hub_session';
-const ROLE_KEY = 'tbk_hub_role';
+const SESSION_KEY = 'sistema_draft_session';
+const ROLE_KEY = 'sistema_draft_role';
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 horas
 
 export type UserRole = 'admin' | 'player';
@@ -140,7 +140,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
               </div>
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight">
-              TBK <span className="text-[#FFCC00]">Hub</span>
+              Sistema <span className="text-[#FFCC00]">de Draft</span>
             </h1>
             <p className="text-zinc-500 text-sm mt-1">
               Insira a senha de Administrador (não público) ou Player (não público)
