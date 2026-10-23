@@ -53,8 +53,8 @@ export const MODE_OBJECTIVES: Record<GameMode, ModeObjective> = {
   },
 };
 
-export function getFirstPickTip(tbkStarts: boolean): TacticalTip {
-  if (tbkStarts) {
+export function getFirstPickTip(allyStarts: boolean): TacticalTip {
+  if (allyStarts) {
     return {
       title: 'First Pick (Nós Começamos)',
       description: 'Garanta brawlers quebrados (Tier S) ou snipers em mapas abertos. Bana os counters diretos do topo do meta.',
