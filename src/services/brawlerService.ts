@@ -65,13 +65,8 @@ export const brawlerService = {
       if (error) throw error;
 
       // Se a tabela estiver vazia, faz o seed automático com mockBrawlers
-      if (!data || data.length === 0) {
-        console.log('Tabela de brawlers vazia. Inserindo dados de seed...');
-        const seedRows = mockBrawlers.map(mapToSupabase);
-        const { error: seedError } = await supabase.from('brawlers').insert(seedRows);
-        if (seedError) console.error('Erro ao realizar seed de brawlers:', seedError);
-        return mockBrawlers;
-      }
+      // Catálogo global é gerenciado em rotina de sincronização confiável, não por visitantes.
+      if (!data) return [];
 
       return data.map(mapFromSupabase);
     } catch (err) {
