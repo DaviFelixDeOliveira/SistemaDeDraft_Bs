@@ -63,10 +63,10 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
   };
 
   return (
-    <div className="relative" ref={wrapperRef}>
+    <div className="relative w-full min-w-0" ref={wrapperRef}>
       <div 
         className={cn(
-          "flex items-center justify-between w-full bg-slate-50 dark:bg-[#0A0A0A] border rounded-lg px-3 py-2 cursor-pointer transition-colors",
+          "flex min-h-[48px] items-center justify-between gap-2 w-full bg-slate-50 dark:bg-[#11141D] border rounded-xl px-3 py-2 cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-indigo-500/40",
           selectedBrawler ? "border-zinc-600" : "border-slate-200 dark:border-[#2A2A2A] hover:border-zinc-600"
         )}
         onClick={() => setIsOpen(!isOpen)}
@@ -74,8 +74,10 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
         {selectedBrawler ? (
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-slate-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {selectedBrawler.iconUrl ? (
-                <img src={selectedBrawler.iconUrl} alt="" className="w-full h-full object-cover" />
+              {(selectedBrawler.iconUrl || selectedBrawler.imageUrl) ? (
+                <img src={selectedBrawler.iconUrl || selectedBrawler.imageUrl} alt="" className="w-full h-full object-cover" onError={e => {
+                  if (selectedBrawler.imageUrl && e.currentTarget.src !== selectedBrawler.imageUrl) e.currentTarget.src = selectedBrawler.imageUrl;
+                }} />
               ) : (
                 <span className="text-[10px] text-slate-500 dark:text-zinc-500">IMG</span>
               )}
@@ -84,13 +86,13 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
             {icon}
           </div>
         ) : (
-          <span className="text-sm text-zinc-600">{placeholder}</span>
+          <span className="text-sm text-slate-500 dark:text-zinc-400 truncate">{placeholder}</span>
         )}
         <ChevronDown className="w-4 h-4 text-slate-500 dark:text-zinc-500" />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-[300px] mt-1 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-lg shadow-xl max-h-80 flex flex-col">
+        <div className="absolute z-[70] left-0 right-0 w-full min-w-[min(260px,80vw)] mt-2 bg-white dark:bg-[#161A26] border border-slate-200 dark:border-white/15 rounded-xl shadow-2xl max-h-[360px] flex flex-col overflow-hidden">
           <div className="p-2 border-b border-slate-200 dark:border-[#2A2A2A] sticky top-0 bg-white dark:bg-[#1A1A1A] z-10 rounded-t-lg">
             <BrawlerFilterBar 
               filters={brawlerFilters} 
@@ -113,8 +115,8 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
                       "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors relative group/brawler",
                       isDisabled 
                         ? "opacity-40 cursor-not-allowed" 
-                        : "hover:bg-[#FF3366]/20 hover:text-[#FF3366] cursor-pointer text-slate-700 dark:text-zinc-300",
-                      isSuggested && !isDisabled && "bg-[#FFCC00]/10 border border-[#FFCC00]/30 text-[#FFCC00] hover:text-[#FFCC00]"
+                        : "hover:bg-indigo-500/15 hover:text-indigo-500 dark:hover:text-cyan-300 cursor-pointer text-slate-700 dark:text-zinc-300",
+                      isSuggested && !isDisabled && "bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 hover:text-cyan-600"
                     )}
                     onClick={() => {
                       if (!isDisabled) {
@@ -124,12 +126,14 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
                     }}
                   >
                      <div className={cn("w-6 h-6 rounded flex-shrink-0 overflow-hidden relative", getBrawlerBgColor(brawler))}>
-                       {brawler.iconUrl && <img src={brawler.iconUrl} alt="" className="w-full h-full object-cover" />}
+                       {(brawler.iconUrl || brawler.imageUrl) && <img src={brawler.iconUrl || brawler.imageUrl} alt="" className="w-full h-full object-cover" onError={e => {
+                         if (brawler.imageUrl && e.currentTarget.src !== brawler.imageUrl) e.currentTarget.src = brawler.imageUrl;
+                       }} />}
                        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ backgroundColor: getBrawlerBgColor(brawler).replace('bg-', '').replace('border-', '') }} />
                      </div>
                      <span className="flex-1">{brawler.name}</span>
                      {isSuggested && !isDisabled && (
-                       <Lightbulb className="w-3.5 h-3.5 ml-auto text-[#FFCC00]" />
+                       <Lightbulb className="w-3.5 h-3.5 ml-auto text-cyan-300" />
                      )}
                      
                      {/* Tooltip Rich Flutuante */}
