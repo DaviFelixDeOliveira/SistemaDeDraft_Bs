@@ -129,7 +129,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
               type="text" 
               value={formData.name || ''}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               placeholder="Ex: Shelly"
               required
             />
@@ -149,7 +149,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                      setFormData({ ...formData, iconUrl: '' });
                    }
                  }}
-                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
                  placeholder="Ex: 16000000"
              />
              {formData.iconUrl && <p className="text-xs text-zinc-500 mt-1 text-right">URL gerada com sucesso.</p>}
@@ -159,7 +159,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
               <select 
                 value={formData.tier || 'C'}
                 onChange={e => setFormData({ ...formData, tier: e.target.value as Tier })}
-                className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+                className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               >
                 <option value="S">S - God Tier</option>
                 <option value="A">A - Muito Forte</option>
@@ -183,7 +183,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                      setFormData({ ...formData, imageUrl: '' });
                    }
                  }}
-                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
                  placeholder="Ex: 16000000"
              />
              {formData.imageUrl && <p className="text-xs text-zinc-500 mt-1 text-right">URL gerada com sucesso.</p>}
@@ -195,7 +195,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
               <select 
                 value={formData.rarity || 'Comum'}
                 onChange={e => setFormData({ ...formData, rarity: e.target.value })}
-                className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+                className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               >
                 <option value="Comum">Comum</option>
                 <option value="Raro">Raro</option>
@@ -212,7 +212,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
               <select 
                 value={formData.health || 'Média'}
                 onChange={e => setFormData({ ...formData, health: e.target.value })}
-                className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+                className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               >
                 <option value="Baixa">Baixa (Menos de 5000)</option>
                 <option value="Média">Média (5000 - 6500)</option>
@@ -227,7 +227,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                   type="checkbox"
                   checked={formData.breaksWalls || false}
                   onChange={e => setFormData({ ...formData, breaksWalls: e.target.checked })}
-                  className="w-4 h-4 rounded border-zinc-300 text-[#FF3366] focus:ring-[#FF3366]"
+                  className="w-4 h-4 rounded border-zinc-300 text-[#6366F1] focus:ring-[#6366F1]"
                 />
                 Quebra Muros?
              </label>
@@ -236,7 +236,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                   type="checkbox"
                   checked={formData.walksOnWater || false}
                   onChange={e => setFormData({ ...formData, walksOnWater: e.target.checked })}
-                  className="w-4 h-4 rounded border-zinc-300 text-[#FF3366] focus:ring-[#FF3366]"
+                  className="w-4 h-4 rounded border-zinc-300 text-[#6366F1] focus:ring-[#6366F1]"
                 />
                 Anda sobre a água?
              </label>
@@ -255,7 +255,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                          className={cn(
                             "px-3 py-1.5 rounded-full text-xs font-bold transition-colors border",
                             isSelected 
-                               ? "bg-[#FF3366]/10 text-[#FF3366] border-[#FF3366]/30" 
+                               ? "bg-[#6366F1]/10 text-[#6366F1] border-[#6366F1]/30" 
                                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-white"
                          )}
                       >
@@ -412,7 +412,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                 if (!formData.name) return;
                 onSave(formData);
               }}
-              className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-6 py-3 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
+              className="bg-[#6366F1] hover:bg-[#E62E5C] text-white px-6 py-3 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
               disabled={!formData.name}
             >
               Salvar Brawler
