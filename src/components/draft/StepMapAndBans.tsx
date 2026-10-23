@@ -175,7 +175,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                   <input
                     type="text"
                     placeholder="Buscar mapa..."
-                    className="w-full bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+                    className="w-full bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
                     value={mapSearch}
                     onChange={(e) => setMapSearch(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
@@ -206,7 +206,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                     {filteredMaps.map(map => (
                       <div
                         key={map.id}
-                        className="flex items-center justify-between px-4 py-2 hover:bg-[#FF3366]/10 hover:text-[#FF3366] cursor-pointer text-sm text-slate-700 dark:text-zinc-300 transition-colors"
+                        className="flex items-center justify-between px-4 py-2 hover:bg-[#6366F1]/10 hover:text-[#6366F1] cursor-pointer text-sm text-slate-700 dark:text-zinc-300 transition-colors"
                         onClick={() => {
                           setDraftState(prev => ({ ...prev, mapId: map.id }));
                           setIsMapDropdownOpen(false);
@@ -214,7 +214,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                       >
                         <span>{map.name}</span>
                         <button
-                          className="p-1 hover:bg-[#FF3366]/20 rounded-md text-slate-500 dark:text-zinc-500 hover:text-[#FF3366]"
+                          className="p-1 hover:bg-[#6366F1]/20 rounded-md text-slate-500 dark:text-zinc-500 hover:text-[#6366F1]"
                           onClick={(e) => {
                             e.stopPropagation();
                             setViewingMap(map);
@@ -265,15 +265,15 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
 
       {/* AI BAN SUGGESTIONS */}
       {selectedMap && (
-        <div className="bg-white dark:bg-[#1A1A1A] border border-[#FFCC00]/40 rounded-xl p-4 shadow-[0_0_15px_rgba(255,204,0,0.05)]">
+        <div className="bg-white dark:bg-[#1A1A1A] border border-[#22D3EE]/40 rounded-xl p-4 shadow-[0_0_15px_rgba(34,211,238,0.05)]">
           <div className="flex items-start gap-3">
-            <Lightbulb className="w-5 h-5 text-[#FFCC00] mt-0.5 flex-shrink-0" />
+            <Lightbulb className="w-5 h-5 text-[#22D3EE] mt-0.5 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-[#FFCC00] text-sm mb-1">Sugestão Inteligente de Bans</h3>
+              <h3 className="font-semibold text-[#22D3EE] text-sm mb-1">Sugestão Inteligente de Bans</h3>
               {isSuggestionsLoading ? (
                 <div className="py-4 flex flex-col items-center justify-center">
-                  <div className="w-6 h-6 rounded-full border-2 border-[#FFCC00]/20 border-t-[#FFCC00] animate-spin mb-2" />
-                  <span className="text-xs text-[#FFCC00] font-medium">Analisando mapa e composições...</span>
+                  <div className="w-6 h-6 rounded-full border-2 border-[#22D3EE]/20 border-t-[#22D3EE] animate-spin mb-2" />
+                  <span className="text-xs text-[#22D3EE] font-medium">Analisando mapa e composições...</span>
                 </div>
               ) : (
                 <>
