@@ -390,119 +390,115 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         </div>
       </div>
 
-      {/* Test Variation Flow (If Defeat) */}
+      {/* Ações após a derrota */}
       {result === 'defeat' && (
-        <div className="mt-8 animate-in fade-in slide-in-from-top-4">
-          <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-[#2A2A2A] p-4 sm:p-6 max-w-2xl mx-auto">
-            <h4 className="text-center text-slate-900 dark:text-white font-bold mb-6">Derrota registrada. E agora?</h4>
-            {/* Aviso quando jogadores não vinculados */}
-            {!allPlayersAssigned && (
-              <div className="mb-4 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2.5">
-                <span className="text-amber-400 text-sm mt-0.5">⚠</span>
-                <p className="text-amber-400 text-xs leading-snug">
-                  {unassignedCount === allyPicks.length
-                    ? 'Nenhum jogador vinculado. Vincule pelo menos um atleta acima para registrar quem jogou.'
-                    : `${unassignedCount} brawler${unassignedCount > 1 ? 's' : ''} sem jogador vinculado. A partida será salva sem esses vínculos.`}
+        <section className="mx-auto max-w-4xl space-y-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#151720] p-4 sm:p-6 animate-in fade-in slide-in-from-top-4">
+          <div className="text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-400">Próximo passo</p>
+            <h4 className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">A partida terminou em derrota. E agora?</h4>
+            <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">Registre o resultado ou teste uma nova composição.</p>
+          </div>
+
+          {!allPlayersAssigned && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3.5">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-500" aria-hidden="true" />
+              <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+                {unassignedCount === allyPicks.length
+                  ? 'Nenhum jogador vinculado. Você pode registrar a partida, mas ela ficará sem estatísticas individuais dos atletas.'
+                  : unassignedCount + ' brawler' + (unassignedCount > 1 ? 's' : '') + ' sem jogador vinculado. Esses picks serão registrados sem atleta.'}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button type="button" onClick={handleSaveResult}
+              className="group flex min-h-[104px] flex-col items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-rose-700 dark:text-rose-300 transition-all hover:border-rose-400 hover:bg-rose-500/10 focus-visible:ring-2 focus-visible:ring-rose-400">
+              <ArrowRight size={22} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              <span className="font-bold">Salvar derrota</span>
+              <span className="text-center text-xs text-rose-700/70 dark:text-rose-200/70">Registra uma partida e atualiza o histórico</span>
+            </button>
+            <button type="button" aria-expanded={isTestingVariation}
+              onClick={() => setIsTestingVariation(v => !v)}
+              className={cn(
+                "group flex min-h-[104px] flex-col items-center justify-center gap-2 rounded-xl border p-4 transition-all focus-visible:ring-2 focus-visible:ring-cyan-400",
+                isTestingVariation
+                  ? "border-cyan-400 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300"
+                  : "border-indigo-400/30 bg-indigo-500/5 text-indigo-700 dark:text-indigo-200 hover:border-indigo-400 hover:bg-indigo-500/10"
+              )}>
+              <ArrowLeftRight size={22} className="transition-transform group-hover:scale-110" aria-hidden="true" />
+              <span className="font-bold">{isTestingVariation ? 'Escolhendo variação' : 'Testar variação'}</span>
+              <span className="text-center text-xs opacity-75">Substitua um brawler e registre o resultado do teste</span>
+            </button>
+          </div>
+
+          {isTestingVariation && (
+            <div className="space-y-5 rounded-2xl border border-indigo-500/20 bg-white dark:bg-[#0D111B] p-4 sm:p-6">
+              <div>
+                <h5 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white">
+                  <RotateCcw size={18} className="text-indigo-500 dark:text-cyan-400" aria-hidden="true" />
+                  Variação da nossa composição
+                </h5>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-zinc-400">
+                  Selecione quem saiu, quem entrou e informe o resultado da segunda partida.
                 </p>
               </div>
-            )}
-            <div className="flex gap-4">
-              <button
-                onClick={handleSaveResult}
-                className={cn(
-                  "flex-1 p-4 border rounded-lg font-medium transition-all duration-200 h-auto min-h-[100px] flex flex-col items-center justify-center",
-                  allPlayersAssigned
-                    ? "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-900 dark:text-white cursor-pointer"
-                    : "bg-slate-50 dark:bg-[#0A0A0A] border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-500/5 text-slate-900 dark:text-white cursor-pointer"
-                )}
-              >
-                <ArrowRight className={cn("w-5 h-5 mb-2", allPlayersAssigned ? "text-slate-500 dark:text-zinc-400" : "text-amber-400")} />
-                <span className="text-sm font-bold block mb-1">Salvar Derrota da Scrim</span>
-                <span className={cn("text-xs font-normal leading-tight text-center", allPlayersAssigned ? "text-slate-500 dark:text-zinc-500" : "text-amber-400/70")}>
-                  {allPlayersAssigned ? 'Registra no histórico e encerra' : 'Salvará sem vínculos de jogadores'}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setIsTestingVariation(true)}
-                className={cn(
-                  "flex-1 p-4 rounded-lg font-medium transition-colors border h-auto min-h-[100px] flex flex-col items-center justify-center text-center",
-                  isTestingVariation ? "bg-emerald-500/10 border-emerald-500 text-emerald-400" : "bg-emerald-500/5 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
-                )}
-              >
-                <span className="text-sm font-bold block mb-1">Testar Variação</span>
-                <span className="text-xs opacity-70 font-normal leading-tight text-center">Troque um brawler e teste a comp</span>
-              </button>
-            </div>
-
-            {isTestingVariation && (
-              <div className="mt-6 p-4 bg-slate-50 dark:bg-[#0A0A0A] rounded-lg border border-slate-200 dark:border-[#2A2A2A] space-y-4">
-                <h5 className="text-sm font-bold text-slate-900 dark:text-white text-center">Testar variação da nossa composição</h5>
-
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="flex-1 w-full relative">
-                    <label className="block text-xs text-slate-500 dark:text-zinc-400 mb-1">Brawler que saiu</label>
-                    <div className="relative group">
-                      <select
-                        value={brawlerOut}
-                        onChange={(e) => setBrawlerOut(e.target.value)}
-                        className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
-                      >
-                        <option value="">Selecionar...</option>
-                        {allyPicks.map(id => (
-                          <option key={id} value={id}>{brawlers.find(b => b.id === id)?.name}</option>
-                        ))}
-                      </select>
-                      <div className={cn("absolute left-2 top-1.5 w-6 h-6 rounded overflow-hidden pointer-events-none", brawlerOut ? getBrawlerBgColor(brawlers.find(b => b.id === brawlerOut) || {}) : "bg-slate-200 dark:bg-zinc-800")}>
-                        {brawlerOut && brawlers.find(b => b.id === brawlerOut)?.iconUrl && (
-                          <img src={brawlers.find(b => b.id === brawlerOut)?.imageUrl || brawlers.find(b => b.id === brawlerOut)?.iconUrl} className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-slate-500 dark:text-zinc-500 mt-5 hidden sm:block"><ArrowRight className="w-5 h-5" /></div>
-
-                  <div className="flex-1 w-full relative">
-                    <label className="block text-xs text-slate-500 dark:text-zinc-400 mb-1">Brawler que entrou</label>
-                    <div className="relative group">
-                      <BrawlerSelectDropdown
-                        placeholder="Selecionar brawler..."
-                        value={brawlerIn}
-                        onChange={(val) => setBrawlerIn(val)}
-                        disabledBrawlers={[...allyPicks, ...enemyPicks]}
-                        allBrawlers={brawlers}
-                      />
-
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-4">
+                <div className="min-w-0 space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-zinc-300">Brawler que saiu</label>
+                  <BrawlerSelectDropdown
+                    placeholder="Escolher do trio atual..."
+                    value={brawlerOut}
+                    onChange={setBrawlerOut}
+                    disabledBrawlers={[]}
+                    allBrawlers={brawlers.filter(b => allyPicks.includes(b.id))}
+                  />
                 </div>
-                <div className="pt-4 flex justify-end gap-3">
-                  <button
-                    onClick={() => setIsTestingVariation(false)}
-                    className="px-4 py-2 text-sm text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:text-white"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    disabled={!brawlerOut || !brawlerIn || !allPlayersAssigned}
-                    onClick={handleSaveResult}
-                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:bg-zinc-800 text-slate-900 dark:text-white text-sm font-medium rounded-md"
-                  >
-                    Variação Venceu
-                  </button>
-                  <button
-                    disabled={!brawlerOut || !brawlerIn || !allPlayersAssigned}
-                    onClick={() => { setIsTestingVariation(false); handleSaveResult(); }}
-                    className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-slate-200 dark:bg-zinc-800 text-slate-900 dark:text-white text-sm font-medium rounded-md"
-                  >
-                    Variação Perdeu
-                  </button>
+                <div className="hidden h-12 items-center justify-center text-indigo-500 dark:text-cyan-400 sm:flex">
+                  <ArrowRight size={22} aria-hidden="true" />
+                </div>
+                <div className="min-w-0 space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-zinc-300">Brawler que entrou</label>
+                  <BrawlerSelectDropdown
+                    placeholder="Escolher substituto..."
+                    value={brawlerIn}
+                    onChange={setBrawlerIn}
+                    disabledBrawlers={[...allyPicks, ...enemyPicks, ...draftState.allyBans.filter(Boolean), ...draftState.enemyBans.filter(Boolean)] as string[]}
+                    allBrawlers={brawlers.filter(b => b.is_active !== false)}
+                  />
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+
+              {brawlerOut && brawlerIn && (
+                <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-3 py-2 text-center text-xs font-medium text-slate-600 dark:text-zinc-300">
+                  {brawlers.find(b => b.id === brawlerOut)?.name || 'Brawler original'} → {brawlers.find(b => b.id === brawlerIn)?.name || 'Novo brawler'}
+                </div>
+              )}
+
+              <p className="text-xs leading-relaxed text-slate-500 dark:text-zinc-400">
+                Ao confirmar, serão registradas <strong>duas partidas reais</strong>: a derrota original e o resultado do teste com a nova composição.
+                Os vínculos de jogadores são opcionais.
+              </p>
+              <div className="grid grid-cols-1 gap-2 border-t border-slate-200 dark:border-white/10 pt-4 sm:grid-cols-3">
+                <button type="button" onClick={closeVariation}
+                  className="min-h-12 rounded-xl border border-slate-300 dark:border-white/15 bg-slate-100 dark:bg-[#222632] px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-zinc-200 transition-colors hover:border-slate-400 dark:hover:border-white/30 hover:bg-slate-200 dark:hover:bg-[#303648] hover:text-slate-900 dark:hover:text-white focus-visible:ring-2 focus-visible:ring-indigo-400">
+                  Cancelar
+                </button>
+                <button type="button"
+                  disabled={!brawlerOut || !brawlerIn || brawlerOut === brawlerIn}
+                  onClick={() => handleSaveVariation('victory')}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-black text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 focus-visible:ring-2 focus-visible:ring-emerald-400">
+                  <CheckCircle2 size={16} aria-hidden="true" /> Variação venceu
+                </button>
+                <button type="button"
+                  disabled={!brawlerOut || !brawlerIn || brawlerOut === brawlerIn}
+                  onClick={() => handleSaveVariation('defeat')}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2.5 text-sm font-black text-white transition-colors hover:bg-rose-500 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 focus-visible:ring-2 focus-visible:ring-rose-400">
+                  <XCircle size={16} aria-hidden="true" /> Variação perdeu
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       )}
 
       {/* Aviso quando jogadores não vinculados (vitória) */}
