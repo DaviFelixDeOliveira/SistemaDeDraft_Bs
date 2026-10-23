@@ -40,18 +40,18 @@ function compFromSupabase(data: any): Composition {
 
 export const mapService = {
   getMaps: async (): Promise<GameMap[]> => {
-    try {
-      const { data, error } = await supabase.from('maps').select('*').order('name');
-      if (error) throw error;
-
-      // Catálogo global é gerenciado em rotina de sincronização confiável, não por visitantes.
-      if (!data) return [];
-
-      return data.map(mapFromSupabase);
-    } catch (err) {
-      console.error('Erro ao buscar mapas do Supabase, usando dados locais:', err);
-      return mockMaps;
-    }
+    const [{ data, error }, { data: settings, error: preferencesError }] = await Promise.all([
+      supabase.from('maps').select('*').order('name'),
+      supabase.from('team_map_settings').select('map_id,is_active'),
+    ]);
+    if (error) throw error;
+    if (preferencesError) throw preferencesError;
+    const perTeam = new Map((settings || []).map(s => [s.map_id, s.is_active]));
+    return (data || []).map(row => {
+      const map = mapFromSupabase(row);
+      const active = perTeam.get(map.id);
+      return active === undefined ? map : { ...map, isActive: active, is_active: active };
+    });
   },
 
   getMapById: async (id: string): Promise<GameMap | undefined> => {
@@ -59,20 +59,14 @@ export const mapService = {
     return maps.find(m => m.id === id);
   },
 
-  createMap: async (map: Omit<GameMap, 'id'>): Promise<GameMap> => {
-    const id = 'm_' + crypto.randomUUID().substring(0, 8);
-    const newMap = { ...map, id } as GameMap;
-    const row = mapToSupabase(newMap);
-
-    const { error } = await supabase.from('maps').insert(row);
-    if (error) console.error('Erro ao criar mapa no Supabase:', error);
-
-    return newMap;
+  createMap: async (_map: Omit<GameMap, 'id'>): Promise<GameMap> => {
+    throw new Error('O catálogo global de mapas é gerenciado pela sincronização. Cada equipe pode ativar ou desativar mapas existentes.');
   },
 
   updateMapStatus: async (id: string, isActive: boolean): Promise<void> => {
-    const { error } = await supabase.from('maps').update({ is_active: isActive }).eq('id', id);
-    if (error) console.error('Erro ao atualizar status do mapa no Supabase:', error);
+    const { error } = await supabase.from('team_map_settings')
+      .upsert({ map_id: id, is_active: isActive }, { onConflict: 'team_id,map_id' });
+    if (error) throw error;
   },
 
   // ─── Composições ────────────────────────────────────────────────────────────
