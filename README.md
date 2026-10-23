@@ -21,7 +21,7 @@ Painel de estatísticas em tempo real, calculadas exclusivamente com base nas pa
 ### 🎮 Draft Wizard
 Assistente completo de picks e bans. Guia o time pelo processo de draft em 5 etapas:
 1. Seleção do mapa e modo de jogo
-2. Bans da Nossa equipe e bans inimigos
+2. Bans da nossa equipe e bans inimigos
 3. Picks em ordem snake (1-2-2-1)
 4. Vinculação de jogadores e registro do resultado
 5. Atualização automática do banco de dados
@@ -66,9 +66,9 @@ Todos os dados persistem em tabelas Supabase:
 | `brawlers` | Catálogo de brawlers com atributos e tier |
 | `maps` | Biblioteca de mapas e modos |
 | `players` | Elenco do time e comfort picks |
-| `scrims` | Partidas registradas (mapa, resultado, bans) |
-| `scrim_picks` | Picks individuais por partida |
-| `scrim_bans` | Bans individuais por partida |
+| `matches` | Partidas registradas (mapa, resultado e treinos) |
+| `match_picks` | Picks individuais por partida |
+| `match_bans` | Bans individuais por partida |
 
 ---
 
@@ -87,11 +87,11 @@ Todos os dados persistem em tabelas Supabase:
 Escolha o mapa da partida. O sistema carrega automaticamente o histórico desse mapa (winrate, top picks, bans) e ajusta o motor de recomendação.
 
 **Etapa 2 — Bans**
-Registre os bans do time Nossa equipe e do adversário. O sistema considera os bans ao calcular disponibilidade de brawlers na fase de picks.
+Registre os bans do nossa equipe e do adversário. O sistema considera os bans ao calcular disponibilidade de brawlers na fase de picks.
 
 **Etapa 3 — Picks (Fase de Draft)**
-Os slots aparecem na ordem snake (1-2-2-1). Quando for a vez da Nossa equipe:
-- O motor de IA exibe os **Top 3 brawlers recomendados** com pontuação explicada
+Os slots aparecem na ordem snake (1-2-2-1). Quando for a vez da nossa equipe:
+- O motor de recomendações exibe os **Top 3 brawlers recomendados** com pontuação explicada
 - Brawlers com 🟢 são comfort picks de atletas ativos do elenco
 - Brawlers tier S têm borda dourada destacada
 - Clique no brawler para confirmar o pick; picks inimigos são registrados manualmente
@@ -129,6 +129,12 @@ Após algumas partidas registradas:
 | **Motion** | 12.x | Animações (Framer Motion) |
 
 ---
+
+## 🔄 Evolução para contas de equipes
+
+> **Status:** esta branch contém uma primeira etapa de identidade visual e nomenclatura neutra. A autenticação por equipe, migração dos dados e RLS ainda não estão implementados. Não colocar esta branch em produção nem mesclar sem validar a migração.
+
+A evolução prevista oferece um login por nome da equipe e senha, dados privados de cada equipe, catálogos de brawlers/mapas compartilhados, configurações de mapa e tier separadas, algoritmo adaptativo baseado no histórico e backup por equipe. O banco da equipe antiga deverá ser limpo somente após implantação e testes da nova estrutura, preservando os brawlers.
 
 ## 🚀 Executar Localmente
 
