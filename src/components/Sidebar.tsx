@@ -39,7 +39,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('tbk_hub_sidebar_collapsed') === 'true';
+      return localStorage.getItem('sistema_draft_sidebar_collapsed') === 'true';
     }
     return false;
   });
@@ -69,7 +69,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
       const next = !prev;
-      localStorage.setItem('tbk_hub_sidebar_collapsed', String(next));
+      localStorage.setItem('sistema_draft_sidebar_collapsed', String(next));
       return next;
     });
   };
@@ -285,7 +285,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
                   <Swords className="w-5 h-5 text-white" />
                 </div>
                 <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
-                  TBK <span className="text-[#FFCC00]">Hub</span>
+                  Sistema <span className="text-[#FFCC00]">de Draft</span>
                 </h1>
               </div>
 
