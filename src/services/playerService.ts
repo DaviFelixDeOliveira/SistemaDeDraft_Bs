@@ -44,10 +44,22 @@ export const playerService = {
   },
 
   savePlayer: async (player: Player): Promise<Player> => {
-    const row = mapToSupabase(player);
-    const { error } = await supabase.from('players').upsert(row);
+    // O formulário de novo jogador não possui id. O banco exige um identificador
+    // TEXT não nulo, então geramos um UUID como texto antes de inserir.
+    // Na edição, preservamos o mesmo id para atualizar o registro correto.
+    const nickname = player.nickname?.trim();
+    if (!nickname) throw new Error('Informe o nickname do jogador.');
+    const name = player.name?.trim() || nickname;
+    const id = player.id?.trim() || crypto.randomUUID();
+    const row = mapToSupabase({ ...player, id, name, nickname });
+
+    const { data, error } = await supabase.from('players')
+      .upsert(row, { onConflict: 'id' })
+      .select('*')
+      .single();
     if (error) throw new Error(`Erro ao salvar jogador: ${error.message}`);
-    return player;
+    if (!data) throw new Error('O banco não confirmou o salvamento do jogador.');
+    return mapFromSupabase(data);
   },
 
   updatePlayerStatus: async (id: string, isActive: boolean): Promise<void> => {
