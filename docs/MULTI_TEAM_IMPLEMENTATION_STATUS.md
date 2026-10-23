@@ -45,3 +45,17 @@ O relatório descreve o sistema antigo para uma equipe: login por PIN em `LockSc
 ## Não interpretar como concluído
 - `npm run lint`, `npm test` e `npm run build` provam tipagem, testes existentes e compilação; **não provam isolamento/RLS, funcionamento real de signup ou integração multi-equipes**.
 - A lista de pendências do relatório inclui itens que podem ter sido implementados depois. Verificar cada um no código atual antes de abrir tarefas duplicadas.
+
+
+## Atualização de implantação rápida — 23/10/2026
+
+O banco de produção foi **efetivamente atualizado** mediante solicitação do proprietário para zerar dados antigos e disponibilizar o sistema. Esta atualização prevalece sobre trechos anteriores que digam que a migração não foi executada.
+
+- Criado snapshot privado `archive.system_reset_snapshots` contendo brawlers, mapas, jogadores, partidas, picks, bans, treinos, composições e backup legado antes da exclusão.
+- Preservados os **106 brawlers** e os **20 mapas**; resetados jogadores, partidas, picks, bans, treinos, composições e `latest_backup`.
+- Criadas `teams`, `team_brawler_settings`, `team_map_settings`, vínculos `team_id`, constraints compostas, trigger `private.create_team_from_auth`, políticas RLS, grants e `security_invoker` para `brawler_winrate`.
+- Confirmado que as tabelas privadas ficam inacessíveis à role `anon`; Supabase security advisors retornam zero alertas; verificadas 39 policies RLS.
+- Frontend adaptado para consultar e gravar mapas e configurações de brawlers por equipe; corrigidos falso sucesso em gravações e restauração global desativada.
+- **Ainda depende de verificação real:** provedor Supabase Email configurado com `Confirm email` desativado, aceitar endereços internos `@teams.sistema-de-draft.invalid`, criar duas equipes e verificar isolamento em navegador real.
+- Cadastro no frontend continua dependendo de `VITE_ENABLE_TEAM_SIGNUP=true` no arquivo `.env.local` ou nas variáveis de hospedagem.
+- O SQL `team_isolation_PREVIEW.sql` é um rascunho anterior, NÃO deve ser executado: a implantação real foi feita por transação via ferramenta Supabase e contém mudanças adicionais.
