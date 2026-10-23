@@ -8,15 +8,11 @@ import { Brawler } from '../../types';
 import { BrawlerModal } from './BrawlerModal';
 
 import { analyticsService } from '../../services/analyticsService';
-import { UserRole } from '../LockScreen';
 import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from '../BrawlerFilters';
 
-interface BrawlersHubProps {
-   userRole?: UserRole;
-}
 
-export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
-   const isPlayerMode = userRole === 'player';
+export function BrawlersHub() {
+   const isPlayerMode = false; // Todas as equipes têm acesso às próprias ferramentas.
    const brawlerFilters = useBrawlerFilters();
    const [selectedBrawler, setSelectedBrawler] = useState<Brawler | null>(null);
    const [brawlerStatsDetail, setBrawlerStatsDetail] = useState<any>(null);
