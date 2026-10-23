@@ -271,7 +271,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
               title="Abrir barra lateral"
             >
               {/* Logo normal */}
-              <div className="w-7 h-7 rounded-lg bg-[#FF3366] flex items-center justify-center shadow-[0_0_12px_rgba(255,51,102,0.4)] group-hover:hidden transition-all">
+              <div className="w-7 h-7 rounded-lg bg-[#6366F1] flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.4)] group-hover:hidden transition-all">
                 <Swords className="w-4 h-4 text-white" />
               </div>
               {/* Ícone de Expandir (PanelLeft) visível no hover */}
@@ -281,11 +281,11 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
             /* Modo Expandido: Logo + Nome + Botão de Recolher na direita */
             <>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FF3366] flex items-center justify-center shadow-[0_0_15px_rgba(255,51,102,0.4)] shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
                   <Swords className="w-5 h-5 text-white" />
                 </div>
                 <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
-                  Sistema <span className="text-[#FFCC00]">de Draft</span>
+                  Sistema <span className="text-[#22D3EE]">de Draft</span>
                 </h1>
               </div>
 
@@ -324,7 +324,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
                   "w-full flex items-center rounded-lg text-sm font-medium transition-all",
                   isCollapsed ? "md:justify-center md:px-0 md:py-3 px-4 py-3 md:gap-0 gap-3" : "gap-3 px-4 py-3",
                   isActive
-                    ? "bg-[#FF3366]/10 text-[#FF3366] shadow-[inset_2px_0_0_0_#FF3366]"
+                    ? "bg-[#6366F1]/10 text-[#6366F1] shadow-[inset_2px_0_0_0_#6366F1]"
                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                 )}
               >
@@ -348,11 +348,11 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
               <div className={cn(
                 "w-9 h-9 rounded-xl flex items-center justify-center",
                 userRole === 'admin'
-                  ? "bg-[#FF3366]/10 border border-[#FF3366]/20"
+                  ? "bg-[#6366F1]/10 border border-[#6366F1]/20"
                   : "bg-blue-500/10 border border-blue-500/20"
               )}>
                 {userRole === 'admin'
-                  ? <Shield className="w-4 h-4 text-[#FF3366]" />
+                  ? <Shield className="w-4 h-4 text-[#6366F1]" />
                   : <UserIcon className="w-4 h-4 text-blue-500" />
                 }
               </div>
@@ -366,7 +366,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
           )}>
             <div className="flex items-center gap-2">
               {userRole === 'admin' ? (
-                <Shield className="w-4 h-4 text-[#FF3366]" />
+                <Shield className="w-4 h-4 text-[#6366F1]" />
               ) : (
                 <UserIcon className="w-4 h-4 text-blue-500" />
               )}
@@ -374,7 +374,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
             </div>
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider",
-              userRole === 'admin' ? "bg-[#FF3366]/10 text-[#FF3366] border border-[#FF3366]/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+              userRole === 'admin' ? "bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
             )}>
               {userRole === 'admin' ? 'Admin' : 'Player'}
             </span>
