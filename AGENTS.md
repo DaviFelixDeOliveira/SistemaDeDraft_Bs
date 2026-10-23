@@ -1,4 +1,4 @@
-# Diretrizes de Interface e Acessibilidade (Projeto TBK Hub)
+# Diretrizes de Interface e Acessibilidade (Sistema de Draft)
 
 Quando implementar novas funcionalidades ou modificar o sistema, obedeça estritamente as seguintes regras de comportamento e atalhos globais:
 
