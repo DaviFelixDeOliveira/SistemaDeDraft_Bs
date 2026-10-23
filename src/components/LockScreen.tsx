@@ -114,13 +114,13 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
     <div className="min-h-screen bg-[#080808] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Fundo decorativo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FF3366]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[#FFCC00]/3 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#6366F1]/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[#22D3EE]/3 rounded-full blur-3xl" />
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
-              'linear-gradient(#FF3366 1px, transparent 1px), linear-gradient(90deg, #FF3366 1px, transparent 1px)',
+              'linear-gradient(#6366F1 1px, transparent 1px), linear-gradient(90deg, #6366F1 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }}
         />
@@ -131,7 +131,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
           <div className="px-8 pt-8 pb-6 text-center border-b border-white/[0.05]">
             <div className="flex justify-center mb-5">
               <div className="relative">
-                <div className="w-16 h-16 bg-[#FF3366] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,51,102,0.35)]">
+                <div className="w-16 h-16 bg-[#6366F1] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.35)]">
                   <Swords className="w-8 h-8 text-white" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#111111] rounded-full flex items-center justify-center border border-white/10">
@@ -140,7 +140,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
               </div>
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight">
-              Sistema <span className="text-[#FFCC00]">de Draft</span>
+              Sistema <span className="text-[#22D3EE]">de Draft</span>
             </h1>
             <p className="text-zinc-500 text-sm mt-1">
               Insira a senha de Administrador (não público) ou Player (não público)
@@ -205,7 +205,7 @@ export function LockScreen({ onAuthenticated }: LockScreenProps) {
                   ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
                   : isLoading
                     ? 'bg-white/10 text-white/50 cursor-wait border border-white/10'
-                    : 'bg-white hover:bg-[#FF3366] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(255,51,102,0.3)]'
+                    : 'bg-white hover:bg-[#6366F1] text-black hover:text-white cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.08)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]'
               )}
             >
               {isLoading ? 'Autenticando...' : 'Login'}
