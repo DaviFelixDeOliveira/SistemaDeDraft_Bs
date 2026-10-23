@@ -1,13 +1,13 @@
-# 🏆 TBK Hub — Sistema de Draft e Analytics para Brawl Stars
+# Sistema de Draft — Brawl Stars
 
-> Ferramenta interna de suporte à performance competitiva do time **TBK** no Brawl Stars.
+> Plataforma de drafts e análise competitiva para equipes de Brawl Stars.
 > Gerencia o processo completo de draft, registra scrims e gera estatísticas reais com base em partidas jogadas.
 
 ---
 
 ## 🎯 Sobre o Projeto
 
-O **TBK Hub** é um sistema de draft e analytics competitivo desenvolvido exclusivamente para o time TBK. Ele resolve um problema concreto: times competitivos precisam de dados reais das próprias partidas para tomar decisões de draft — não apenas de estatísticas genéricas da comunidade.
+O **Sistema de Draft** é um sistema de draft e analytics competitivo desenvolvido para diversas equipes. Ele resolve um problema concreto: times competitivos precisam de dados reais das próprias partidas para tomar decisões de draft — não apenas de estatísticas genéricas da comunidade.
 
 O sistema foi construído sob a filosofia **"Dia 0"**: começa completamente zerado e vai ficando mais inteligente conforme partidas reais são registradas. No primeiro uso, as recomendações são baseadas em tier meta e mecânicas de mapa. Após algumas scrims registradas, o sistema passa a ponderar winrate histórico por brawler/mapa, picks mais usados, bans frequentes e counters observados em partida.
 
@@ -21,7 +21,7 @@ Painel de estatísticas em tempo real, calculadas exclusivamente com base nas pa
 ### 🎮 Draft Wizard
 Assistente completo de picks e bans. Guia o time pelo processo de draft em 5 etapas:
 1. Seleção do mapa e modo de jogo
-2. Bans da TBK e bans inimigos
+2. Bans da Nossa equipe e bans inimigos
 3. Picks em ordem snake (1-2-2-1)
 4. Vinculação de jogadores e registro do resultado
 5. Atualização automática do banco de dados
@@ -43,7 +43,7 @@ Catálogo completo de brawlers com tier, tipo, mecânicas especiais (quebra pare
 
 ### O Conceito de "Dia 0"
 
-O TBK Hub foi pensado para crescer com o time. No início (Dia 0), não há nenhuma partida registrada, então o sistema não tem histórico próprio. Nesse estado:
+O Sistema de Draft foi pensado para crescer com o time. No início (Dia 0), não há nenhuma partida registrada, então o sistema não tem histórico próprio. Nesse estado:
 
 - O motor de recomendação usa apenas **tier meta + mecânicas do mapa** como base de pontuação
 - O Dashboard exibe zeros e vazios — isso é esperado e correto
@@ -87,10 +87,10 @@ Todos os dados persistem em tabelas Supabase:
 Escolha o mapa da partida. O sistema carrega automaticamente o histórico desse mapa (winrate, top picks, bans) e ajusta o motor de recomendação.
 
 **Etapa 2 — Bans**
-Registre os bans do time TBK e do adversário. O sistema considera os bans ao calcular disponibilidade de brawlers na fase de picks.
+Registre os bans do time Nossa equipe e do adversário. O sistema considera os bans ao calcular disponibilidade de brawlers na fase de picks.
 
 **Etapa 3 — Picks (Fase de Draft)**
-Os slots aparecem na ordem snake (1-2-2-1). Quando for a vez da TBK:
+Os slots aparecem na ordem snake (1-2-2-1). Quando for a vez da Nossa equipe:
 - O motor de IA exibe os **Top 3 brawlers recomendados** com pontuação explicada
 - Brawlers com 🟢 são comfort picks de atletas ativos do elenco
 - Brawlers tier S têm borda dourada destacada
