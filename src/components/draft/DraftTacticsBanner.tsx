@@ -59,12 +59,12 @@ export function DraftTacticsBanner({ mapId, allyStarts, step }: DraftTacticsBann
       <div className={cn(
         "border rounded-xl p-3 sm:p-4 flex gap-3 sm:items-center items-start",
         allyStarts
-          ? "bg-[#FFCC00]/10 border-[#FFCC00]/20 text-amber-600 dark:text-amber-500"
+          ? "bg-[#22D3EE]/10 border-[#22D3EE]/20 text-amber-600 dark:text-amber-500"
           : "bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-400"
       )}>
         <div className={cn(
           "p-2 rounded-lg shrink-0",
-          allyStarts ? "bg-[#FFCC00]/20" : "bg-fuchsia-500/20"
+          allyStarts ? "bg-[#22D3EE]/20" : "bg-fuchsia-500/20"
         )}>
           <Lightbulb className="w-5 h-5" />
         </div>
