@@ -64,8 +64,10 @@ export const mapService = {
   },
 
   updateMapStatus: async (id: string, isActive: boolean): Promise<void> => {
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) throw new Error('Faça login para configurar os mapas.');
     const { error } = await supabase.from('team_map_settings')
-      .upsert({ map_id: id, is_active: isActive }, { onConflict: 'team_id,map_id' });
+      .upsert({ team_id: auth.user.id, map_id: id, is_active: isActive }, { onConflict: 'team_id,map_id' });
     if (error) throw error;
   },
 
