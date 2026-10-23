@@ -408,14 +408,14 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
             {selectedMap.imageUrl ? (
               <img src={selectedMap.imageUrl} alt={selectedMap.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-zinc-800" />
             ) : (
-              <div className="w-10 h-10 rounded-lg bg-[#FF3366]/10 flex items-center justify-center text-[#FF3366]">
+              <div className="w-10 h-10 rounded-lg bg-[#6366F1]/10 flex items-center justify-center text-[#6366F1]">
                 <MapPin className="w-5 h-5" />
               </div>
             )}
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
-                  <Gamepad2 className="w-3.5 h-3.5 text-[#FF3366]" /> Mapa & Modo Selecionados
+                  <Gamepad2 className="w-3.5 h-3.5 text-[#6366F1]" /> Mapa & Modo Selecionados
                 </span>
                 <span className="text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 px-2 py-0.5 rounded-full font-medium border border-slate-200 dark:border-zinc-700">
                   {selectedMap.terrain}
@@ -424,7 +424,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
               <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <span>{selectedMap.name}</span>
                 <span className="text-slate-400 dark:text-zinc-600">•</span>
-                <span className="text-[#FFCC00] font-semibold">{selectedMap.mode}</span>
+                <span className="text-[#22D3EE] font-semibold">{selectedMap.mode}</span>
               </div>
             </div>
           </div>
@@ -566,10 +566,10 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
 
       {/* Engine Recommendations */}
       {!isDraftComplete && currentTeamPicking === 'ally' && !recommendedComp && recommendations.length > 0 && (
-        <div className="bg-white dark:bg-[#1A1A1A] border border-[#FFCC00]/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(255,204,0,0.1)]">
+        <div className="bg-white dark:bg-[#1A1A1A] border border-[#22D3EE]/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.1)]">
           <div className="flex items-center gap-2 mb-3">
-            <Target className="w-5 h-5 text-[#FFCC00]" />
-            <h3 className="font-semibold text-[#FFCC00]">Recomendação da IA</h3>
+            <Target className="w-5 h-5 text-[#22D3EE]" />
+            <h3 className="font-semibold text-[#22D3EE]">Recomendação da IA</h3>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             {recommendations.map((rec, i) => (
@@ -579,7 +579,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                 className={cn(
                   "flex-1 border rounded-lg p-3 flex items-start gap-3 cursor-pointer transition-all",
                   i === 0 
-                    ? "bg-[#FFCC00]/10 border-[#FFCC00]/50 hover:bg-[#FFCC00]/20 hover:border-[#FFCC00]" 
+                    ? "bg-[#22D3EE]/10 border-[#22D3EE]/50 hover:bg-[#22D3EE]/20 hover:border-[#22D3EE]" 
                     : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] hover:border-zinc-500"
                 )}
               >
@@ -589,7 +589,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                  <div className="flex-1">
                     <div className="font-medium text-slate-900 dark:text-white flex items-center justify-between gap-1">
                       <span>{rec.name}</span>
-                      {i === 0 && <span className="text-[10px] text-[#FFCC00] font-bold uppercase tracking-wider bg-[#FFCC00]/20 px-1.5 py-0.5 rounded">Top Pick</span>}
+                      {i === 0 && <span className="text-[10px] text-[#22D3EE] font-bold uppercase tracking-wider bg-[#22D3EE]/20 px-1.5 py-0.5 rounded">Top Pick</span>}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Score: <span className={rec.score > 0 ? "text-emerald-400" : "text-red-400"}>{rec.score}</span></div>
                     {rec.mapPicksCount > 0 && (
@@ -698,9 +698,9 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                         ? "opacity-30 cursor-not-allowed grayscale" 
                         : cn(
                             "cursor-pointer bg-white dark:bg-[#1A1A1A] hover:bg-slate-100 dark:hover:bg-[#2A2A2A]",
-                            isFirstAvailable ? "ring-2 ring-offset-2 ring-[#FF3366] dark:ring-offset-[#121212]" : "",
+                            isFirstAvailable ? "ring-2 ring-offset-2 ring-[#6366F1] dark:ring-offset-[#121212]" : "",
                             isTopPick ? "border-2 border-amber-400 animate-[pulse_1.5s_ease-in-out_infinite] shadow-[0_0_15px_rgba(251,191,36,0.6)]" : 
-                            isTierS ? "border-2 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]" : "border border-slate-200 dark:border-[#2A2A2A] hover:border-[#FF3366]"
+                            isTierS ? "border-2 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]" : "border border-slate-200 dark:border-[#2A2A2A] hover:border-[#6366F1]"
                           )
                     )}
                   >
@@ -725,7 +725,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                       {brawler.iconUrl && <img src={brawler.iconUrl} alt="" className="w-full h-full object-cover" />}
                     </div>
                     <span className="text-xs font-medium text-slate-900 dark:text-white truncate w-full text-center">{brawler.name}</span>
-                    {!isUnavailable && <span className={cn("text-[10px] font-bold", isTierS ? "text-[#FFCC00]" : "text-slate-500 dark:text-zinc-500")}>Tier {brawler.tier}</span>}
+                    {!isUnavailable && <span className={cn("text-[10px] font-bold", isTierS ? "text-[#22D3EE]" : "text-slate-500 dark:text-zinc-500")}>Tier {brawler.tier}</span>}
                   </div>
                 );
               })}
