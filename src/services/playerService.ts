@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
 import { Player } from '../types';
-import { mockPlayers } from '../data/mockData';
 
 function mapFromSupabase(data: any): Player {
   return {
@@ -34,18 +33,13 @@ export const playerService = {
       const { data, error } = await supabase.from('players').select('*').order('name');
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        console.log('Tabela de players vazia. Inserindo dados de seed...');
-        const seedRows = mockPlayers.map(mapToSupabase);
-        const { error: seedError } = await supabase.from('players').insert(seedRows);
-        if (seedError) console.error('Erro ao realizar seed de players:', seedError);
-        return mockPlayers;
-      }
+      // Uma equipe nova começa sem jogadores; nunca inserir o elenco antigo automaticamente.
+      if (!data) return [];
 
       return data.map(mapFromSupabase);
     } catch (err) {
-      console.error('Erro ao buscar players do Supabase, usando dados locais:', err);
-      return mockPlayers;
+      console.error('Erro ao buscar jogadores no Supabase:', err);
+      return []; // Não revelar nem criar jogadores fictícios em outra equipe.
     }
   },
 
