@@ -10,14 +10,10 @@ import { ConfirmModal } from "../ui/ConfirmModal";
 
 import { analyticsService } from '../../services/analyticsService';
 
-import { UserRole } from '../LockScreen';
 
-interface PlayersHubProps {
-  userRole?: UserRole;
-}
 
-export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
-  const isPlayerMode = userRole === 'player';
+export function PlayersHub() {
+  const isPlayerMode = false; // Todas as equipes têm acesso às próprias ferramentas.
   const [players, setPlayers] = useState<Player[]>([]);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
