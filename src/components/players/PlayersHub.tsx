@@ -10,14 +10,10 @@ import { ConfirmModal } from "../ui/ConfirmModal";
 
 import { analyticsService } from '../../services/analyticsService';
 
-import { UserRole } from '../LockScreen';
 
-interface PlayersHubProps {
-  userRole?: UserRole;
-}
 
-export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
-  const isPlayerMode = userRole === 'player';
+export function PlayersHub() {
+  const isPlayerMode = false; // Todas as equipes têm acesso às próprias ferramentas.
   const [players, setPlayers] = useState<Player[]>([]);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -151,7 +147,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
           {!isPlayerMode && (
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 w-fit"
+              className="bg-[#6366F1] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 w-fit"
             >
               <Plus className="w-4 h-4" />
               Novo Jogador
@@ -245,7 +241,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-300 flex items-center gap-2">
-                    <Award className="w-4 h-4 text-[#FFCC00]" />
+                    <Award className="w-4 h-4 text-[#22D3EE]" />
                     Comfort Picks
                   </h4>
                 </div>
@@ -270,7 +266,7 @@ export function PlayersHub({ userRole = 'admin' }: PlayersHubProps) {
                 <div className="mt-auto pt-4 flex items-center justify-between cursor-pointer" onClick={() => setSelectedPlayer(player)}>
                   <div className="flex flex-wrap gap-2">
                     {player.tags?.map((tag, idx) => (
-                      <span key={idx} className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-[#FFCC00]/10 text-amber-600 dark:text-[#FFCC00] border border-[#FFCC00]/20">
+                      <span key={idx} className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-[#22D3EE]/10 text-amber-600 dark:text-[#22D3EE] border border-[#22D3EE]/20">
                         {tag}
                       </span>
                     ))}

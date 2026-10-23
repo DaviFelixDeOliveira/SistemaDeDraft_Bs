@@ -186,7 +186,7 @@ export function DetailsModal({ player, isOpen, onClose, stats }: DetailsModalPro
             <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3">Tags Táticas</h4>
             <div className="flex flex-wrap gap-2">
               {player.tags?.map((tag, idx) => (
-                <span key={idx} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#FFCC00]/10 text-amber-600 dark:text-[#FFCC00] border border-[#FFCC00]/20">
+                <span key={idx} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#22D3EE]/10 text-amber-600 dark:text-[#22D3EE] border border-[#22D3EE]/20">
                   {tag}
                 </span>
               ))}
@@ -317,7 +317,7 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                   type="text" 
                   value={formData.nickname || ''} 
                   onChange={e => setFormData({ ...formData, nickname: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366] dark:focus:border-[#FF3366] transition-colors"
+                  className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1] dark:focus:border-[#6366F1] transition-colors"
                 />
               </div>
               <div>
@@ -326,7 +326,7 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                   type="text" 
                   value={formData.name || ''} 
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366] dark:focus:border-[#FF3366] transition-colors"
+                  className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1] dark:focus:border-[#6366F1] transition-colors"
                 />
               </div>
               <div className="grid grid-cols-1 gap-4">
@@ -335,7 +335,7 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                   <select 
                     value={formData.status || 'Titular'} 
                     onChange={e => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366] transition-colors"
+                    className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1] transition-colors"
                   >
                     <option value="Titular">Titular</option>
                     <option value="Reserva">Reserva</option>
@@ -350,11 +350,11 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                   onKeyDown={addTag}
                   onBlur={handleBlur}
                   placeholder="Ex: POCKET PICK"
-                  className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#FFCC00] transition-colors mb-2"
+                  className="w-full bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-[#22D3EE] transition-colors mb-2"
                 />
                 <div className="flex flex-wrap gap-2">
                   {(formData.tags || []).map(tag => (
-                    <span key={tag} className="text-xs font-bold px-2 py-1 rounded bg-[#FFCC00]/10 text-amber-600 dark:text-[#FFCC00] border border-[#FFCC00]/20 flex items-center gap-1">
+                    <span key={tag} className="text-xs font-bold px-2 py-1 rounded bg-[#22D3EE]/10 text-amber-600 dark:text-[#22D3EE] border border-[#22D3EE]/20 flex items-center gap-1">
                       {tag}
                       <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500"><X className="w-3 h-3" /></button>
                     </span>
@@ -394,13 +394,13 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                          onClick={() => toggleBrawler(b.id)}
                          className={cn(
                            "relative rounded-lg overflow-hidden border-2 transition-all group aspect-square", getBrawlerBgColor(b),
-                           isSelected ? "border-[#FFCC00] shadow-[0_0_10px_rgba(255,204,0,0.3)] scale-105 z-10" : "border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 opacity-70 hover:opacity-100"
+                           isSelected ? "border-[#22D3EE] shadow-[0_0_10px_rgba(34,211,238,0.3)] scale-105 z-10" : "border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 opacity-70 hover:opacity-100"
                          )}
                        >
                          {b.iconUrl && <img src={b.iconUrl} alt={b.name} className="w-full h-full object-cover" />}
                          {isSelected && (
-                           <div className="absolute inset-0 bg-[#FFCC00]/20 flex items-center justify-center">
-                             <div className="bg-[#FFCC00] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md">
+                           <div className="absolute inset-0 bg-[#22D3EE]/20 flex items-center justify-center">
+                             <div className="bg-[#22D3EE] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md">
                                Comfort
                              </div>
                            </div>
@@ -423,7 +423,7 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 rounded-lg font-bold bg-[#FF3366] hover:bg-[#E62E5C] text-white transition-colors"
+                className="px-6 py-3 rounded-lg font-bold bg-[#6366F1] hover:bg-[#E62E5C] text-white transition-colors"
               >
                 {isEditing ? 'Salvar Alterações' : 'Adicionar Jogador'}
               </button>

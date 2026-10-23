@@ -11,8 +11,6 @@ import {
   Download,
   Upload,
   History,
-  Shield,
-  User as UserIcon,
   Save,
   Clock,
   FileJson,
@@ -22,7 +20,6 @@ import {
   ChevronsRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { UserRole } from './LockScreen';
 import { backupRestoreService, BackupSnapshotInfo, FullBackupPayload } from '../services/backupRestoreService';
 import { ConfirmModal } from './ui/ConfirmModal';
 
@@ -32,14 +29,14 @@ interface SidebarProps {
   onLogout: () => void;
   isOpen: boolean;
   onClose: () => void;
-  userRole: UserRole;
+  teamName: string;
 }
 
-export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, userRole }: SidebarProps) {
+export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, teamName }: SidebarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('tbk_hub_sidebar_collapsed') === 'true';
+      return localStorage.getItem('sistema_draft_sidebar_collapsed') === 'true';
     }
     return false;
   });
@@ -69,7 +66,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
       const next = !prev;
-      localStorage.setItem('tbk_hub_sidebar_collapsed', String(next));
+      localStorage.setItem('sistema_draft_sidebar_collapsed', String(next));
       return next;
     });
   };
@@ -79,11 +76,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
     setSnapshotInfo(info);
   };
 
-  useEffect(() => {
-    if (userRole === 'admin') {
-      loadSnapshotInfo();
-    }
-  }, [userRole]);
+  // A rotina global de backup permanece desabilitada até existir restauração por equipe.
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -271,7 +264,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
               title="Abrir barra lateral"
             >
               {/* Logo normal */}
-              <div className="w-7 h-7 rounded-lg bg-[#FF3366] flex items-center justify-center shadow-[0_0_12px_rgba(255,51,102,0.4)] group-hover:hidden transition-all">
+              <div className="w-7 h-7 rounded-lg bg-[#6366F1] flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.4)] group-hover:hidden transition-all">
                 <Swords className="w-4 h-4 text-white" />
               </div>
               {/* Ícone de Expandir (PanelLeft) visível no hover */}
@@ -281,11 +274,11 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
             /* Modo Expandido: Logo + Nome + Botão de Recolher na direita */
             <>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FF3366] flex items-center justify-center shadow-[0_0_15px_rgba(255,51,102,0.4)] shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
                   <Swords className="w-5 h-5 text-white" />
                 </div>
                 <h1 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
-                  TBK <span className="text-[#FFCC00]">Hub</span>
+                  Sistema <span className="text-[#22D3EE]">de Draft</span>
                 </h1>
               </div>
 
@@ -324,7 +317,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
                   "w-full flex items-center rounded-lg text-sm font-medium transition-all",
                   isCollapsed ? "md:justify-center md:px-0 md:py-3 px-4 py-3 md:gap-0 gap-3" : "gap-3 px-4 py-3",
                   isActive
-                    ? "bg-[#FF3366]/10 text-[#FF3366] shadow-[inset_2px_0_0_0_#FF3366]"
+                    ? "bg-[#6366F1]/10 text-[#6366F1] shadow-[inset_2px_0_0_0_#6366F1]"
                     : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                 )}
               >
@@ -338,50 +331,17 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
         {/* ═══ FOOTER ═══ */}
         <div className={cn("p-4 border-t border-zinc-200 dark:border-[#2A2A2A] space-y-3", isCollapsed && "md:p-2 md:space-y-2")}>
 
-          {/* ── Badge de Nível de Acesso ── */}
-          {isCollapsed ? (
-            /* Modo colapsado (desktop): só ícone + title */
-            <div
-              className="hidden md:flex items-center justify-center py-2"
-              title={`Entrou como ${userRole === 'admin' ? 'Admin' : 'Player'}`}
-            >
-              <div className={cn(
-                "w-9 h-9 rounded-xl flex items-center justify-center",
-                userRole === 'admin'
-                  ? "bg-[#FF3366]/10 border border-[#FF3366]/20"
-                  : "bg-blue-500/10 border border-blue-500/20"
-              )}>
-                {userRole === 'admin'
-                  ? <Shield className="w-4 h-4 text-[#FF3366]" />
-                  : <UserIcon className="w-4 h-4 text-blue-500" />
-                }
-              </div>
-            </div>
-          ) : null}
-
-          {/* Modo expandido: badge completo (sempre visível no mobile) */}
+          {/* Identificação da conta autenticada, sem níveis de permissão. */}
           <div className={cn(
-            "flex items-center justify-between px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400",
-            isCollapsed && "md:hidden"
-          )}>
-            <div className="flex items-center gap-2">
-              {userRole === 'admin' ? (
-                <Shield className="w-4 h-4 text-[#FF3366]" />
-              ) : (
-                <UserIcon className="w-4 h-4 text-blue-500" />
-              )}
-              <span className="text-zinc-700 dark:text-zinc-300">Entrou como</span>
-            </div>
-            <span className={cn(
-              "px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider",
-              userRole === 'admin' ? "bg-[#FF3366]/10 text-[#FF3366] border border-[#FF3366]/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-            )}>
-              {userRole === 'admin' ? 'Admin' : 'Player'}
-            </span>
+            "flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300",
+            isCollapsed && "md:justify-center"
+          )} title={teamName}>
+            <Users className="w-4 h-4 text-indigo-500 shrink-0" />
+            <span className={cn("truncate", isCollapsed && "md:hidden")}>{teamName}</span>
           </div>
 
-          {/* ── Seção de Backup (Admin only) ── */}
-          {userRole === 'admin' && (
+          {/* Backup global bloqueado até a implementação do backup por equipe. */}
+          {false && (
             <>
               {/* MODO EXPANDIDO */}
               <div className={cn("space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-800", isCollapsed && "md:hidden")}>

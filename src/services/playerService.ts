@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
 import { Player } from '../types';
-import { mockPlayers } from '../data/mockData';
 
 function mapFromSupabase(data: any): Player {
   return {
@@ -34,35 +33,42 @@ export const playerService = {
       const { data, error } = await supabase.from('players').select('*').order('name');
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        console.log('Tabela de players vazia. Inserindo dados de seed...');
-        const seedRows = mockPlayers.map(mapToSupabase);
-        const { error: seedError } = await supabase.from('players').insert(seedRows);
-        if (seedError) console.error('Erro ao realizar seed de players:', seedError);
-        return mockPlayers;
-      }
+      // Uma equipe nova começa sem jogadores; nunca inserir o elenco antigo automaticamente.
+      if (!data) return [];
 
       return data.map(mapFromSupabase);
     } catch (err) {
-      console.error('Erro ao buscar players do Supabase, usando dados locais:', err);
-      return mockPlayers;
+      console.error('Erro ao buscar jogadores no Supabase:', err);
+      return []; // Não revelar nem criar jogadores fictícios em outra equipe.
     }
   },
 
   savePlayer: async (player: Player): Promise<Player> => {
-    const row = mapToSupabase(player);
-    const { error } = await supabase.from('players').upsert(row);
-    if (error) console.error('Erro ao salvar player no Supabase:', error);
-    return player;
+    // O formulário de novo jogador não possui id. O banco exige um identificador
+    // TEXT não nulo, então geramos um UUID como texto antes de inserir.
+    // Na edição, preservamos o mesmo id para atualizar o registro correto.
+    const nickname = player.nickname?.trim();
+    if (!nickname) throw new Error('Informe o nickname do jogador.');
+    const name = player.name?.trim() || nickname;
+    const id = player.id?.trim() || crypto.randomUUID();
+    const row = mapToSupabase({ ...player, id, name, nickname });
+
+    const { data, error } = await supabase.from('players')
+      .upsert(row, { onConflict: 'id' })
+      .select('*')
+      .single();
+    if (error) throw new Error(`Erro ao salvar jogador: ${error.message}`);
+    if (!data) throw new Error('O banco não confirmou o salvamento do jogador.');
+    return mapFromSupabase(data);
   },
 
   updatePlayerStatus: async (id: string, isActive: boolean): Promise<void> => {
     const { error } = await supabase.from('players').update({ is_active: isActive }).eq('id', id);
-    if (error) console.error('Erro ao atualizar status do player no Supabase:', error);
+    if (error) throw error;
   },
 
   deletePlayer: async (id: string): Promise<void> => {
     const { error } = await supabase.from('players').delete().eq('id', id);
-    if (error) console.error('Erro ao excluir player no Supabase:', error);
+    if (error) throw error;
   }
 };

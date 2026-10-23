@@ -8,15 +8,11 @@ import { Brawler } from '../../types';
 import { BrawlerModal } from './BrawlerModal';
 
 import { analyticsService } from '../../services/analyticsService';
-import { UserRole } from '../LockScreen';
 import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from '../BrawlerFilters';
 
-interface BrawlersHubProps {
-   userRole?: UserRole;
-}
 
-export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
-   const isPlayerMode = userRole === 'player';
+export function BrawlersHub() {
+   const isPlayerMode = false; // Todas as equipes têm acesso às próprias ferramentas.
    const brawlerFilters = useBrawlerFilters();
    const [selectedBrawler, setSelectedBrawler] = useState<Brawler | null>(null);
    const [brawlerStatsDetail, setBrawlerStatsDetail] = useState<any>(null);
@@ -127,7 +123,7 @@ export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
                            setEditingBrawler(null);
                            setIsModalOpen(true);
                         }}
-                        className="w-full bg-[#FF3366] hover:bg-[#E62E5C] text-white px-6 py-3 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
+                        className="w-full bg-[#6366F1] hover:bg-[#E62E5C] text-white px-6 py-3 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
                      >
                         <Plus className="w-4 h-4" /> Adicionar  Brawler
                      </button>
@@ -178,7 +174,7 @@ export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
             )}>
                {loading ? (
                   <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-                     <Loader2 className="w-8 h-8 text-[#FF3366] animate-spin mb-4" />
+                     <Loader2 className="w-8 h-8 text-[#6366F1] animate-spin mb-4" />
                      <span className="text-sm font-medium text-zinc-500">Carregando dados do brawler...</span>
                   </div>
                ) : selectedBrawler ? (
@@ -275,7 +271,7 @@ export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
                            {/* B) Card 1: Análise Detalhada de Banimentos */}
                            <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-6 shadow-sm flex flex-col gap-5">
                               <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                                 <Target className="w-5 h-5 text-[#FF3366]" /> Análise de Banimentos
+                                 <Target className="w-5 h-5 text-[#6366F1]" /> Análise de Banimentos
                               </h4>
 
                               <div>
@@ -284,7 +280,7 @@ export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
                                     <span className="font-black text-zinc-900 dark:text-white">{brawlerStatsDetail?.totalBans || 0}x</span>
                                  </div>
                                  <div className="w-full h-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-full overflow-hidden">
-                                    <div className="h-full bg-[#FF3366] rounded-full relative" style={{ width: `${Math.min((brawlerStatsDetail?.totalBans || 0) * 10, 100)}%` }}>
+                                    <div className="h-full bg-[#6366F1] rounded-full relative" style={{ width: `${Math.min((brawlerStatsDetail?.totalBans || 0) * 10, 100)}%` }}>
                                        <div className="absolute top-0 right-0 bottom-0 w-4 bg-white/30 blur-[2px] rounded-full animate-pulse" />
                                     </div>
                                  </div>
@@ -313,7 +309,7 @@ export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
                                           brawlerStatsDetail.topMapBans.map((mb: any) => (
                                              <div key={mb.mapName} className="flex justify-between text-xs">
                                                 <span className="text-zinc-600 dark:text-zinc-300 font-medium">{mb.mapName}</span>
-                                                <span className="font-bold text-[#FF3366]">{mb.count}x</span>
+                                                <span className="font-bold text-[#6366F1]">{mb.count}x</span>
                                              </div>
                                           ))
                                        ) : (
@@ -333,10 +329,10 @@ export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
                               <div>
                                  <div className="flex justify-between text-sm mb-1.5">
                                     <span className="text-zinc-500 dark:text-zinc-400 font-medium">Winrate Geral</span>
-                                    <span className="font-black text-emerald-500">{brawlerStatsDetail?.tbkPicksCount > 0 ? `${brawlerStatsDetail.winrate}%` : '0%'}</span>
+                                    <span className="font-black text-emerald-500">{brawlerStatsDetail?.allyPicksCount > 0 ? `${brawlerStatsDetail.winrate}%` : '0%'}</span>
                                  </div>
                                  <div className="w-full h-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500 rounded-full relative" style={{ width: `${brawlerStatsDetail?.tbkPicksCount > 0 ? brawlerStatsDetail.winrate : 0}%` }}>
+                                    <div className="h-full bg-emerald-500 rounded-full relative" style={{ width: `${brawlerStatsDetail?.allyPicksCount > 0 ? brawlerStatsDetail.winrate : 0}%` }}>
                                        <div className="absolute top-0 right-0 bottom-0 w-4 bg-white/30 blur-[2px] rounded-full animate-pulse" />
                                     </div>
                                  </div>
@@ -344,11 +340,11 @@ export function BrawlersHub({ userRole = 'admin' }: BrawlersHubProps) {
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                                  <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Picks (TBK vs Inimigos)</span>
+                                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Picks (Nossa equipe vs Inimigos)</span>
                                     <div className="flex items-end gap-3">
                                        <div className="flex flex-col">
-                                          <span className="text-3xl font-black text-blue-500 leading-none">{brawlerStatsDetail?.tbkPicksCount || 0}</span>
-                                          <span className="text-[10px] text-zinc-500 font-semibold mt-1">TBK</span>
+                                          <span className="text-3xl font-black text-blue-500 leading-none">{brawlerStatsDetail?.allyPicksCount || 0}</span>
+                                          <span className="text-[10px] text-zinc-500 font-semibold mt-1">Nossa equipe</span>
                                        </div>
                                        <span className="text-xl font-black text-zinc-300 dark:text-zinc-700 leading-none mb-4">/</span>
                                        <div className="flex flex-col">

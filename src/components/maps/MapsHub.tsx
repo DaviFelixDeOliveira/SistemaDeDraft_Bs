@@ -14,14 +14,10 @@ const GAME_MODES: GameMode[] = [
   'Pique-Gema', 'Fute-Brawl', 'Caça-Estrelas', 'Roubo', 'Zona Estratégica', 'Nocaute'
 ];
 
-import { UserRole } from '../LockScreen';
 
-interface MapsHubProps {
-  userRole?: UserRole;
-}
 
-export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
-  const isPlayerMode = userRole === 'player';
+export function MapsHub() {
+  const isPlayerMode = false; // Todas as equipes têm acesso às próprias ferramentas.
   const [maps, setMaps] = useState<GameMap[]>([]);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [comps, setComps] = useState<Composition[]>([]);
@@ -156,7 +152,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
           {!isPlayerMode && (
             <button 
               onClick={() => { setEditingMap(undefined); setIsAddModalOpen(true); }}
-              className="bg-[#FF3366] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm h-full"
+              className="bg-[#6366F1] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm h-full"
             >
               <Plus className="w-4 h-4" />
               Novo Mapa
@@ -185,7 +181,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
                     }
                   }
                 }}
-                className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg pl-9 pr-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366] transition-colors"
+                className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg pl-9 pr-4 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1] transition-colors"
               />
             </div>
           </div>
@@ -197,7 +193,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
                   activeMode === mode 
-                    ? "bg-[#FF3366]/10 text-[#FF3366]" 
+                    ? "bg-[#6366F1]/10 text-[#6366F1]" 
                     : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 )}
               >
@@ -257,7 +253,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
 
           {isLoadingSwitch ? (
             <div className="flex flex-col items-center justify-center min-h-[300px]">
-              <div className="w-10 h-10 rounded-full border-4 border-slate-200 dark:border-zinc-800 border-t-[#FF3366] border-r-fuchsia-500 animate-spin mb-4" />
+              <div className="w-10 h-10 rounded-full border-4 border-slate-200 dark:border-zinc-800 border-t-[#6366F1] border-r-fuchsia-500 animate-spin mb-4" />
               <span className="text-slate-500 font-medium text-sm">Carregando mapas...</span>
             </div>
           ) : filteredMaps.length > 0 ? (
@@ -266,7 +262,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
                 <div 
                   key={map.id} 
                   onClick={() => setSelectedMap(map)}
-                  className="bg-white dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl hover:border-[#FF3366]/50 dark:hover:border-[#FF3366]/50 transition-colors cursor-pointer group flex flex-col relative shadow-sm"
+                  className="bg-white dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl hover:border-[#6366F1]/50 dark:hover:border-[#6366F1]/50 transition-colors cursor-pointer group flex flex-col relative shadow-sm"
                 >
                   <div className="w-full aspect-[4/5] sm:aspect-square bg-zinc-200 dark:bg-zinc-800 flex-shrink-0 relative overflow-hidden rounded-t-xl border-b border-zinc-100 dark:border-zinc-800">
                     {map.imageUrl ? (
@@ -324,7 +320,7 @@ export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
                           </button>
                           <button 
                             onClick={(e) => toggleMapStatus(map.id, e)}
-                            className="p-1.5 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-[#FF3366] hover:bg-[#FF3366]/10 dark:hover:bg-[#FF3366]/10 transition-colors"
+                            className="p-1.5 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-[#6366F1] hover:bg-[#6366F1]/10 dark:hover:bg-[#6366F1]/10 transition-colors"
                             title={map.isActive ? "Arquivar Mapa" : "Desarquivar Mapa"}
                           >
                             {map.isActive ? <Archive className="w-3.5 h-3.5" /> : <ArchiveRestore className="w-3.5 h-3.5" />}

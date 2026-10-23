@@ -48,25 +48,25 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
 
   const map = maps.find(m => m.id === draftState.mapId);
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean, action: (() => void) | null, title: string, message: string }>({ isOpen: false, action: null, title: '', message: '' });
-  const tbkPicks = draftState.picks.filter(p => p.team === 'tbk').map(p => p.brawlerId);
+  const allyPicks = draftState.picks.filter(p => p.team === 'ally').map(p => p.brawlerId);
   const enemyPicks = draftState.picks.filter(p => p.team === 'enemy').map(p => p.brawlerId);
 
-  const tbkPlayers = players;
+  const allyPlayers = players;
 
   // Determine suggested players based on comfort picks
   const suggestedAssignments = React.useMemo(() => {
     const assignments: Record<string, string> = {};
     const assigned = new Set<string>();
 
-    tbkPicks.forEach(bId => {
-      const p = tbkPlayers.find(pl => (pl.comfortBrawlers || []).includes(bId) && !assigned.has(pl.id));
+    allyPicks.forEach(bId => {
+      const p = allyPlayers.find(pl => (pl.comfortBrawlers || []).includes(bId) && !assigned.has(pl.id));
       if (p) {
         assignments[bId] = p.id;
         assigned.add(p.id);
       }
     });
     return assignments;
-  }, [tbkPicks, tbkPlayers]);
+  }, [allyPicks, allyPlayers]);
   const handlePlayerAssign = (brawlerId: string, playerId: string) => {
     setDraftState(prev => ({
       ...prev,
@@ -87,12 +87,12 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         await analyticsService.recordScrim({
           mapId: draftState.mapId,
           result: result,
-          tbkPicks: tbkPicks.map(bId => ({
+          allyPicks: allyPicks.map(bId => ({
             brawlerId: bId,
             playerId: draftState.playerAssignments[bId] || undefined
           })),
           enemyPicks: enemyPicks,
-          tbkBans: draftState.tbkBans.filter(Boolean) as string[],
+          allyBans: draftState.allyBans.filter(Boolean) as string[],
           enemyBans: draftState.enemyBans.filter(Boolean) as string[],
           variationTested: isTestingVariation && brawlerOut && brawlerIn ? {
             brawlerOut,
@@ -117,12 +117,12 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         await analyticsService.recordScrim({
           mapId: draftState.mapId,
           result: 'victory',
-          tbkPicks: tbkPicks.map(bId => ({
+          allyPicks: allyPicks.map(bId => ({
             brawlerId: bId,
             playerId: draftState.playerAssignments[bId] || undefined
           })),
           enemyPicks: enemyPicks,
-          tbkBans: draftState.tbkBans.filter(Boolean) as string[],
+          allyBans: draftState.allyBans.filter(Boolean) as string[],
           enemyBans: draftState.enemyBans.filter(Boolean) as string[],
         });
         onFinish();
@@ -134,14 +134,14 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
   /** Salvar como Meta do Mapa — registra a vitória E cria uma composição meta */
   const handleSaveAsMapMeta = () => {
     if (result !== 'victory') return;
-    if (tbkPicks.length < 3) {
-      alert('Selecione pelo menos 3 brawlers na composição TBK antes de salvar como meta.');
+    if (allyPicks.length < 3) {
+      alert('Selecione pelo menos 3 brawlers na composição Nossa equipe antes de salvar como meta.');
       return;
     }
     setConfirmConfig({
       isOpen: true,
       title: 'Salvar como Meta do Mapa',
-      message: 'Registrar esta vitória E salvar a composição TBK como meta de referência para este mapa?',
+      message: 'Registrar esta vitória E salvar a composição Nossa equipe como meta de referência para este mapa?',
       action: async () => {
         setIsSavingMeta(true);
         try {
@@ -149,12 +149,12 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
           await analyticsService.recordScrim({
             mapId: draftState.mapId,
             result: 'victory',
-            tbkPicks: tbkPicks.map(bId => ({
+            allyPicks: allyPicks.map(bId => ({
               brawlerId: bId,
               playerId: draftState.playerAssignments[bId] || undefined
             })),
             enemyPicks: enemyPicks,
-            tbkBans: draftState.tbkBans.filter(Boolean) as string[],
+            allyBans: draftState.allyBans.filter(Boolean) as string[],
             enemyBans: draftState.enemyBans.filter(Boolean) as string[],
           });
 
@@ -162,7 +162,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
           const mapName = map?.name || 'Mapa';
           await mapService.createComp({
             mapId: draftState.mapId,
-            brawlers: tbkPicks.slice(0, 3) as [string, string, string],
+            brawlers: allyPicks.slice(0, 3) as [string, string, string],
             description: `Meta — ${mapName}`,
             winrate: 0,
             matchesPlayed: 0,
@@ -177,9 +177,9 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
       }
     });
   };
-  const allPlayersAssigned = tbkPicks.every(id => draftState.playerAssignments[id]);
-  const anyPlayerAssigned = tbkPicks.some(id => draftState.playerAssignments[id]);
-  const unassignedCount = tbkPicks.filter(id => !draftState.playerAssignments[id]).length;
+  const allPlayersAssigned = allyPicks.every(id => draftState.playerAssignments[id]);
+  const anyPlayerAssigned = allyPicks.some(id => draftState.playerAssignments[id]);
+  const unassignedCount = allyPicks.filter(id => !draftState.playerAssignments[id]).length;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -205,11 +205,11 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
 
       {/* Compositions & Player Assignment */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-        {/* TBK Team */}
+        {/* Nossa equipe Team */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-emerald-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Composição TBK</h3>
+          <h3 className="text-lg font-bold text-emerald-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Composição Nossa equipe</h3>
           <div className="space-y-3">
-            {tbkPicks.map(brawlerId => {
+            {allyPicks.map(brawlerId => {
               const brawler = brawlers.find(b => b.id === brawlerId);
               return (
                 <div key={brawlerId} className="bg-white dark:bg-[#1A1A1A] border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
@@ -226,11 +226,11 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                       onChange={(e) => handlePlayerAssign(brawlerId, e.target.value)}
                       className={cn(
                         "w-full bg-slate-50 dark:bg-[#0A0A0A] border rounded-md px-3 py-2 text-sm appearance-none focus:outline-none focus:border-emerald-500",
-                        !draftState.playerAssignments[brawlerId] && suggestedAssignments[brawlerId] ? "border-[#FFCC00] text-[#FFCC00]" : "border-slate-200 dark:border-[#2A2A2A] text-slate-900 dark:text-white"
+                        !draftState.playerAssignments[brawlerId] && suggestedAssignments[brawlerId] ? "border-[#22D3EE] text-[#22D3EE]" : "border-slate-200 dark:border-[#2A2A2A] text-slate-900 dark:text-white"
                       )}
                     >
                       <option value="">{draftState.playerAssignments[brawlerId] ? '(Desmarcar Player)' : 'Vincular jogador...'}</option>
-                      {tbkPlayers.map(player => {
+                      {allyPlayers.map(player => {
                         const isAssignedToOther = Object.entries(draftState.playerAssignments).some(([bId, pId]) => pId === player.id && bId !== brawlerId);
                         const isSuggested = suggestedAssignments[brawlerId] === player.id;
                         return (
@@ -250,7 +250,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
           <div className="mt-4 bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] p-3 rounded-lg">
             <div className="text-xs text-slate-500 dark:text-zinc-500 mb-2 uppercase tracking-wider font-semibold">Nossos Bans</div>
             <div className="flex gap-2">
-              {draftState.tbkBans.map((bId, i) => {
+              {draftState.allyBans.map((bId, i) => {
                 if (!bId) return null;
                 const b = brawlers.find(b => b.id === bId);
                 return (
@@ -348,7 +348,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
               <div className="mb-4 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2.5">
                 <span className="text-amber-400 text-sm mt-0.5">⚠</span>
                 <p className="text-amber-400 text-xs leading-snug">
-                  {unassignedCount === tbkPicks.length
+                  {unassignedCount === allyPicks.length
                     ? 'Nenhum jogador vinculado. Vincule pelo menos um atleta acima para registrar quem jogou.'
                     : `${unassignedCount} brawler${unassignedCount > 1 ? 's' : ''} sem jogador vinculado. A partida será salva sem esses vínculos.`}
                 </p>
@@ -385,7 +385,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
 
             {isTestingVariation && (
               <div className="mt-6 p-4 bg-slate-50 dark:bg-[#0A0A0A] rounded-lg border border-slate-200 dark:border-[#2A2A2A] space-y-4">
-                <h5 className="text-sm font-bold text-slate-900 dark:text-white text-center">Testar variação da composição TBK</h5>
+                <h5 className="text-sm font-bold text-slate-900 dark:text-white text-center">Testar variação da composição Nossa equipe</h5>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   <div className="flex-1 w-full relative">
@@ -397,7 +397,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                         className="w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-md pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-white appearance-none focus:outline-none focus:border-emerald-500"
                       >
                         <option value="">Selecionar...</option>
-                        {tbkPicks.map(id => (
+                        {allyPicks.map(id => (
                           <option key={id} value={id}>{brawlers.find(b => b.id === id)?.name}</option>
                         ))}
                       </select>
@@ -418,7 +418,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                         placeholder="Selecionar brawler..."
                         value={brawlerIn}
                         onChange={(val) => setBrawlerIn(val)}
-                        disabledBrawlers={[...tbkPicks, ...enemyPicks]}
+                        disabledBrawlers={[...allyPicks, ...enemyPicks]}
                         allBrawlers={brawlers}
                       />
 
@@ -458,7 +458,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         <div className="max-w-2xl mx-auto mt-4 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2.5">
           <span className="text-amber-400 text-sm mt-0.5">⚠</span>
           <p className="text-amber-400 text-xs leading-snug">
-            {unassignedCount === tbkPicks.length
+            {unassignedCount === allyPicks.length
               ? 'Vincule os jogadores acima para registrar quem jogou. A partida pode ser salva sem vínculos.'
               : `${unassignedCount} brawler${unassignedCount > 1 ? 's' : ''} sem jogador vinculado. A partida será salva sem esses vínculos.`}
           </p>
@@ -484,7 +484,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
           </button>
           <button
             onClick={handleSaveAsMapMeta}
-            disabled={isSavingMeta || tbkPicks.length < 3}
+            disabled={isSavingMeta || allyPicks.length < 3}
             className={cn(
               "flex-1 p-4 sm:p-6 rounded-xl transition-colors flex flex-col items-center justify-center text-center h-auto min-h-[100px] cursor-pointer",
               metaSaved

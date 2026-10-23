@@ -6,7 +6,7 @@ import { cn } from '../../lib/utils';
 
 interface DraftTacticsBannerProps {
   mapId: string;
-  tbkStarts: boolean;
+  allyStarts: boolean;
   step: number;
 }
 
@@ -19,7 +19,7 @@ const MODE_TIPS: Record<string, string> = {
   'Caça-Estrelas': 'Um brawler de avanço, um suporte focado e outro bom contra assassinos e algozes.'
 };
 
-export function DraftTacticsBanner({ mapId, tbkStarts, step }: DraftTacticsBannerProps) {
+export function DraftTacticsBanner({ mapId, allyStarts, step }: DraftTacticsBannerProps) {
   const [map, setMap] = useState<GameMap | null>(null);
 
   useEffect(() => {
@@ -58,22 +58,22 @@ export function DraftTacticsBanner({ mapId, tbkStarts, step }: DraftTacticsBanne
       {/* Card da Sugestão First/Last Pick */}
       <div className={cn(
         "border rounded-xl p-3 sm:p-4 flex gap-3 sm:items-center items-start",
-        tbkStarts
-          ? "bg-[#FFCC00]/10 border-[#FFCC00]/20 text-amber-600 dark:text-amber-500"
+        allyStarts
+          ? "bg-[#22D3EE]/10 border-[#22D3EE]/20 text-amber-600 dark:text-amber-500"
           : "bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-400"
       )}>
         <div className={cn(
           "p-2 rounded-lg shrink-0",
-          tbkStarts ? "bg-[#FFCC00]/20" : "bg-fuchsia-500/20"
+          allyStarts ? "bg-[#22D3EE]/20" : "bg-fuchsia-500/20"
         )}>
           <Lightbulb className="w-5 h-5" />
         </div>
         <div>
           <h4 className="text-sm font-bold mb-0.5">
-            {tbkStarts ? '💡 Dica de First Pick (Nossa Vez Primeiro)' : '💡 Dica de Last Pick (Inimigo Começa)'}
+            {allyStarts ? '💡 Dica de First Pick (Nossa Vez Primeiro)' : '💡 Dica de Last Pick (Inimigo Começa)'}
           </h4>
           <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-            {tbkStarts
+            {allyStarts
               ? 'Garanta os brawlers fortes no meta, ou fortes em mapas abertos(se for o caso). Foque em banir os counters diretos desses brawlers.'
               : 'Foque em banir os Tier S gerais do meta. Tente reservar o último pick (6º pick) para um counter que destrua a composição inimiga.'}
           </p>

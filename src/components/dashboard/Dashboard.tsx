@@ -23,7 +23,7 @@ function DashboardContent() {
                 <span className="w-2 h-2 rounded-full bg-blue-500" />
                 <span className="text-zinc-400">Picks (Nós)</span>
               </span>
-              <span className="font-bold text-blue-500">{data.tbkPickCount}</span>
+              <span className="font-bold text-blue-500">{data.allyPickCount}</span>
             </div>
             <div className="flex justify-between items-center gap-4">
               <span className="flex items-center gap-2">
@@ -38,7 +38,7 @@ function DashboardContent() {
             </div>
             <div className="flex justify-between items-center gap-4">
               <span className="text-zinc-400 text-xs">Vitórias / Derrotas</span>
-              <span className="font-bold text-xs"><span className="text-emerald-500">{data.tbkWins}V</span> - <span className="text-red-500">{data.tbkLosses}D</span></span>
+              <span className="font-bold text-xs"><span className="text-emerald-500">{data.allyWins}V</span> - <span className="text-red-500">{data.allyLosses}D</span></span>
             </div>
           </div>
         </div>
@@ -79,7 +79,7 @@ function DashboardContent() {
   const [selectedMapImage, setSelectedMapImage] = useState<string | null>(null);
 
   // Bans Tabs State
-  const [activeBanTab, setActiveBanTab] = useState<'geral' | 'tbk' | 'enemy'>('geral');
+  const [activeBanTab, setActiveBanTab] = useState<'geral' | 'ally' | 'enemy'>('geral');
   const [isLoadingBans, setIsLoadingBans] = useState(false);
   const [activeTimeFilter, setActiveTimeFilter] = useState<'Última Semana' | 'Último Mês' | 'Geral'>('Geral');
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
@@ -130,12 +130,12 @@ function DashboardContent() {
     }
   }, [selectedMode, mapPerformance]);
 
-  // Ordena por quantidade de picks (TBK) primeiro, e desempata por Winrate (P1-4)
+  // Ordena por quantidade de picks (Nossa equipe) primeiro, e desempata por Winrate (P1-4)
   const activeHotBrawlers = (brawlerStats || [])
-    .filter(b => (b.tbkPickCount || b.pick || 0) > 0)
+    .filter(b => (b.allyPickCount || b.pick || 0) > 0)
     .sort((a, b) => {
-      const picksA = a.tbkPickCount || a.pick || 0;
-      const picksB = b.tbkPickCount || b.pick || 0;
+      const picksA = a.allyPickCount || a.pick || 0;
+      const picksB = b.allyPickCount || b.pick || 0;
       if (picksB !== picksA) return picksB - picksA;
       return b.winrate - a.winrate;
     })
@@ -224,7 +224,7 @@ function DashboardContent() {
         {/* B) Desempenho por Modo */}
         <div className="lg:col-span-2 bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 sm:p-6 shadow-sm flex flex-col">
           <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-[#FF3366]" /> Desempenho por Modo
+            <Trophy className="w-5 h-5 text-[#6366F1]" /> Desempenho por Modo
           </h3>
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2">
             {(modeWinrate || []).map((item) => {
@@ -284,7 +284,7 @@ function DashboardContent() {
           </div>
 
           <div className="flex bg-slate-100 dark:bg-[#0A0A0A] p-1 rounded-lg mb-4">
-            {['geral', 'tbk', 'enemy'].map((tab) => (
+            {['geral', 'ally', 'enemy'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveBanTab(tab as any)}
@@ -293,7 +293,7 @@ function DashboardContent() {
                   activeBanTab === tab ? "bg-white dark:bg-[#2A2A2A] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-zinc-300"
                 )}
               >
-                {tab === 'geral' ? 'Geral' : tab === 'tbk' ? 'Nossos' : 'Inimigos'}
+                {tab === 'geral' ? 'Geral' : tab === 'ally' ? 'Nossos' : 'Inimigos'}
               </button>
             ))}
           </div>
@@ -307,7 +307,7 @@ function DashboardContent() {
             <div className={cn("space-y-3 transition-opacity duration-300", isLoadingBans ? "opacity-30" : "opacity-100")}>
               {(() => {
                 // Seleciona o campo de ban correto baseado na aba ativa
-                const banField = activeBanTab === 'tbk' ? 'tbkBan' : activeBanTab === 'enemy' ? 'enemyBan' : 'ban';
+                const banField = activeBanTab === 'ally' ? 'allyBan' : activeBanTab === 'enemy' ? 'enemyBan' : 'ban';
                 const filtered = (brawlerStats || [])
                   .filter(b => (b[banField] || 0) > 0)
                   .sort((a, b) => (b[banField] || 0) - (a[banField] || 0))
@@ -329,11 +329,11 @@ function DashboardContent() {
                     <div className="flex-1 flex flex-col gap-1">
                       <div className="flex justify-between items-center text-sm">
                         <span className="font-medium text-slate-900 dark:text-white">{b?.name}</span>
-                        <span className="font-bold text-[#FF3366]">{b[banField]}</span>
+                        <span className="font-bold text-[#6366F1]">{b[banField]}</span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#FF3366] rounded-full"
+                          className="h-full bg-[#6366F1] rounded-full"
                           style={{ width: `${((b[banField] || 0) / maxBan) * 100}%` }} />
                       </div>
                     </div>
@@ -414,14 +414,14 @@ function DashboardContent() {
           <h3 className="font-bold text-slate-900 dark:text-white mb-6">Top Brawlers (Picks vs Bans)</h3>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={(brawlerStats || []).slice().sort((a, b) => (b.tbkPickCount || 0) - (a.tbkPickCount || 0)).slice(0, 5)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={(brawlerStats || []).slice().sort((a, b) => (b.allyPickCount || 0) - (a.allyPickCount || 0)).slice(0, 5)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
                 <XAxis dataKey="name" stroke="#52525B" fontSize={12} tickLine={false} axisLine={false} tick={<CustomXAxisTick />} />
                 <YAxis stroke="#52525B" fontSize={12} tickLine={false} axisLine={false} />
                 <RechartsTooltip content={<CustomBrawlerTooltip />} cursor={{ fill: '#2A2A2A' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="tbkPickCount" name="Nossos Picks" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="ban" name="Bans" fill="#FF3366" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="allyPickCount" name="Nossos Picks" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ban" name="Bans" fill="#6366F1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -446,7 +446,7 @@ function DashboardContent() {
                 <div
                   key={b.id}
                   onClick={() => setSelectedHotBrawler(b)}
-                  className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-[#FF3366]/50 transition-colors relative"
+                  className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-[#6366F1]/50 transition-colors relative"
                 >
                   <span className="text-[10px] font-bold text-slate-400 absolute top-2 left-2">#{i + 1}</span>
                   <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-zinc-800 overflow-hidden mt-1">
@@ -457,7 +457,7 @@ function DashboardContent() {
                     <div className="flex flex-col items-center justify-center gap-1 mt-2">
                       <span className={cn("text-xs px-1.5 py-0.5 rounded border font-bold", wrColor)}>{wr}% WR</span>
                       <div className="flex flex-col items-center mt-1 text-[10px] text-slate-500 font-bold leading-none gap-0.5">
-                        <span><span className="text-blue-500">{b.tbkPickCount || 0}</span> picks nossos</span>
+                        <span><span className="text-blue-500">{b.allyPickCount || 0}</span> picks nossos</span>
                         <span><span className="text-red-500">{b.enemyPickCount || 0}</span> picks inimigos</span>
                       </div>
                     </div>
@@ -510,10 +510,10 @@ function DashboardContent() {
                   <div className="flex-1">
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-bold text-slate-900 dark:text-white">{b?.name}</span>
-                      <span className="font-bold text-[#FF3366]">{b.ban} bans</span>
+                      <span className="font-bold text-[#6366F1]">{b.ban} bans</span>
                     </div>
                     <div className="w-full h-2 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#FF3366] rounded-full" style={{ width: `${Math.min((b.ban / 10) * 100, 100)}%` }} />
+                      <div className="h-full bg-[#6366F1] rounded-full" style={{ width: `${Math.min((b.ban / 10) * 100, 100)}%` }} />
                     </div>
                   </div>
                 </div>
@@ -555,11 +555,11 @@ function DashboardContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 text-center">
                   <div className="text-xs font-bold text-slate-500 uppercase mb-1">Partidas Jogadas</div>
-                  <div className="text-2xl font-black text-slate-900 dark:text-white">{hotBrawlerDetails?.tbkPicksCount ?? 0}</div>
+                  <div className="text-2xl font-black text-slate-900 dark:text-white">{hotBrawlerDetails?.allyPicksCount ?? 0}</div>
                 </div>
                 <div className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 text-center">
                   <div className="text-xs font-bold text-slate-500 uppercase mb-1">Taxa de Vitória</div>
-                  <div className="text-2xl font-black text-emerald-500">{hotBrawlerDetails?.tbkPicksCount > 0 ? `${hotBrawlerDetails.winrate}%` : '—'}</div>
+                  <div className="text-2xl font-black text-emerald-500">{hotBrawlerDetails?.allyPicksCount > 0 ? `${hotBrawlerDetails.winrate}%` : '—'}</div>
                 </div>
               </div>
 

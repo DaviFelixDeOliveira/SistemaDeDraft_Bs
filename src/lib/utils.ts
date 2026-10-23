@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 // ================================================================
 // MAPEAMENTO CÓDIGO ↔ BANCO (Supabase)
-// O estado interno usa inglês ('victory', 'defeat', 'tbk', 'enemy').
+// O estado interno usa inglês ('victory', 'defeat', 'ally', 'enemy').
 // O banco Supabase usa português ('vitoria', 'derrota', 'nos', 'inimigo').
 // Use sempre estas funções ao ler/escrever no banco — nunca escreva
 // os valores diretamente para evitar descompassos.
@@ -20,13 +20,13 @@ export function fromDbResult(result: string): 'victory' | 'defeat' {
 }
 
 /** Converte team interno → valor aceito pelo banco */
-export function toDbTeam(team: 'tbk' | 'enemy'): 'nos' | 'inimigo' {
-  return team === 'tbk' ? 'nos' : 'inimigo';
+export function toDbTeam(team: 'ally' | 'enemy'): 'nos' | 'inimigo' {
+  return team === 'ally' ? 'nos' : 'inimigo';
 }
 
 /** Converte team do banco → valor interno do código */
-export function fromDbTeam(team: string): 'tbk' | 'enemy' {
-  return team === 'nos' ? 'tbk' : 'enemy';
+export function fromDbTeam(team: string): 'ally' | 'enemy' {
+  return team === 'nos' ? 'ally' : 'enemy';
 }
 
 

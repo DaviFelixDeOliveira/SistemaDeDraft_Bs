@@ -30,6 +30,7 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     if (!isOpen && !showToast) {
@@ -41,14 +42,17 @@ export function ConfirmModal({
 
   const handleConfirm = async () => {
     setIsProcessing(true);
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-    await onConfirm();
-    setIsProcessing(false);
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000);
+    setActionError('');
+    try {
+      await onConfirm();
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Não foi possível concluir a operação.';
+      setActionError(message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -70,6 +74,7 @@ export function ConfirmModal({
                   </p>
                 </div>
               </div>
+              {actionError && <p role="alert" className="text-sm text-red-500 bg-red-500/10 rounded-xl p-3">{actionError}</p>}
               <div className="flex gap-3 justify-end mt-6">
                 <button
                   onClick={onCancel}

@@ -40,23 +40,18 @@ function compFromSupabase(data: any): Composition {
 
 export const mapService = {
   getMaps: async (): Promise<GameMap[]> => {
-    try {
-      const { data, error } = await supabase.from('maps').select('*').order('name');
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        console.log('Tabela de mapas vazia. Inserindo dados de seed...');
-        const seedRows = mockMaps.map(mapToSupabase);
-        const { error: seedError } = await supabase.from('maps').insert(seedRows);
-        if (seedError) console.error('Erro ao realizar seed de mapas:', seedError);
-        return mockMaps;
-      }
-
-      return data.map(mapFromSupabase);
-    } catch (err) {
-      console.error('Erro ao buscar mapas do Supabase, usando dados locais:', err);
-      return mockMaps;
-    }
+    const [{ data, error }, { data: settings, error: preferencesError }] = await Promise.all([
+      supabase.from('maps').select('*').order('name'),
+      supabase.from('team_map_settings').select('map_id,is_active'),
+    ]);
+    if (error) throw error;
+    if (preferencesError) throw preferencesError;
+    const perTeam = new Map((settings || []).map(s => [s.map_id, s.is_active]));
+    return (data || []).map(row => {
+      const map = mapFromSupabase(row);
+      const active = perTeam.get(map.id);
+      return active === undefined ? map : { ...map, isActive: active, is_active: active };
+    });
   },
 
   getMapById: async (id: string): Promise<GameMap | undefined> => {
@@ -64,20 +59,16 @@ export const mapService = {
     return maps.find(m => m.id === id);
   },
 
-  createMap: async (map: Omit<GameMap, 'id'>): Promise<GameMap> => {
-    const id = 'm_' + crypto.randomUUID().substring(0, 8);
-    const newMap = { ...map, id } as GameMap;
-    const row = mapToSupabase(newMap);
-
-    const { error } = await supabase.from('maps').insert(row);
-    if (error) console.error('Erro ao criar mapa no Supabase:', error);
-
-    return newMap;
+  createMap: async (_map: Omit<GameMap, 'id'>): Promise<GameMap> => {
+    throw new Error('O catálogo global de mapas é gerenciado pela sincronização. Cada equipe pode ativar ou desativar mapas existentes.');
   },
 
   updateMapStatus: async (id: string, isActive: boolean): Promise<void> => {
-    const { error } = await supabase.from('maps').update({ is_active: isActive }).eq('id', id);
-    if (error) console.error('Erro ao atualizar status do mapa no Supabase:', error);
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) throw new Error('Faça login para configurar os mapas.');
+    const { error } = await supabase.from('team_map_settings')
+      .upsert({ team_id: auth.user.id, map_id: id, is_active: isActive }, { onConflict: 'team_id,map_id' });
+    if (error) throw error;
   },
 
   // ─── Composições ────────────────────────────────────────────────────────────
@@ -151,15 +142,11 @@ export const mapService = {
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao criar composição no Supabase:', error.message);
-        // Fallback: retorna com id gerado localmente
-        return { ...comp, id: crypto.randomUUID() };
-      }
+      if (error) throw error;
       return compFromSupabase(data);
     } catch (err) {
-      console.error('Erro ao conectar ao Supabase para criar composição:', err);
-      return { ...comp, id: crypto.randomUUID() };
+      console.error('Erro ao criar composição no Supabase:', err);
+      throw new Error('Não foi possível salvar a composição no banco.');
     }
   },
 };
