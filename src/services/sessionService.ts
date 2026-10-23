@@ -3,7 +3,7 @@ import { TrainingSession } from '../types';
 
 export type { TrainingSession };
 
-const STORAGE_KEY = 'tbk_training_sessions';
+const STORAGE_KEY = 'sistema_draft_training_sessions';
 
 // ── Helpers de cache local ──────────────────────────────────────────────────
 
