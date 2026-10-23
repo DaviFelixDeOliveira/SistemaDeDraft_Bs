@@ -118,7 +118,7 @@ export function TrainingHistory() {
 
   const getSessionPlayers = (sessionMatches: Match[]) => {
     const matchIds = new Set(sessionMatches.map(m => m.id));
-    const sessionPicks = picks.filter(p => matchIds.has(p.match_id) && p.team === 'tbk' && p.player_id);
+    const sessionPicks = picks.filter(p => matchIds.has(p.match_id) && p.team === 'ally' && p.player_id);
     const uniquePlayerIds = Array.from(new Set(sessionPicks.map(p => p.player_id!)));
     return uniquePlayerIds.map(id => playersMap[id]).filter(Boolean);
   };
@@ -203,7 +203,7 @@ export function TrainingHistory() {
 
         const fileNameSuffix = pages.length > 1 ? `_pagina${i + 1}` : '';
         const link = document.createElement('a');
-        link.download = `tbk_hub_relatorio_treino_${dateStr}${fileNameSuffix}.${format}`;
+        link.download = `sistema_draft_relatorio_treino_${dateStr}${fileNameSuffix}.${format}`;
         link.href = imgData;
         document.body.appendChild(link);
         link.click();
@@ -277,7 +277,7 @@ export function TrainingHistory() {
       const year = now.getFullYear();
       const dateStr = `${day}-${month}-${year}`;
 
-      finalPdf.save(`tbk_hub_relatorio_treino_${dateStr}.pdf`);
+      finalPdf.save(`sistema_draft_relatorio_treino_${dateStr}.pdf`);
     } catch (err: any) {
       console.error('Erro ao exportar PDF:', err);
       alert(`Ocorreu um erro ao gerar o PDF: ${err?.message || err}`);
@@ -625,7 +625,7 @@ export function TrainingHistory() {
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-black text-[10px] uppercase tracking-wider">TBK Esports</span>
+                                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-black text-[10px] uppercase tracking-wider">Sistema de Draft</span>
                                     <span className="text-[11px] font-bold text-zinc-400">Análises de Scrim</span>
                                   </div>
                                   <h1 className="text-2xl font-black tracking-tight text-white uppercase mt-0.5">RELATÓRIO DE TREINO</h1>
@@ -647,7 +647,7 @@ export function TrainingHistory() {
                             <div className="relative z-10 flex justify-between items-center border-b border-[#232738] pb-3.5 text-xs text-zinc-400 font-bold">
                               <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                                <span className="text-white uppercase tracking-wider font-black">TBK ESPORTS</span>
+                                <span className="text-white uppercase tracking-wider font-black">SISTEMA DE DRAFT</span>
                                 <span className="text-zinc-600">—</span>
                                 <span className="text-indigo-400 uppercase tracking-wider">RELATÓRIO DE TREINO</span>
                               </div>
@@ -743,9 +743,9 @@ export function TrainingHistory() {
                                 const map = mapsMap[m.map_id];
                                 const mPicks = picks.filter(p => p.match_id === m.id);
                                 const mBans = bans.filter(b => b.match_id === m.id);
-                                const tbkP = mPicks.filter(p => p.team === 'tbk');
+                                const allyP = mPicks.filter(p => p.team === 'ally');
                                 const enmP = mPicks.filter(p => p.team === 'enemy');
-                                const tbkB = mBans.filter(b => b.team === 'tbk');
+                                const allyB = mBans.filter(b => b.team === 'ally');
                                 const enmB = mBans.filter(b => b.team === 'enemy');
                                 const mDate = parseTs(m.match_date);
 
@@ -785,16 +785,16 @@ export function TrainingHistory() {
 
                                     {/* Picks e Bans Grid */}
                                     <div className="grid grid-cols-2 gap-4 text-xs">
-                                      {/* Time TBK */}
+                                      {/* Time Nossa equipe */}
                                       <div className="bg-[#191c28] rounded-xl p-3.5 border border-[#2b3044]">
                                         <div className="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
                                           <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-indigo-400" /> Nossa Composição</span>
-                                          <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[9px]">TBK</span>
+                                          <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[9px]">Nossa equipe</span>
                                         </div>
 
-                                        {/* Picks TBK */}
+                                        {/* Picks Nossa equipe */}
                                         <div className="flex gap-2.5 flex-wrap">
-                                          {tbkP.length > 0 ? tbkP.map((p, i) => {
+                                          {allyP.length > 0 ? allyP.map((p, i) => {
                                             const b = brawlersMap[p.brawler_id];
                                             const player = p.player_id ? playersMap[p.player_id] : null;
                                             return b ? (
@@ -802,19 +802,19 @@ export function TrainingHistory() {
                                                 <img crossOrigin="anonymous" src={b.imageUrl || b.iconUrl} alt={b.name} className="w-10 h-10 rounded-md object-cover border border-[#2e344a] bg-zinc-900" />
                                                 <span className="text-[9px] font-bold text-zinc-200 truncate w-full text-center">{b.name}</span>
                                                 <span className="text-[8px] font-black text-indigo-400 truncate w-full text-center bg-indigo-500/10 px-1 py-0.5 rounded">
-                                                  {player ? (player.nickname || player.name) : 'TBK'}
+                                                  {player ? (player.nickname || player.name) : 'Nossa equipe'}
                                                 </span>
                                               </div>
                                             ) : null;
                                           }) : <span className="text-xs text-zinc-500 italic">—</span>}
                                         </div>
 
-                                        {/* Bans TBK */}
-                                        {tbkB.length > 0 && (
+                                        {/* Bans Nossa equipe */}
+                                        {allyB.length > 0 && (
                                           <div className="mt-3 pt-2.5 border-t border-[#232738] flex items-center gap-2">
                                             <div className="text-[9px] font-black text-red-400 uppercase flex items-center gap-1 shrink-0"><Ban className="w-3 h-3" /> Bans:</div>
                                             <div className="flex gap-2">
-                                              {tbkB.map((ban, i) => {
+                                              {allyB.map((ban, i) => {
                                                 const b = brawlersMap[ban.brawler_id];
                                                 return b ? (
                                                   <div key={i} className="flex flex-col items-center gap-0.5 w-10">
@@ -884,7 +884,7 @@ export function TrainingHistory() {
                         {/* ═══ RODAPÉ DA FOLHA ═══ */}
                         <div className="relative z-10 pt-4 mt-6 border-t border-[#232738] flex justify-between items-center text-[10px] text-zinc-400 font-mono">
                           <span className="flex items-center gap-1 text-zinc-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" /> Gerado via TBK Hub — Sistema de Draft Brawl Stars
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" /> Gerado via Sistema de Draft — Brawl Stars
                           </span>
                           <span className="text-zinc-400">
                             {totalDocPages > 1 ? `Página ${pageIndex + 1} de ${totalDocPages}` : 'Documento Oficial de Treino'}
@@ -937,9 +937,9 @@ export function TrainingHistory() {
         const matchPicks = picks.filter(p => p.match_id === match.id);
         const matchBans = bans.filter(b => b.match_id === match.id);
 
-        const tbkPicks = matchPicks.filter(p => p.team === 'tbk');
+        const allyPicks = matchPicks.filter(p => p.team === 'ally');
         const enemyPicks = matchPicks.filter(p => p.team === 'enemy');
-        const tbkBans = matchBans.filter(b => b.team === 'tbk');
+        const allyBans = matchBans.filter(b => b.team === 'ally');
         const enemyBans = matchBans.filter(b => b.team === 'enemy');
 
         return (
@@ -992,18 +992,18 @@ export function TrainingHistory() {
 
                 {/* Draft Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* TBK Team */}
+                  {/* Nossa equipe Team */}
                   <div className="bg-slate-50 dark:bg-[#1A1A1A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4">
                     <h5 className="font-bold text-indigo-600 dark:text-indigo-400 mb-4 border-b border-indigo-100 dark:border-indigo-500/20 pb-2 flex items-center justify-between">
                       Nossa Composição
-                      <span className="text-[10px] bg-indigo-100 dark:bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-600 dark:text-indigo-400">TBK</span>
+                      <span className="text-[10px] bg-indigo-100 dark:bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-600 dark:text-indigo-400">Nossa equipe</span>
                     </h5>
 
                     <div className="space-y-4">
                       <div>
-                        <div className="text-[10px] uppercase text-zinc-500 font-bold mb-2">Picks ({tbkPicks.length})</div>
+                        <div className="text-[10px] uppercase text-zinc-500 font-bold mb-2">Picks ({allyPicks.length})</div>
                         <div className="flex gap-2 flex-wrap">
-                          {tbkPicks.length > 0 ? tbkPicks.map((p, i) => {
+                          {allyPicks.length > 0 ? allyPicks.map((p, i) => {
                             const b = brawlersMap[p.brawler_id];
                             const player = p.player_id ? playersMap[p.player_id] : null;
                             return b ? (
@@ -1017,11 +1017,11 @@ export function TrainingHistory() {
                         </div>
                       </div>
 
-                      {tbkBans.length > 0 && (
+                      {allyBans.length > 0 && (
                         <div>
                           <div className="text-[10px] uppercase text-zinc-500 font-bold mb-2">Nossos Bans</div>
                           <div className="flex gap-2 flex-wrap">
-                            {tbkBans.map((ban, i) => {
+                            {allyBans.map((ban, i) => {
                               const b = brawlersMap[ban.brawler_id];
                               return b ? (
                                 <div key={i} className="relative w-8 h-8 sm:w-10 sm:h-10 opacity-70 grayscale hover:grayscale-0 transition-all">
