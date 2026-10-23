@@ -74,7 +74,10 @@ export const teamAuthService = {
       if (/already registered|already been registered|user already exists/i.test(error.message)) {
         throw new Error('Já existe uma equipe com esse nome. Escolha outro.');
       }
-      throw new Error('Não foi possível cadastrar esta equipe. Confira a configuração do Supabase.');
+      if (error.code === 'email_address_invalid' || /invalid email|email address.*invalid/i.test(error.message)) {
+        throw new Error('O Supabase não aceitou o identificador interno da equipe. Precisamos ajustar a estratégia de autenticação.');
+      }
+      throw new Error(`Não foi possível cadastrar: ${error.message}`);
     }
     if (!data.session || !data.user) {
       throw new Error('Cadastro pendente: a confirmação de e-mail deve ser desativada no Supabase para contas sem e-mail.');
