@@ -19,6 +19,7 @@ export function TeamAuthScreen({ onAuthenticated }: TeamAuthScreenProps) {
 
   const slug = normalizeTeamUsername(name);
   const isRegister = mode === 'register';
+  const registrationReady = import.meta.env.VITE_ENABLE_TEAM_SIGNUP === 'true';
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,6 +83,11 @@ export function TeamAuthScreen({ onAuthenticated }: TeamAuthScreenProps) {
             {isRegister ? 'Comece a registrar drafts e estatísticas da sua equipe.' : 'Acesse os drafts e o histórico da sua equipe.'}
           </p>
 
+          {isRegister && !registrationReady && (
+            <p role="status" className="mb-4 text-xs text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3">
+              Cadastro ainda em preparação: estamos configurando o isolamento seguro dos dados por equipe.
+            </p>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="team-name" className="block text-sm font-medium mb-2">Nome da equipe</label>
