@@ -226,7 +226,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                       onChange={(e) => handlePlayerAssign(brawlerId, e.target.value)}
                       className={cn(
                         "w-full bg-slate-50 dark:bg-[#0A0A0A] border rounded-md px-3 py-2 text-sm appearance-none focus:outline-none focus:border-emerald-500",
-                        !draftState.playerAssignments[brawlerId] && suggestedAssignments[brawlerId] ? "border-[#FFCC00] text-[#FFCC00]" : "border-slate-200 dark:border-[#2A2A2A] text-slate-900 dark:text-white"
+                        !draftState.playerAssignments[brawlerId] && suggestedAssignments[brawlerId] ? "border-[#22D3EE] text-[#22D3EE]" : "border-slate-200 dark:border-[#2A2A2A] text-slate-900 dark:text-white"
                       )}
                     >
                       <option value="">{draftState.playerAssignments[brawlerId] ? '(Desmarcar Player)' : 'Vincular jogador...'}</option>
