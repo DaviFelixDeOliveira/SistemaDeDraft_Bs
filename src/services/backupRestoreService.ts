@@ -28,11 +28,11 @@ export interface BackupSnapshotInfo {
   payload?: FullBackupPayload;
 }
 
-const LOCAL_STORAGE_MATCHES_KEY = 'tbk_hub_matches';
-const LOCAL_STORAGE_PICKS_KEY = 'tbk_hub_picks';
-const LOCAL_STORAGE_BANS_KEY = 'tbk_hub_bans';
-const LOCAL_STORAGE_SESSIONS_KEY = 'tbk_training_sessions';
-const LOCAL_STORAGE_SNAPSHOT_KEY = 'tbk_latest_backup_snapshot';
+const LOCAL_STORAGE_MATCHES_KEY = 'sistema_draft_matches';
+const LOCAL_STORAGE_PICKS_KEY = 'sistema_draft_picks';
+const LOCAL_STORAGE_BANS_KEY = 'sistema_draft_bans';
+const LOCAL_STORAGE_SESSIONS_KEY = 'sistema_draft_training_sessions';
+const LOCAL_STORAGE_SNAPSHOT_KEY = 'sistema_draft_latest_backup_snapshot';
 
 function getLocalData<T>(key: string): T[] {
   try {
@@ -224,7 +224,7 @@ export const backupRestoreService = {
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = `tbk_hub_backup_${dateStr}.json`;
+      link.download = `sistema_draft_backup_${dateStr}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
