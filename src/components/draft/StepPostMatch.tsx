@@ -5,7 +5,7 @@ import { DraftState } from './DraftWizard';
 
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { cn } from '../../lib/utils';
-import { Trophy, XCircle, ArrowRight, User } from 'lucide-react';
+import { Trophy, XCircle, ArrowRight, User, MapPinned, Eye, RefreshCw, RotateCcw, CheckCircle2, AlertTriangle, ArrowLeftRight } from 'lucide-react';
 
 import { analyticsService } from '../../services/analyticsService';
 import { brawlerService } from '../../services/brawlerService';
@@ -13,6 +13,8 @@ import { mapService } from '../../services/mapService';
 import { playerService } from '../../services/playerService';
 import { Brawler, GameMap, Player } from '../../types';
 import { BrawlerSelectDropdown } from '../ui/BrawlerSelectDropdown';
+import { MapPreviewModal } from '../ui/MapPreviewModal';
+import { recordVariationSeries } from '../../services/variationService';
 
 interface StepPostMatchProps {
   draftState: DraftState;
@@ -29,6 +31,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
   const [brawlerIn, setBrawlerIn] = useState<string>('');
   const [isSavingMeta, setIsSavingMeta] = useState(false);
   const [metaSaved, setMetaSaved] = useState(false);
+  const [showMapPreview, setShowMapPreview] = useState(false);
 
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [maps, setMaps] = useState<GameMap[]>([]);
@@ -106,6 +109,40 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
     });
   };
 
+  /** Registra a derrota do draft original + o resultado real do segundo jogo testado. */
+  const handleSaveVariation = (variationResult: 'victory' | 'defeat') => {
+    if (result !== 'defeat' || !brawlerOut || !brawlerIn) return;
+    const pairIds = { originalMatchId: crypto.randomUUID(), variationMatchId: crypto.randomUUID() };
+    const outcomeLabel = variationResult === 'victory' ? 'venceu' : 'perdeu';
+    setConfirmConfig({
+      isOpen: true,
+      title: variationResult === 'victory' ? 'Registrar variação vencedora' : 'Registrar variação derrotada',
+      message: 'Serão registradas duas partidas no histórico: a derrota original e a partida em que a variação ' + outcomeLabel + '. O jogador do brawler substituído continuará vinculado ao novo brawler, se informado.',
+      action: async () => {
+        await recordVariationSeries({
+          mapId: draftState.mapId,
+          allyPicks: allyPicks.map(brawlerId => ({
+            brawlerId,
+            playerId: draftState.playerAssignments[brawlerId] || undefined
+          })),
+          enemyPicks,
+          allyBans: draftState.allyBans.filter(Boolean) as string[],
+          enemyBans: draftState.enemyBans.filter(Boolean) as string[],
+          brawlerOut,
+          brawlerIn,
+          variationResult
+        }, pairIds);
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+        onFinish();
+      }
+    });
+  };
+  const closeVariation = () => {
+    setIsTestingVariation(false);
+    setBrawlerOut('');
+    setBrawlerIn('');
+  };
+
   /** Salvar Vitória da Scrim — registra a partida normalmente, sem criar meta */
   const handleSaveVictory = () => {
     if (result !== 'victory') return;
@@ -135,13 +172,13 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
   const handleSaveAsMapMeta = () => {
     if (result !== 'victory') return;
     if (allyPicks.length < 3) {
-      alert('Selecione pelo menos 3 brawlers na composição Nossa equipe antes de salvar como meta.');
+      alert('Selecione pelo menos 3 brawlers na nossa composição antes de salvar como meta.');
       return;
     }
     setConfirmConfig({
       isOpen: true,
       title: 'Salvar como Meta do Mapa',
-      message: 'Registrar esta vitória E salvar a composição Nossa equipe como meta de referência para este mapa?',
+      message: 'Registrar esta vitória E salvar a nossa composição como meta de referência para este mapa?',
       action: async () => {
         setIsSavingMeta(true);
         try {
@@ -184,22 +221,37 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {/* Header Info */}
-      <div className="flex justify-between items-center bg-white dark:bg-[#1A1A1A] p-4 rounded-xl border border-slate-200 dark:border-[#2A2A2A]">
-        <div>
-          <div className="text-sm text-slate-500 dark:text-zinc-400">Mapa Jogado</div>
-          <div className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            {map?.name}
+      {/* Contexto da partida */}
+      <div className="relative overflow-hidden rounded-2xl border border-indigo-400/20 bg-slate-50 dark:bg-[#141723] p-4 sm:p-5 shadow-sm">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-transparent to-cyan-500/5" />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-20 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#0B1220] shadow-inner">
+              {map?.imageUrl ? (
+                <img src={map.imageUrl} alt="" className="h-full w-full object-contain" />
+              ) : <MapPinned className="h-8 w-8 text-indigo-400" aria-hidden="true" />}
+            </div>
+            <div className="min-w-0 space-y-1.5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-500 dark:text-cyan-300">Mapa da partida</p>
+              <h3 className="truncate text-xl font-black text-slate-900 dark:text-white sm:text-2xl">{map?.name || 'Mapa não encontrado'}</h3>
+              <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                <span className="rounded-full border border-indigo-400/20 bg-indigo-500/10 px-2.5 py-1 text-indigo-700 dark:text-indigo-200">{map?.mode || 'Modo não informado'}</span>
+                {map?.terrain && <span className="rounded-full border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-2.5 py-1 text-slate-600 dark:text-zinc-300">Terreno {map.terrain}</span>}
+              </div>
+            </div>
+          </div>
+          <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
             {onRestartPicks && (
-              <button onClick={onRestartPicks} className="text-xs font-normal text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:text-white underline px-2 py-1 bg-slate-200 dark:bg-zinc-800 rounded-md">
-                Mudar Composição
+              <button type="button" onClick={onRestartPicks}
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-zinc-100 transition-all hover:border-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-400 sm:flex-none">
+                <RefreshCw size={16} aria-hidden="true" /> Mudar composição
               </button>
             )}
+            <button type="button" onClick={() => setShowMapPreview(true)} disabled={!map}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none">
+              <Eye size={17} aria-hidden="true" /> Ver mapa
+            </button>
           </div>
-        </div>
-        <div className="text-right">
-          <div className="text-sm text-slate-500 dark:text-zinc-400">Modo</div>
-          <div className="text-lg font-medium text-slate-700 dark:text-zinc-300">{map?.mode}</div>
         </div>
       </div>
 
@@ -207,7 +259,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
         {/* Nossa equipe Team */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-emerald-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Composição Nossa equipe</h3>
+          <h3 className="text-lg font-bold text-emerald-400 border-b border-slate-200 dark:border-[#2A2A2A] pb-2">Nossa composição</h3>
           <div className="space-y-3">
             {allyPicks.map(brawlerId => {
               const brawler = brawlers.find(b => b.id === brawlerId);
@@ -303,37 +355,37 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         </div>
       </div>
 
-      {/* Result Selection */}
-      <div className="pt-6 border-t border-slate-200 dark:border-[#2A2A2A]">
-        <h3 className="text-center text-lg font-bold text-slate-900 dark:text-white mb-6">Qual foi o resultado?</h3>
-
-        <div className="flex gap-4 max-w-2xl mx-auto">
-          <button
-            onClick={() => { setResult('victory'); setIsTestingVariation(false); }}
+      {/* Resultado da partida */}
+      <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#14161F] p-4 sm:p-6">
+        <div className="mb-5 text-center">
+          <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.2em] text-indigo-500 dark:text-cyan-400">Encerramento do draft</p>
+          <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Qual foi o resultado?</h3>
+          <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">Escolha o resultado para continuar com o registro.</p>
+        </div>
+        <div className="mx-auto grid max-w-3xl grid-cols-2 gap-3 sm:gap-5">
+          <button type="button" aria-pressed={result === 'victory'}
+            onClick={() => { setResult('victory'); closeVariation(); }}
             className={cn(
-              "flex-1 py-6 rounded-xl border-2 flex flex-col items-center justify-center gap-3 transition-all duration-300",
+              "group flex min-h-[130px] flex-col items-center justify-center gap-3 rounded-2xl border-2 px-3 py-5 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-emerald-400",
               result === 'victory'
-                ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)] scale-[1.02]"
-                : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-emerald-500/50 hover:text-emerald-400/80",
-              result === 'defeat' && "opacity-50 scale-95"
-            )}
-          >
-            <Trophy className="w-8 h-8" />
-            <span className="text-lg font-bold">Vitória</span>
+                ? "border-emerald-400 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 shadow-[0_0_22px_rgba(16,185,129,0.13)]"
+                : "border-slate-200 dark:border-white/10 bg-white dark:bg-[#0C0D13] text-slate-400 dark:text-zinc-400 hover:border-emerald-500/60 hover:bg-emerald-500/5 hover:text-emerald-600 dark:hover:text-emerald-300"
+            )}>
+            <Trophy size={32} className="transition-transform group-hover:scale-110" aria-hidden="true" />
+            <span className="text-base font-black sm:text-lg">Vitória</span>
+            <span className="text-[11px] font-medium opacity-75">A composição venceu</span>
           </button>
-
-          <button
+          <button type="button" aria-pressed={result === 'defeat'}
             onClick={() => setResult('defeat')}
             className={cn(
-              "flex-1 py-6 rounded-xl border-2 flex flex-col items-center justify-center gap-3 transition-all duration-300",
+              "group flex min-h-[130px] flex-col items-center justify-center gap-3 rounded-2xl border-2 px-3 py-5 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-rose-400",
               result === 'defeat'
-                ? "bg-red-500/20 border-red-500 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.2)] scale-[1.02]"
-                : "bg-slate-50 dark:bg-[#0A0A0A] border-slate-200 dark:border-[#2A2A2A] text-slate-500 dark:text-zinc-500 hover:border-red-500/50 hover:text-red-400/80",
-              result === 'victory' && "opacity-50 scale-95"
-            )}
-          >
-            <XCircle className="w-8 h-8" />
-            <span className="text-lg font-bold">Derrota</span>
+                ? "border-rose-400 bg-rose-500/15 text-rose-600 dark:text-rose-300 shadow-[0_0_22px_rgba(244,63,94,0.12)]"
+                : "border-slate-200 dark:border-white/10 bg-white dark:bg-[#0C0D13] text-slate-400 dark:text-zinc-400 hover:border-rose-500/60 hover:bg-rose-500/5 hover:text-rose-600 dark:hover:text-rose-300"
+            )}>
+            <XCircle size={32} className="transition-transform group-hover:scale-110" aria-hidden="true" />
+            <span className="text-base font-black sm:text-lg">Derrota</span>
+            <span className="text-[11px] font-medium opacity-75">A composição perdeu</span>
           </button>
         </div>
       </div>
@@ -385,7 +437,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
 
             {isTestingVariation && (
               <div className="mt-6 p-4 bg-slate-50 dark:bg-[#0A0A0A] rounded-lg border border-slate-200 dark:border-[#2A2A2A] space-y-4">
-                <h5 className="text-sm font-bold text-slate-900 dark:text-white text-center">Testar variação da composição Nossa equipe</h5>
+                <h5 className="text-sm font-bold text-slate-900 dark:text-white text-center">Testar variação da nossa composição</h5>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   <div className="flex-1 w-full relative">
@@ -513,6 +565,8 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
         </div>
       )}
 
+
+      {showMapPreview && map && <MapPreviewModal map={map} onClose={() => setShowMapPreview(false)} />}
 
       <ConfirmModal
         isOpen={confirmConfig.isOpen}
