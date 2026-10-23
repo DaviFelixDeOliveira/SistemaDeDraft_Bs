@@ -1,5 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { normalizeTeamUsername, isValidTeamUsername, getInternalTeamEmail, INTERNAL_TEAM_EMAIL_DOMAIN } from '../lib/teamIdentity';
+export { normalizeTeamUsername, isValidTeamUsername, getInternalTeamEmail } from '../lib/teamIdentity';
 
 /**
  * Identidade técnica do Supabase Auth, invisível para o usuário.
@@ -8,33 +10,16 @@ import { supabase } from '../lib/supabase';
  * Importante: cadastro sem email exige confirmação de email DESATIVADA no projeto.
  * A aplicação deve implementar recuperação segura antes do lançamento público.
  */
-const INTERNAL_DOMAIN = 'teams.sistema-de-draft.invalid';
-
 export interface TeamAccount {
   id: string;
   username: string;
   displayName: string;
 }
 
-/** O identificador da equipe é normalizado e único (ex.: "Os Melhores" -> "os-melhores"). */
-export function normalizeTeamUsername(input: string): string {
-  return input.trim().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-
-export function isValidTeamUsername(value: string): boolean {
-  return /^[a-z0-9][a-z0-9-]{2,30}[a-z0-9]$/.test(value);
-}
-
-export function getInternalTeamEmail(username: string): string {
-  if (!isValidTeamUsername(username)) throw new Error('O nome deve gerar um identificador de 4 a 32 caracteres.');
-  return username + '@' + INTERNAL_DOMAIN;
-}
-
 /** Metadados são apenas para exibição, nunca para autorizar acesso a dados. */
 export function userToTeam(user: User | null): TeamAccount | null {
-  if (!user || !user.email?.endsWith('@' + INTERNAL_DOMAIN)) return null;
-  const username = user.email.slice(0, -('@' + INTERNAL_DOMAIN).length);
+  if (!user || !user.email?.endsWith('@' + INTERNAL_TEAM_EMAIL_DOMAIN)) return null;
+  const username = user.email.slice(0, -('@' + INTERNAL_TEAM_EMAIL_DOMAIN).length);
   if (!isValidTeamUsername(username)) return null;
   const rawName = user.user_metadata?.team_display_name;
   return {
