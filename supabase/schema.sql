@@ -1,5 +1,5 @@
 -- ================================================================
--- SCHEMA SQL - TBK HUB (Brawl Stars Draft System)
+-- SCHEMA SQL - Nossa equipe HUB (Brawl Stars Draft System)
 -- Cole e execute este script no SQL Editor do Supabase Dashboard
 -- ================================================================
 
@@ -60,7 +60,7 @@ alter table training_sessions disable row level security;
 
 -- 5. TABELA DE PARTIDAS (SCRIMS)
 -- ATENÇÃO: os valores aceitos pelo banco são em PORTUGUÊS.
--- O código interno usa 'victory'/'defeat' e 'tbk'/'enemy' —
+-- O código interno usa 'victory'/'defeat' e 'ally'/'enemy' —
 -- a conversão é feita pelas funções toDbResult/toDbTeam em src/lib/utils.ts.
 create table if not exists matches (
   id uuid primary key default gen_random_uuid(),
