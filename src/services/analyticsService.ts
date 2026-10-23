@@ -7,9 +7,9 @@ import { playerService } from './playerService';
 import { sessionService } from './sessionService';
 
 // Armazenamento local de fallback caso o Supabase não responda
-const LOCAL_STORAGE_MATCHES_KEY = 'tbk_hub_matches';
-const LOCAL_STORAGE_PICKS_KEY = 'tbk_hub_picks';
-const LOCAL_STORAGE_BANS_KEY = 'tbk_hub_bans';
+const LOCAL_STORAGE_MATCHES_KEY = 'sistema_draft_matches';
+const LOCAL_STORAGE_PICKS_KEY = 'sistema_draft_picks';
+const LOCAL_STORAGE_BANS_KEY = 'sistema_draft_bans';
 
 function getLocalData<T>(key: string): T[] {
   try {
@@ -53,11 +53,11 @@ export const analyticsService = {
     };
 
     const pickRows: MatchPick[] = [];
-    data.tbkPicks.forEach(pick => {
+    data.allyPicks.forEach(pick => {
       if (pick.brawlerId) {
         pickRows.push({
           match_id: matchId,
-          team: 'tbk',
+          team: 'ally',
           player_id: pick.playerId || null,
           brawler_id: pick.brawlerId
         });
@@ -76,11 +76,11 @@ export const analyticsService = {
     });
 
     const banRows: MatchBan[] = [];
-    data.tbkBans.forEach(bId => {
+    data.allyBans.forEach(bId => {
       if (bId) {
         banRows.push({
           match_id: matchId,
-          team: 'tbk',
+          team: 'ally',
           brawler_id: bId
         });
       }
@@ -105,13 +105,13 @@ export const analyticsService = {
       if (matchError) console.warn('Erro ao inserir partida no Supabase:', matchError);
 
       if (pickRows.length > 0) {
-        const pickRowsDb = pickRows.map(p => ({ ...p, team: toDbTeam(p.team as 'tbk' | 'enemy') }));
+        const pickRowsDb = pickRows.map(p => ({ ...p, team: toDbTeam(p.team as 'ally' | 'enemy') }));
         const { error: pickError } = await supabase.from('match_picks').insert(pickRowsDb);
         if (pickError) console.warn('Erro ao inserir picks no Supabase:', pickError);
       }
 
       if (banRows.length > 0) {
-        const banRowsDb = banRows.map(b => ({ ...b, team: toDbTeam(b.team as 'tbk' | 'enemy') }));
+        const banRowsDb = banRows.map(b => ({ ...b, team: toDbTeam(b.team as 'ally' | 'enemy') }));
         const { error: banError } = await supabase.from('match_bans').insert(banRowsDb);
         if (banError) console.warn('Erro ao inserir bans no Supabase:', banError);
       }
@@ -212,13 +212,13 @@ export const analyticsService = {
       const bBans = bans.filter(bn => bn.brawler_id === b.id);
 
       // Separar bans por time para o filtro Nossos/Inimigos do Dashboard
-      const tbkBans = bBans.filter(bn => bn.team === 'tbk');
+      const allyBans = bBans.filter(bn => bn.team === 'ally');
       const enemyBans = bBans.filter(bn => bn.team === 'enemy');
 
-      const tbkPicks = bPicks.filter(p => p.team === 'tbk');
+      const allyPicks = bPicks.filter(p => p.team === 'ally');
       const enemyPicksCount = bPicks.filter(p => p.team === 'enemy').length;
       let wins = 0;
-      tbkPicks.forEach(p => {
+      allyPicks.forEach(p => {
         const match = matchesMap.get(p.match_id);
         if (match && match.result === 'victory') {
           wins++;
@@ -226,7 +226,7 @@ export const analyticsService = {
       });
 
       const totalPicks = bPicks.length;
-      const winrate = tbkPicks.length > 0 ? Math.round((wins / tbkPicks.length) * 100) : 0;
+      const winrate = allyPicks.length > 0 ? Math.round((wins / allyPicks.length) * 100) : 0;
 
       return {
         id: b.id,
@@ -236,12 +236,12 @@ export const analyticsService = {
         tier: b.tier,
         pick: totalPicks,
         ban: bBans.length,       // total (Geral)
-        tbkBan: tbkBans.length,  // apenas nossos bans
+        allyBan: allyBans.length,  // apenas nossos bans
         enemyBan: enemyBans.length, // apenas bans do inimigo
-        tbkPickCount: tbkPicks.length,
+        allyPickCount: allyPicks.length,
         enemyPickCount: enemyPicksCount,
-        tbkWins: wins,
-        tbkLosses: tbkPicks.length - wins,
+        allyWins: wins,
+        allyLosses: allyPicks.length - wins,
         winrate
       };
     });
@@ -295,20 +295,20 @@ export const analyticsService = {
 
     // Picks deste brawler
     const brawlerPicks = picks.filter(p => p.brawler_id === brawlerId);
-    const tbkPicks = brawlerPicks.filter(p => p.team === 'tbk');
+    const allyPicks = brawlerPicks.filter(p => p.team === 'ally');
     const enemyPicks = brawlerPicks.filter(p => p.team === 'enemy');
 
-    let tbkWins = 0;
-    tbkPicks.forEach(p => {
+    let allyWins = 0;
+    allyPicks.forEach(p => {
       const match = matchesMap.get(p.match_id);
-      if (match && match.result === 'victory') tbkWins++;
+      if (match && match.result === 'victory') allyWins++;
     });
 
-    const winrate = tbkPicks.length > 0 ? Math.round((tbkWins / tbkPicks.length) * 100) : 0;
+    const winrate = allyPicks.length > 0 ? Math.round((allyWins / allyPicks.length) * 100) : 0;
 
     // Comfort picks (atletas que usaram este brawler)
     const playerPicksCount: Record<string, { total: number; wins: number }> = {};
-    tbkPicks.forEach(p => {
+    allyPicks.forEach(p => {
       if (p.player_id) {
         if (!playerPicksCount[p.player_id]) playerPicksCount[p.player_id] = { total: 0, wins: 0 };
         playerPicksCount[p.player_id].total++;
@@ -333,20 +333,20 @@ export const analyticsService = {
         };
       }).sort((a, b) => b.matches - a.matches);
 
-    // Sinergias (Melhores Parceiros TBK baseados em Winrate real da dupla)
+    // Sinergias (Melhores Parceiros Nossa equipe baseados em Winrate real da dupla)
     const partnerGames: Record<string, { total: number; wins: number }> = {};
     const enemyCounterCounts: Record<string, number> = {}; // Brawlers inimigos derrotados por este
     const threatCounts: Record<string, number> = {}; // Brawlers inimigos que venceram contra este
 
-    tbkPicks.forEach(p => {
+    allyPicks.forEach(p => {
       const match = matchesMap.get(p.match_id);
       if (!match) return;
 
       const sameMatchPicks = picks.filter(pk => pk.match_id === p.match_id);
-      const tbkPartners = sameMatchPicks.filter(pk => pk.team === 'tbk' && pk.brawler_id !== brawlerId);
+      const allyPartners = sameMatchPicks.filter(pk => pk.team === 'ally' && pk.brawler_id !== brawlerId);
       const enemyEnemies = sameMatchPicks.filter(pk => pk.team === 'enemy');
 
-      tbkPartners.forEach(partner => {
+      allyPartners.forEach(partner => {
         if (!partnerGames[partner.brawler_id]) partnerGames[partner.brawler_id] = { total: 0, wins: 0 };
         partnerGames[partner.brawler_id].total++;
         if (match.result === 'victory') partnerGames[partner.brawler_id].wins++;
@@ -422,7 +422,7 @@ export const analyticsService = {
       topModeBans,
       topMapBans,
       winrate,
-      tbkPicksCount: tbkPicks.length,
+      allyPicksCount: allyPicks.length,
       enemyPicksCount: enemyPicks.length,
       totalPicksCount: brawlerPicks.length,
       comfortStats,
@@ -454,27 +454,27 @@ export const analyticsService = {
     const mapPicks = picks.filter(p => mapMatchesIds.has(p.match_id));
     const mapBans = bans.filter(b => mapMatchesIds.has(b.match_id));
 
-    // Picks TBK no Mapa
-    const tbkPickCounts: Record<string, { total: number; wins: number }> = {};
+    // Picks Nossa equipe no Mapa
+    const allyPickCounts: Record<string, { total: number; wins: number }> = {};
     // Picks inimigos no Mapa — agora com contagem de vitórias inimigo (1.2)
     const enemyPickCounts: Record<string, { total: number; wins: number }> = {};
 
     mapPicks.forEach(p => {
-      if (p.team === 'tbk') {
-        if (!tbkPickCounts[p.brawler_id]) tbkPickCounts[p.brawler_id] = { total: 0, wins: 0 };
-        tbkPickCounts[p.brawler_id].total++;
+      if (p.team === 'ally') {
+        if (!allyPickCounts[p.brawler_id]) allyPickCounts[p.brawler_id] = { total: 0, wins: 0 };
+        allyPickCounts[p.brawler_id].total++;
         const match = mapMatches.find(m => m.id === p.match_id);
-        if (match && match.result === 'victory') tbkPickCounts[p.brawler_id].wins++;
+        if (match && match.result === 'victory') allyPickCounts[p.brawler_id].wins++;
       } else {
         if (!enemyPickCounts[p.brawler_id]) enemyPickCounts[p.brawler_id] = { total: 0, wins: 0 };
         enemyPickCounts[p.brawler_id].total++;
-        // Vitória do inimigo = derrota da TBK
+        // Vitória do inimigo = derrota da Nossa equipe
         const match = mapMatches.find(m => m.id === p.match_id);
         if (match && match.result === 'defeat') enemyPickCounts[p.brawler_id].wins++;
       }
     });
 
-    const topTbkPicks = Object.entries(tbkPickCounts)
+    const topTbkPicks = Object.entries(allyPickCounts)
       .map(([bId, data]) => {
         const b = brawlersMap.get(bId);
         const wr = data.total > 0 ? Math.round((data.wins / data.total) * 100) : 0;
@@ -503,13 +503,13 @@ export const analyticsService = {
 
     // Bans no Mapa
     const totalBansCount: Record<string, number> = {};
-    const tbkBansCount: Record<string, number> = {};
+    const allyBansCount: Record<string, number> = {};
     const enemyBansCount: Record<string, number> = {};
 
     mapBans.forEach(b => {
       totalBansCount[b.brawler_id] = (totalBansCount[b.brawler_id] || 0) + 1;
-      if (b.team === 'tbk') {
-        tbkBansCount[b.brawler_id] = (tbkBansCount[b.brawler_id] || 0) + 1;
+      if (b.team === 'ally') {
+        allyBansCount[b.brawler_id] = (allyBansCount[b.brawler_id] || 0) + 1;
       } else {
         enemyBansCount[b.brawler_id] = (enemyBansCount[b.brawler_id] || 0) + 1;
       }
@@ -521,7 +521,7 @@ export const analyticsService = {
       .sort((a, b) => b.count - a.count)
       .slice(0, 3);
 
-    const topTbkBans = Object.entries(tbkBansCount)
+    const topTbkBans = Object.entries(allyBansCount)
       .map(([bId, count]) => ({ brawler: brawlersMap.get(bId), count }))
       .filter(i => i.brawler)
       .sort((a, b) => b.count - a.count)
@@ -576,9 +576,9 @@ export const analyticsService = {
     const threatCountMap = new Map<string, Map<string, number>>();
     brawlerIdSet.forEach(id => threatCountMap.set(id, new Map()));
 
-    // Itera picks TBK que pertencem aos brawlers alvo
+    // Itera picks Nossa equipe que pertencem aos brawlers alvo
     for (const pick of picks) {
-      if (pick.team !== 'tbk' || !brawlerIdSet.has(pick.brawler_id)) continue;
+      if (pick.team !== 'ally' || !brawlerIdSet.has(pick.brawler_id)) continue;
       const match = matchesMap.get(pick.match_id);
       if (!match || match.result !== 'defeat') continue; // apenas derrotas
 
@@ -610,7 +610,7 @@ export const analyticsService = {
     const picks = await analyticsService.getAllPicks();
 
     const matchesMap = new Map<string, Match>(matches.map(m => [m.id, m]));
-    const playerPicks = picks.filter(p => p.player_id === playerId && p.team === 'tbk');
+    const playerPicks = picks.filter(p => p.player_id === playerId && p.team === 'ally');
 
     const totalMatches = playerPicks.length;
     let wins = 0;
@@ -812,9 +812,9 @@ export const analyticsService = {
     const matchesMap = new Map<string, Match>(matches.map(m => [m.id, m]));
     const brawlersMap = new Map(brawlers.map(b => [b.id, b]));
 
-    // Filtra apenas picks TBK deste jogador
+    // Filtra apenas picks Nossa equipe deste jogador
     const playerPicks = picks.filter(
-      p => p.player_id === playerId && p.team === 'tbk'
+      p => p.player_id === playerId && p.team === 'ally'
     );
 
     // Agrega por brawler
@@ -862,7 +862,7 @@ export const analyticsService = {
     localStorage.removeItem(LOCAL_STORAGE_PICKS_KEY);
     localStorage.removeItem(LOCAL_STORAGE_BANS_KEY);
 
-    // Also remove the old tbk_matches hack key
-    localStorage.removeItem('tbk_matches');
+    // Also remove the old ally_matches hack key
+    localStorage.removeItem('ally_matches');
   },
 };
