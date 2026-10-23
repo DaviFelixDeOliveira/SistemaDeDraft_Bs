@@ -44,13 +44,8 @@ export const mapService = {
       const { data, error } = await supabase.from('maps').select('*').order('name');
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        console.log('Tabela de mapas vazia. Inserindo dados de seed...');
-        const seedRows = mockMaps.map(mapToSupabase);
-        const { error: seedError } = await supabase.from('maps').insert(seedRows);
-        if (seedError) console.error('Erro ao realizar seed de mapas:', seedError);
-        return mockMaps;
-      }
+      // Catálogo global é gerenciado em rotina de sincronização confiável, não por visitantes.
+      if (!data) return [];
 
       return data.map(mapFromSupabase);
     } catch (err) {
