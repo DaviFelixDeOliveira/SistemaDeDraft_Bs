@@ -11,8 +11,6 @@ import {
   Download,
   Upload,
   History,
-  Shield,
-  User as UserIcon,
   Save,
   Clock,
   FileJson,
@@ -22,7 +20,6 @@ import {
   ChevronsRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { UserRole } from './LockScreen';
 import { backupRestoreService, BackupSnapshotInfo, FullBackupPayload } from '../services/backupRestoreService';
 import { ConfirmModal } from './ui/ConfirmModal';
 
@@ -32,10 +29,10 @@ interface SidebarProps {
   onLogout: () => void;
   isOpen: boolean;
   onClose: () => void;
-  userRole: UserRole;
+  teamName: string;
 }
 
-export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, userRole }: SidebarProps) {
+export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, teamName }: SidebarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -79,11 +76,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
     setSnapshotInfo(info);
   };
 
-  useEffect(() => {
-    if (userRole === 'admin') {
-      loadSnapshotInfo();
-    }
-  }, [userRole]);
+  // A rotina global de backup permanece desabilitada até existir restauração por equipe.
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -338,50 +331,17 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
         {/* ═══ FOOTER ═══ */}
         <div className={cn("p-4 border-t border-zinc-200 dark:border-[#2A2A2A] space-y-3", isCollapsed && "md:p-2 md:space-y-2")}>
 
-          {/* ── Badge de Nível de Acesso ── */}
-          {isCollapsed ? (
-            /* Modo colapsado (desktop): só ícone + title */
-            <div
-              className="hidden md:flex items-center justify-center py-2"
-              title={`Entrou como ${userRole === 'admin' ? 'Admin' : 'Player'}`}
-            >
-              <div className={cn(
-                "w-9 h-9 rounded-xl flex items-center justify-center",
-                userRole === 'admin'
-                  ? "bg-[#6366F1]/10 border border-[#6366F1]/20"
-                  : "bg-blue-500/10 border border-blue-500/20"
-              )}>
-                {userRole === 'admin'
-                  ? <Shield className="w-4 h-4 text-[#6366F1]" />
-                  : <UserIcon className="w-4 h-4 text-blue-500" />
-                }
-              </div>
-            </div>
-          ) : null}
-
-          {/* Modo expandido: badge completo (sempre visível no mobile) */}
+          {/* Identificação da conta autenticada, sem níveis de permissão. */}
           <div className={cn(
-            "flex items-center justify-between px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400",
-            isCollapsed && "md:hidden"
-          )}>
-            <div className="flex items-center gap-2">
-              {userRole === 'admin' ? (
-                <Shield className="w-4 h-4 text-[#6366F1]" />
-              ) : (
-                <UserIcon className="w-4 h-4 text-blue-500" />
-              )}
-              <span className="text-zinc-700 dark:text-zinc-300">Entrou como</span>
-            </div>
-            <span className={cn(
-              "px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider",
-              userRole === 'admin' ? "bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-            )}>
-              {userRole === 'admin' ? 'Admin' : 'Player'}
-            </span>
+            "flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-[#1A1A1A] rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300",
+            isCollapsed && "md:justify-center"
+          )} title={teamName}>
+            <Users className="w-4 h-4 text-indigo-500 shrink-0" />
+            <span className={cn("truncate", isCollapsed && "md:hidden")}>{teamName}</span>
           </div>
 
-          {/* ── Seção de Backup (Admin only) ── */}
-          {userRole === 'admin' && (
+          {/* Backup global bloqueado até a implementação do backup por equipe. */}
+          {false && (
             <>
               {/* MODO EXPANDIDO */}
               <div className={cn("space-y-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-800", isCollapsed && "md:hidden")}>
