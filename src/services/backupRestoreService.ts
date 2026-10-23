@@ -238,71 +238,13 @@ export const backupRestoreService = {
   /**
    * Executa a restauração destrutiva a partir de um payload recebido.
    */
-  applyRestorePayload: async (payload: FullBackupPayload): Promise<{ success: boolean; message: string }> => {
-    try {
-      if (!payload.data || !payload.data.brawlers || !payload.data.maps || !payload.data.players) {
-        return { success: false, message: 'Estrutura de backup inválida.' };
-      }
-
-      const { brawlers, maps, players, compositions, trainingSessions, matches, matchPicks, matchBans } = payload.data;
-
-      // 1. LIMPEZA NA ORDEM INVERSA DE DEPENDÊNCIA
-      const dummyUuid = '00000000-0000-0000-0000-000000000000';
-      const dummyText = '__DELETE_ALL_DUMMY__';
-
-      await supabase.from('match_picks').delete().neq('id', dummyUuid);
-      await supabase.from('match_bans').delete().neq('id', dummyUuid);
-      await supabase.from('matches').delete().neq('id', dummyUuid);
-      await supabase.from('training_sessions').delete().neq('id', dummyUuid);
-      await supabase.from('compositions').delete().neq('id', dummyUuid);
-      await supabase.from('players').delete().neq('id', dummyText);
-      await supabase.from('maps').delete().neq('id', dummyText);
-      await supabase.from('brawlers').delete().neq('id', dummyText);
-
-      // Limpa caches locais
-      localStorage.removeItem(LOCAL_STORAGE_MATCHES_KEY);
-      localStorage.removeItem(LOCAL_STORAGE_PICKS_KEY);
-      localStorage.removeItem(LOCAL_STORAGE_BANS_KEY);
-      localStorage.removeItem(LOCAL_STORAGE_SESSIONS_KEY);
-
-      // 2. INSERÇÃO NA ORDEM DE DEPENDÊNCIA DIRETA
-      if (brawlers && brawlers.length > 0) {
-        await supabase.from('brawlers').insert(brawlers);
-      }
-      if (maps && maps.length > 0) {
-        await supabase.from('maps').insert(maps);
-      }
-      if (players && players.length > 0) {
-        await supabase.from('players').insert(players);
-      }
-      if (compositions && compositions.length > 0) {
-        await supabase.from('compositions').insert(compositions);
-      }
-      if (trainingSessions && trainingSessions.length > 0) {
-        await supabase.from('training_sessions').insert(trainingSessions);
-        localStorage.setItem(LOCAL_STORAGE_SESSIONS_KEY, JSON.stringify(trainingSessions));
-      }
-      if (matches && matches.length > 0) {
-        await supabase.from('matches').insert(matches);
-        localStorage.setItem(LOCAL_STORAGE_MATCHES_KEY, JSON.stringify(matches));
-      }
-      if (matchPicks && matchPicks.length > 0) {
-        await supabase.from('match_picks').insert(matchPicks);
-        localStorage.setItem(LOCAL_STORAGE_PICKS_KEY, JSON.stringify(matchPicks));
-      }
-      if (matchBans && matchBans.length > 0) {
-        await supabase.from('match_bans').insert(matchBans);
-        localStorage.setItem(LOCAL_STORAGE_BANS_KEY, JSON.stringify(matchBans));
-      }
-
-      return {
-        success: true,
-        message: `Backup restaurado com sucesso! (${brawlers?.length || 0} brawlers, ${maps?.length || 0} mapas, ${players?.length || 0} atletas, ${matches?.length || 0} partidas)`
-      };
-    } catch (err: any) {
-      console.error('Erro ao aplicar payload de restauração:', err);
-      return { success: false, message: err?.message || 'Falha ao restaurar dados.' };
-    }
+  applyRestorePayload: async (_payload: FullBackupPayload): Promise<{ success: boolean; message: string }> => {
+    // Antiga rotina apagava todas as tabelas, inclusive o catálogo global de brawlers.
+    // Nunca permitir exclusões globais em um sistema com múltiplas equipes.
+    return {
+      success: false,
+      message: 'Restauração legada desativada para proteger as equipes. A restauração individual será disponibilizada após a migração segura.'
+    };
   },
 
   /**
