@@ -92,7 +92,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
             </div>
             <div className="bg-white dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-[#2A2A2A] text-center">
               <div className="text-xs text-zinc-500 dark:text-zinc-400 font-bold mb-1 uppercase tracking-wider">Top Brawler</div>
-              <div className="text-xl font-bold text-[#FFCC00] truncate">{topPickBrawlerName}</div>
+              <div className="text-xl font-bold text-[#22D3EE] truncate">{topPickBrawlerName}</div>
             </div>
              <div className="bg-white dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-[#2A2A2A] text-center">
               <div className="text-xs text-zinc-500 dark:text-zinc-400 font-bold mb-1 uppercase tracking-wider">Maior Counter</div>
@@ -192,7 +192,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
           
           <div>
              <h4 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-4 mt-6">
-                <Target className="w-5 h-5 text-[#FF3366]" /> Histórico de Bans
+                <Target className="w-5 h-5 text-[#6366F1]" /> Histórico de Bans
              </h4>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-4 shadow-sm">
@@ -202,7 +202,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
                         mapStats.topTotalBans.map((tb: any, i: number) => (
                            <div key={i} className="flex justify-between items-center text-sm">
                               <span className="font-medium text-slate-900 dark:text-white">{tb.brawler?.name}</span>
-                              <span className="font-bold text-[#FF3366]">{tb.count}</span>
+                              <span className="font-bold text-[#6366F1]">{tb.count}</span>
                            </div>
                         ))
                       ) : (
@@ -217,7 +217,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
                         mapStats.topTbkBans.map((tb: any, i: number) => (
                            <div key={i} className="flex justify-between items-center text-sm">
                               <span className="font-medium text-slate-900 dark:text-white">{tb.brawler?.name}</span>
-                              <span className="font-bold text-[#FF3366]">{tb.count}</span>
+                              <span className="font-bold text-[#6366F1]">{tb.count}</span>
                            </div>
                         ))
                       ) : (
@@ -232,7 +232,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
                         mapStats.topEnemyBans.map((tb: any, i: number) => (
                            <div key={i} className="flex justify-between items-center text-sm">
                               <span className="font-medium text-slate-900 dark:text-white">{tb.brawler?.name}</span>
-                              <span className="font-bold text-[#FF3366]">{tb.count}</span>
+                              <span className="font-bold text-[#6366F1]">{tb.count}</span>
                            </div>
                         ))
                       ) : (
@@ -295,7 +295,7 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
               type="text" 
               value={formData.name || ''}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               placeholder="Ex: Mina Rochosa"
             />
           </div>
@@ -305,7 +305,7 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
             <select 
               value={formData.mode || 'Pique-Gema'}
               onChange={e => setFormData({ ...formData, mode: e.target.value as any })}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
             >
               <option value="Pique-Gema">Pique-Gema</option>
               <option value="Fute-Brawl">Fute-Brawl</option>
@@ -321,7 +321,7 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
             <select 
               value={formData.terrain || 'Aberto'}
               onChange={e => setFormData({ ...formData, terrain: e.target.value as any })}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
             >
               <option value="Aberto">Aberto</option>
               <option value="Semi-Aberto">Semi-Aberto</option>
@@ -343,7 +343,7 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
                   setFormData({ ...formData, imageUrl: '' });
                 }
               }}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               placeholder="Ex: 15000703"
               required
             />
@@ -376,7 +376,7 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
               if (formData.name) onSave(formData);
             }}
             disabled={!formData.name}
-            className="px-6 py-3 bg-[#FF3366] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
+            className="px-6 py-3 bg-[#6366F1] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
           >
             Salvar
           </button>
@@ -426,7 +426,7 @@ export function AddCompModal({ isOpen, onClose, onSave, mapId }: AddCompModalPro
               type="text" 
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#FF3366]"
+              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               placeholder="Ex: Controle de Meio"
             />
           </div>
@@ -439,7 +439,7 @@ export function AddCompModal({ isOpen, onClose, onSave, mapId }: AddCompModalPro
                 placeholder="Buscar..."
                 value={brawlerSearch}
                 onChange={(e) => setBrawlerSearch(e.target.value)}
-                className="px-2 py-1 text-xs bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded focus:outline-none focus:border-[#FF3366] text-zinc-900 dark:text-white"
+                className="px-2 py-1 text-xs bg-zinc-50 dark:bg-[#0A0A0A] border border-zinc-200 dark:border-[#2A2A2A] rounded focus:outline-none focus:border-[#6366F1] text-zinc-900 dark:text-white"
               />
             </div>
             <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-zinc-50 dark:bg-[#1A1A1A] rounded-lg border border-zinc-200 dark:border-[#2A2A2A]">
@@ -454,7 +454,7 @@ export function AddCompModal({ isOpen, onClose, onSave, mapId }: AddCompModalPro
                      }}
                      className={cn(
                        "w-10 h-10 rounded-lg cursor-pointer overflow-hidden transition-all border-2", getBrawlerBgColor(brawler),
-                       isSelected ? "border-[#FF3366] opacity-100" : "border-transparent opacity-50 hover:opacity-100"
+                       isSelected ? "border-[#6366F1] opacity-100" : "border-transparent opacity-50 hover:opacity-100"
                      )}
                    >
                      {brawler?.iconUrl && <img src={brawler.iconUrl} alt={brawler?.name} className="w-full h-full object-cover" />}
@@ -491,7 +491,7 @@ export function AddCompModal({ isOpen, onClose, onSave, mapId }: AddCompModalPro
               }
             }}
             disabled={!name || brawlers.length !== 3}
-            className="px-6 py-3 bg-[#FF3366] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
+            className="px-6 py-3 bg-[#6366F1] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
           >
             Salvar Comp
           </button>
