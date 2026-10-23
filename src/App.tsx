@@ -11,7 +11,7 @@ import { BrawlersHub } from './components/brawlers/BrawlersHub';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { LockScreen, hasActiveSession, clearSession, getUserRole, UserRole } from './components/LockScreen';
 
-const ACTIVE_TAB_KEY = 'tbk_hub_active_tab';
+const ACTIVE_TAB_KEY = 'sistema_draft_active_tab';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => hasActiveSession());
@@ -102,7 +102,7 @@ export default function App() {
           </div>
         </div>
         <div className="text-center">
-          <h1 className="text-3xl font-black text-white tracking-tight">TBK <span className="text-[#FFCC00]">Hub</span></h1>
+          <h1 className="text-3xl font-black text-white tracking-tight">Sistema <span className="text-[#FFCC00]">de Draft</span></h1>
           <p className="text-zinc-600 text-sm mt-1">Sistema de Draft · Brawl Stars</p>
         </div>
         <div className="flex gap-1.5 mt-2">
@@ -142,7 +142,7 @@ export default function App() {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <span className="font-bold text-zinc-900 dark:text-white tracking-tight">TBK Hub</span>
+            <span className="font-bold text-zinc-900 dark:text-white tracking-tight">Sistema de Draft</span>
           </div>
           <ThemeToggle />
         </div>
@@ -202,7 +202,7 @@ export default function App() {
         onCancel={() => setShowLogoutConfirm(false)}
         onConfirm={confirmLogout}
         title="Sair do Sistema"
-        message="Tem certeza que deseja sair do TBK Hub?"
+        message="Tem certeza que deseja sair do Sistema de Draft?"
         confirmText="Sim, Sair"
         cancelText="Cancelar"
         processingText="Aguarde..."
