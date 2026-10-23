@@ -10,7 +10,7 @@ export function normalizeTeamUsername(input: string): string {
 }
 
 export function isValidTeamUsername(value: string): boolean {
-  return /^[a-z0-9][a-z0-9-]{2,30}[a-z0-9]$/.test(value);
+  return /^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$/.test(value);
 }
 
 /**
@@ -19,6 +19,6 @@ export function isValidTeamUsername(value: string): boolean {
  * sem testar e projetar recuperacao de conta.
  */
 export function getInternalTeamEmail(username: string): string {
-  if (!isValidTeamUsername(username)) throw new Error('O nome deve gerar um identificador de 4 a 32 caracteres.');
+  if (!isValidTeamUsername(username)) throw new Error('O nome deve gerar um identificador de 3 a 32 caracteres.');
   return username + '@' + INTERNAL_TEAM_EMAIL_DOMAIN;
 }
