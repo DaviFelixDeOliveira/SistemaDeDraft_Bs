@@ -68,6 +68,10 @@ export const teamAuthService = {
   },
 
   async register(teamName: string, password: string): Promise<TeamAccount> {
+    // Cadastro bloqueado até testes da autenticação, ativação do RLS e isolamento por equipe.
+    if (import.meta.env.VITE_ENABLE_TEAM_SIGNUP !== 'true') {
+      throw new Error('O cadastro de equipes ainda está em preparação. Não foi liberado neste ambiente.');
+    }
     const displayName = teamName.trim().replace(/\s+/g, ' ');
     const username = normalizeTeamUsername(displayName);
     if (displayName.length < 3 || displayName.length > 60 || !isValidTeamUsername(username)) {
