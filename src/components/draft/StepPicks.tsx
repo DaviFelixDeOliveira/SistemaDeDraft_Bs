@@ -28,10 +28,10 @@ interface StepPicksProps {
 }
 
 // 1-2-2-1 snake draft order
-const getPickOrder = (tbkStarts: boolean): ('tbk' | 'enemy')[] => {
-  return tbkStarts 
-    ? ['tbk', 'enemy', 'enemy', 'tbk', 'tbk', 'enemy'] 
-    : ['enemy', 'tbk', 'tbk', 'enemy', 'enemy', 'tbk'];
+const getPickOrder = (allyStarts: boolean): ('ally' | 'enemy')[] => {
+  return allyStarts 
+    ? ['ally', 'enemy', 'enemy', 'ally', 'ally', 'enemy'] 
+    : ['enemy', 'ally', 'ally', 'enemy', 'enemy', 'ally'];
 };
 
 export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }: StepPicksProps) {
@@ -72,7 +72,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
   }, [draftState.mapId]);
 
   
-  const pickOrder = getPickOrder(draftState.tbkStarts);
+  const pickOrder = getPickOrder(draftState.allyStarts);
   const currentPickIndex = draftState.picks.length;
   const isDraftComplete = currentPickIndex === 6;
   
@@ -80,7 +80,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
 
   // Combine bans and already picked brawlers
   const unavailableBrawlerIds = [
-    ...draftState.tbkBans,
+    ...draftState.allyBans,
     ...draftState.enemyBans,
     ...draftState.picks.map(p => p.brawlerId)
   ].filter(id => id !== null) as string[];
@@ -129,7 +129,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
    * 4. Counters e Sinergias:
    *    - Contra 2+ Lançadores inimigos (Hard counters Mortis/Edgar/Mico): +10000 pts.
    *    - Contra 1+ Tanque inimigo (Destruidores/Controle): +150 pts.
-   *    - Equilíbrio de Papéis do Trio TBK: +30 pts.
+   *    - Equilíbrio de Papéis do Trio Nossa equipe: +30 pts.
    * 5. Penalidade de Matchup Específico (1.3):
    *    - Por ameaça histórica já na equipe inimiga: -min(count,10)*10 pts por ameaça.
    *
@@ -155,10 +155,10 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
 
     const available = brawlers.filter(b => !unavailableBrawlerIds.includes(b.id));
     const enemyTeamIds = draftState.picks.filter(p => p.team === 'enemy').map(p => p.brawlerId);
-    const tbkTeamIds = draftState.picks.filter(p => p.team === 'tbk').map(p => p.brawlerId);
+    const allyTeamIds = draftState.picks.filter(p => p.team === 'ally').map(p => p.brawlerId);
 
     const enemyBrawlers = enemyTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
-    const tbkBrawlers = tbkTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
+    const allyBrawlers = allyTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
 
     const map = maps.find(m => m.id === draftState.mapId);
 
@@ -252,10 +252,10 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         }
       });
 
-      // Sinergia com picks do time TBK
-      if (tbkBrawlers.length > 0) {
-        const hasTank = tbkBrawlers.some(b => b.type.includes('Tanque'));
-        const hasSniper = tbkBrawlers.some(b => b.type.includes('Tiro preciso'));
+      // Sinergia com picks do time Nossa equipe
+      if (allyBrawlers.length > 0) {
+        const hasTank = allyBrawlers.some(b => b.type.includes('Tanque'));
+        const hasSniper = allyBrawlers.some(b => b.type.includes('Tiro preciso'));
         if (!hasTank && brawler.type.includes('Tanque')) score += 30;
         if (!hasSniper && brawler.type.includes('Tiro preciso')) score += 30;
       }
@@ -329,19 +329,19 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
   const bestRecommendationId = recommendations[0]?.id;
 
   const unbalancedAlert = useMemo(() => {
-    const tbkTeamIds = draftState.picks.filter(p => p.team === 'tbk').map(p => p.brawlerId);
-    const tbkBrawlers = tbkTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
+    const allyTeamIds = draftState.picks.filter(p => p.team === 'ally').map(p => p.brawlerId);
+    const allyBrawlers = allyTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
     const map = maps.find(m => m.id === draftState.mapId);
 
-    const snipers = tbkBrawlers.filter(b => b.type.includes('Tiro preciso')).length;
-    const throwers = tbkBrawlers.filter(b => b.type.includes('Lancadores')).length;
-    const tanks = tbkBrawlers.filter(b => b.type.includes('Tanque')).length;
+    const snipers = allyBrawlers.filter(b => b.type.includes('Tiro preciso')).length;
+    const throwers = allyBrawlers.filter(b => b.type.includes('Lancadores')).length;
+    const tanks = allyBrawlers.filter(b => b.type.includes('Tanque')).length;
 
     if (snipers >= 3) return "Atenção: Composição com 3 Atiradores — Alto risco contra Assassinos/Tanques avançados.";
     if (throwers >= 3) return "Atenção: Composição com 3 Lançadores — Vulnerabilidade crítica contra Assassinos.";
     if (tanks >= 3) return "Atenção: Composição com 3 Tanques — Risco contra Brawlers de Controle e Anti-Tanques.";
     
-    if (map?.terrain === 'Aberto' && tbkBrawlers.length >= 2 && snipers === 0) {
+    if (map?.terrain === 'Aberto' && allyBrawlers.length >= 2 && snipers === 0) {
       return "Atenção: Faltam Atiradores/Controle para este mapa longo.";
     }
 
@@ -376,7 +376,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       <div className="flex flex-col mb-6 gap-4">
         <div className="text-center w-full">
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white whitespace-nowrap">
-            {isDraftComplete ? "Draft Concluído" : `Vez da ${currentTeamPicking === 'tbk' ? 'TBK' : 'Inimigo'} escolher`}
+            {isDraftComplete ? "Draft Concluído" : `Vez da ${currentTeamPicking === 'ally' ? 'Nossa equipe' : 'Inimigo'} escolher`}
           </h2>
           {!isDraftComplete && (
             <p className="text-sm text-slate-500 dark:text-zinc-400">Pick {currentPickIndex + 1} de 6</p>
@@ -430,28 +430,28 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
           </div>
           <div className="flex items-center gap-2 text-xs bg-slate-50 dark:bg-[#1A1A1A] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[#2A2A2A] text-slate-600 dark:text-zinc-300">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>First Pick: <strong className="text-slate-900 dark:text-white">{draftState.tbkStarts ? 'TBK (Nosso)' : 'Inimigo'}</strong></span>
+            <span>First Pick: <strong className="text-slate-900 dark:text-white">{draftState.allyStarts ? 'Nossa equipe (Nosso)' : 'Inimigo'}</strong></span>
           </div>
         </div>
       )}
 
       {/* Draft Slots Visualization */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 mb-8">
-        {/* TBK Team */}
+        {/* Nossa equipe Team */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 mb-4 border-b border-emerald-500/30 pb-2">
             <Shield className="w-5 h-5 text-emerald-400" />
-            <span className="font-bold text-emerald-400">Time TBK</span>
+            <span className="font-bold text-emerald-400">Time Nossa equipe</span>
           </div>
           {pickOrder.map((team, index) => {
-            if (team !== 'tbk') return null;
+            if (team !== 'ally') return null;
             const pick = draftState.picks[index];
             const brawler = pick ? brawlers.find(b => b.id === pick.brawlerId) : null;
             const isCurrentPick = currentPickIndex === index;
 
             return (
               <div 
-                key={`tbk-slot-${index}`}
+                key={`ally-slot-${index}`}
                 className={cn(
                   "flex items-center gap-3 p-3 rounded-lg border transition-all duration-300",
                   brawler ? "bg-white dark:bg-[#1A1A1A] border-emerald-500/50 shadow-sm" : 
@@ -529,7 +529,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       </div>
 
       {/* Composition Recommendation */}
-      {!isDraftComplete && currentTeamPicking === 'tbk' && recommendedComp && (
+      {!isDraftComplete && currentTeamPicking === 'ally' && recommendedComp && (
         <div className="bg-emerald-500/10 border border-emerald-500/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.1)]">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-5 h-5 text-emerald-400" />
@@ -538,7 +538,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             {recommendedComp.brawlersList.map((brawler, i) => {
-              const isPickedByUs = draftState.picks.some(p => p.team === 'tbk' && p.brawlerId === brawler.id);
+              const isPickedByUs = draftState.picks.some(p => p.team === 'ally' && p.brawlerId === brawler.id);
               return (
                 <div 
                   key={`rec-comp-${brawler.id}`} 
@@ -565,7 +565,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       )}
 
       {/* Engine Recommendations */}
-      {!isDraftComplete && currentTeamPicking === 'tbk' && !recommendedComp && recommendations.length > 0 && (
+      {!isDraftComplete && currentTeamPicking === 'ally' && !recommendedComp && recommendations.length > 0 && (
         <div className="bg-white dark:bg-[#1A1A1A] border border-[#FFCC00]/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(255,204,0,0.1)]">
           <div className="flex items-center gap-2 mb-3">
             <Target className="w-5 h-5 text-[#FFCC00]" />
@@ -685,7 +685,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                 const isUnavailable = unavailableBrawlerIds.includes(brawler.id);
                 const isFirstAvailable = brawler.id === filteredBrawlers.find(b => !unavailableBrawlerIds.includes(b.id))?.id;
                 const isTierS = brawler.tier === 'S';
-                const isTopPick = brawler.id === bestRecommendationId && !isDraftComplete && currentTeamPicking === 'tbk';
+                const isTopPick = brawler.id === bestRecommendationId && !isDraftComplete && currentTeamPicking === 'ally';
                 const isComfort = players.some(p => p.isActive !== false && p.comfortBrawlers?.includes(brawler.id));
                 const isStrong = false; // composições serão implementadas em sessão futura
                 return (
