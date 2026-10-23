@@ -46,17 +46,17 @@ export const playerService = {
   savePlayer: async (player: Player): Promise<Player> => {
     const row = mapToSupabase(player);
     const { error } = await supabase.from('players').upsert(row);
-    if (error) console.error('Erro ao salvar player no Supabase:', error);
+    if (error) throw new Error(`Erro ao salvar jogador: ${error.message}`);
     return player;
   },
 
   updatePlayerStatus: async (id: string, isActive: boolean): Promise<void> => {
     const { error } = await supabase.from('players').update({ is_active: isActive }).eq('id', id);
-    if (error) console.error('Erro ao atualizar status do player no Supabase:', error);
+    if (error) throw error;
   },
 
   deletePlayer: async (id: string): Promise<void> => {
     const { error } = await supabase.from('players').delete().eq('id', id);
-    if (error) console.error('Erro ao excluir player no Supabase:', error);
+    if (error) throw error;
   }
 };
