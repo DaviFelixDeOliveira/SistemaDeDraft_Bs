@@ -94,22 +94,22 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500">
         <div className="relative">
-          <div className="w-20 h-20 bg-[#FF3366] rounded-2xl flex items-center justify-center shadow-[0_0_60px_rgba(255,51,102,0.4)] animate-pulse">
+          <div className="w-20 h-20 bg-[#6366F1] rounded-2xl flex items-center justify-center shadow-[0_0_60px_rgba(99,102,241,0.4)] animate-pulse">
             <Swords className="w-10 h-10 text-white" />
           </div>
-          <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FFCC00] rounded-full flex items-center justify-center shadow-lg">
-            <span className="text-[10px] font-black text-black">T</span>
+          <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#22D3EE] rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-[10px] font-black text-black">D</span>
           </div>
         </div>
         <div className="text-center">
-          <h1 className="text-3xl font-black text-white tracking-tight">Sistema <span className="text-[#FFCC00]">de Draft</span></h1>
+          <h1 className="text-3xl font-black text-white tracking-tight">Sistema <span className="text-[#22D3EE]">de Draft</span></h1>
           <p className="text-zinc-600 text-sm mt-1">Sistema de Draft · Brawl Stars</p>
         </div>
         <div className="flex gap-1.5 mt-2">
           {[0, 1, 2].map(i => (
             <div
               key={i}
-              className="w-2 h-2 rounded-full bg-[#FF3366]"
+              className="w-2 h-2 rounded-full bg-[#6366F1]"
               style={{ animation: `bounce 0.9s ${i * 0.15}s infinite` }}
             />
           ))}
@@ -155,7 +155,7 @@ export default function App() {
 
             {isViewLoading ? (
               <div className="flex flex-col items-center justify-center min-h-[50vh] animate-in fade-in zoom-in-95 duration-300">
-                <Loader2 className="w-12 h-12 text-[#FF3366] animate-spin mb-4" />
+                <Loader2 className="w-12 h-12 text-[#6366F1] animate-spin mb-4" />
                 <span className="text-slate-500 dark:text-zinc-500 font-medium">Carregando módulo...</span>
               </div>
             ) : (
