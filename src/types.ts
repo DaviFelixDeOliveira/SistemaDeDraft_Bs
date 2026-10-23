@@ -76,7 +76,7 @@ export interface Match {
 export interface MatchPick {
   id?: string;
   match_id: string;
-  team: 'tbk' | 'enemy';
+  team: 'ally' | 'enemy';
   player_id?: string | null;
   brawler_id: string;
 }
@@ -84,7 +84,7 @@ export interface MatchPick {
 export interface MatchBan {
   id?: string;
   match_id: string;
-  team: 'tbk' | 'enemy';
+  team: 'ally' | 'enemy';
   brawler_id: string;
 }
 
@@ -92,9 +92,9 @@ export interface MatchRecordData {
   mapId: string;
   sessionId?: string | null;
   result: 'victory' | 'defeat';
-  tbkPicks: { brawlerId: string; playerId?: string }[];
+  allyPicks: { brawlerId: string; playerId?: string }[];
   enemyPicks: string[];
-  tbkBans: string[];
+  allyBans: string[];
   enemyBans: string[];
   opponentName?: string;
   notes?: string;
