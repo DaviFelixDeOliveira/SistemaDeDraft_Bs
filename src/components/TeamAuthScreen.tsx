@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, LockKeyhole, Swords, Users, ArrowRight } from 'lucide-react';
 import { normalizeTeamUsername, teamAuthService, type TeamAccount } from '../services/teamAuthService';
 
@@ -20,7 +20,7 @@ export function TeamAuthScreen({ onAuthenticated }: TeamAuthScreenProps) {
   const slug = normalizeTeamUsername(name);
   const isRegister = mode === 'register';
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     setError('');
