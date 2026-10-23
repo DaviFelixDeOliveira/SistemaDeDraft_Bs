@@ -213,7 +213,7 @@ const TIER_BAN_SCORES: Record<string, number> = {
  *   ruleScore = tierScore + terrainTypeBonus
  *     tierScore:       S=100, A=80, B=60, C=40, D=20
  *     terrainBonus (inimigo tem first pick, mapa Aberto + Tiro preciso): +20
- *     terrainBonus (TBK tem first pick, Algoz ou Controle): +15
+ *     terrainBonus (Nossa equipe tem first pick, Algoz ou Controle): +15
  *
  *   historicalBanBonus = (winrateInimigo - 50) * min(picksNesteMapaInimigo, 10) * 8
  *     Padrão análogo ao historicalBonus de picks (weight=10), com weight=8
@@ -224,17 +224,17 @@ const TIER_BAN_SCORES: Record<string, number> = {
 export function computeBanScore(
   brawler: Brawler,
   terrain: MapTerrain,
-  tbkStarts: boolean,
+  allyStarts: boolean,
   enemyPickStats: EnemyPickStatsMap,
 ): number {
   let ruleScore = TIER_BAN_SCORES[brawler.tier] ?? 0;
 
   // Bônus de heurística de terreno
-  if (!tbkStarts) {
+  if (!allyStarts) {
     // Inimigo tem first pick → prioriza banir Snipers e Tier S
     if (terrain === 'Aberto' && brawler.type.includes('Tiro preciso')) ruleScore += 20;
   } else {
-    // TBK tem first pick → elimina counters versáteis
+    // Nossa equipe tem first pick → elimina counters versáteis
     if (brawler.type.includes('Algoz') || brawler.type.includes('Controle')) ruleScore += 15;
   }
 
@@ -259,7 +259,7 @@ export function computeBanScore(
  * Fórmula por ameaça encontrada no time inimigo:
  *   penalty -= min(count, 10) * 10
  *
- * count = número de derrotas históricas TBK quando o brawler alvo encontrou
+ * count = número de derrotas históricas Nossa equipe quando o brawler alvo encontrou
  * o brawler ameaça no lado inimigo — proxy da força do matchup desfavorável.
  *
  * Padrão: (winrate - 50) * min(picks, 10) * weight, com a distinção de que
@@ -291,7 +291,7 @@ export function computeMatchupPenalty(
 // ============================================================
 
 /**
- * Bônus histórico baseado no winrate do brawler TBK em um mapa específico.
+ * Bônus histórico baseado no winrate do brawler Nossa equipe em um mapa específico.
  *
  * Fórmula: (winrate - 50) * min(picks, 10) * 10
  *
