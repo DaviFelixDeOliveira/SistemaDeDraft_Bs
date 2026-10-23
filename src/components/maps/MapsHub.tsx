@@ -14,14 +14,10 @@ const GAME_MODES: GameMode[] = [
   'Pique-Gema', 'Fute-Brawl', 'Caça-Estrelas', 'Roubo', 'Zona Estratégica', 'Nocaute'
 ];
 
-import { UserRole } from '../LockScreen';
 
-interface MapsHubProps {
-  userRole?: UserRole;
-}
 
-export function MapsHub({ userRole = 'admin' }: MapsHubProps) {
-  const isPlayerMode = userRole === 'player';
+export function MapsHub() {
+  const isPlayerMode = false; // Todas as equipes têm acesso às próprias ferramentas.
   const [maps, setMaps] = useState<GameMap[]>([]);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [comps, setComps] = useState<Composition[]>([]);
