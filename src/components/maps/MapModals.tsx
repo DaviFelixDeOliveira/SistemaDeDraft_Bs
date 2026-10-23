@@ -83,7 +83,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
              <div className="bg-white dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-[#2A2A2A] text-center">
-              <div className="text-xs text-zinc-500 dark:text-zinc-400 font-bold mb-1 uppercase tracking-wider">Winrate TBK</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400 font-bold mb-1 uppercase tracking-wider">Winrate Nossa equipe</div>
               <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{mapStats?.totalMatches > 0 ? `${mapStats.winrate}%` : '0%'}</div>
             </div>
             <div className="bg-white dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-[#2A2A2A] text-center">
@@ -103,7 +103,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-5 shadow-sm">
                <h4 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-4">
-                  <Target className="w-4 h-4 text-emerald-500" /> Top Brawlers (Picks TBK)
+                  <Target className="w-4 h-4 text-emerald-500" /> Top Brawlers (Picks Nossa equipe)
                </h4>
                <div className="space-y-2">
                  {mapStats?.topTbkPicks && mapStats.topTbkPicks.length > 0 ? (
@@ -211,7 +211,7 @@ export function MapDetailsModal({ map, isOpen, onClose, comps, onAddComp }: MapD
                    </div>
                 </div>
                 <div className="bg-white dark:bg-[#1A1A1A] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl p-4 shadow-sm">
-                   <h5 className="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-4 border-b border-zinc-100 dark:border-[#2A2A2A] pb-2">Nossos Bans (TBK)</h5>
+                   <h5 className="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-4 border-b border-zinc-100 dark:border-[#2A2A2A] pb-2">Nossos Bans (Nossa equipe)</h5>
                    <div className="space-y-3">
                       {mapStats?.topTbkBans && mapStats.topTbkBans.length > 0 ? (
                         mapStats.topTbkBans.map((tb: any, i: number) => (
