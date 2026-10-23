@@ -11,25 +11,25 @@ import { ConfirmModal } from '../ui/ConfirmModal';
 export interface DraftState {
   mapId: string;
 
-  tbkStarts: boolean;
-  tbkBans: (string | null)[]; // 3 slots
+  allyStarts: boolean;
+  allyBans: (string | null)[]; // 3 slots
   enemyBans: (string | null)[]; // 3 slots
-  picks: { brawlerId: string; team: 'tbk' | 'enemy' }[]; // Up to 6 picks
+  picks: { brawlerId: string; team: 'ally' | 'enemy' }[]; // Up to 6 picks
   playerAssignments: Record<string, string>; // brawlerId -> playerId
 }
 
 const initialDraftState: DraftState = {
   mapId: '',
-  tbkStarts: true,
-  tbkBans: [null, null, null],
+  allyStarts: true,
+  allyBans: [null, null, null],
   enemyBans: [null, null, null],
   picks: [],
   playerAssignments: {},
 };
 
-const DRAFT_STATE_KEY = 'tbk_hub_draft_state';
-const DRAFT_STEP_KEY = 'tbk_hub_draft_step';
-const DRAFT_HISTORY_KEY = 'tbk_hub_draft_history';
+const DRAFT_STATE_KEY = 'sistema_draft_draft_state';
+const DRAFT_STEP_KEY = 'sistema_draft_draft_step';
+const DRAFT_HISTORY_KEY = 'sistema_draft_draft_history';
 
 export function DraftWizard() {
   // Item 2: Restaura o rascunho do draft e etapa do localStorage ao carregar a página
@@ -199,8 +199,8 @@ export function DraftWizard() {
     });
     setDraftState({
       mapId: '',
-      tbkStarts: true,
-      tbkBans: [null, null, null],
+      allyStarts: true,
+      allyBans: [null, null, null],
       enemyBans: [null, null, null],
       picks: [],
       playerAssignments: {}
@@ -292,7 +292,7 @@ export function DraftWizard() {
             if (
               draftState.mapId ||
               draftState.picks.length > 0 ||
-              draftState.tbkBans.some(Boolean) ||
+              draftState.allyBans.some(Boolean) ||
               draftState.enemyBans.some(Boolean)
             ) {
               setConfirmResetOpen(true);
@@ -321,7 +321,7 @@ export function DraftWizard() {
 
         <DraftTacticsBanner 
           mapId={draftState.mapId} 
-          tbkStarts={draftState.tbkStarts} 
+          allyStarts={draftState.allyStarts} 
           step={step} 
         />
 
