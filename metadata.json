@@ -1,6 +1,8 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Sistema de Draft",
+  "description": "Assistente de draft e análise competitiva de Brawl Stars para equipes",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
