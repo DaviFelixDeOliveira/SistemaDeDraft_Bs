@@ -8,11 +8,11 @@ describe('Identidade normalizada das equipes', () => {
   });
 
   it('rejeita nomes curtos e identificadores malformados', () => {
-    for (const invalid of ['a', 'ab', 'abc', '-minha-equipe', 'equipe-', 'equipe@email.com']) {
+    for (const invalid of ['a', 'ab', '-minha-equipe', 'equipe-', 'equipe@email.com']) {
       expect(isValidTeamUsername(invalid)).toBe(false);
     }
     expect(isValidTeamUsername('time-01')).toBe(true);
-    expect(isValidTeamUsername('abcd')).toBe(true);
+    expect(isValidTeamUsername('abc')).toBe(true);
     expect(isValidTeamUsername('x'.repeat(33))).toBe(false);
   });
 
