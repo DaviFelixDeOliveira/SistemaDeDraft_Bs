@@ -142,15 +142,11 @@ export const mapService = {
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao criar composição no Supabase:', error.message);
-        // Fallback: retorna com id gerado localmente
-        return { ...comp, id: crypto.randomUUID() };
-      }
+      if (error) throw error;
       return compFromSupabase(data);
     } catch (err) {
-      console.error('Erro ao conectar ao Supabase para criar composição:', err);
-      return { ...comp, id: crypto.randomUUID() };
+      console.error('Erro ao criar composição no Supabase:', err);
+      throw new Error('Não foi possível salvar a composição no banco.');
     }
   },
 };
