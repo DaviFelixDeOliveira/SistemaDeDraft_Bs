@@ -224,7 +224,7 @@ function DashboardContent() {
         {/* B) Desempenho por Modo */}
         <div className="lg:col-span-2 bg-white dark:bg-[#121212] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-4 sm:p-6 shadow-sm flex flex-col">
           <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-[#FF3366]" /> Desempenho por Modo
+            <Trophy className="w-5 h-5 text-[#6366F1]" /> Desempenho por Modo
           </h3>
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2">
             {(modeWinrate || []).map((item) => {
@@ -329,11 +329,11 @@ function DashboardContent() {
                     <div className="flex-1 flex flex-col gap-1">
                       <div className="flex justify-between items-center text-sm">
                         <span className="font-medium text-slate-900 dark:text-white">{b?.name}</span>
-                        <span className="font-bold text-[#FF3366]">{b[banField]}</span>
+                        <span className="font-bold text-[#6366F1]">{b[banField]}</span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#FF3366] rounded-full"
+                          className="h-full bg-[#6366F1] rounded-full"
                           style={{ width: `${((b[banField] || 0) / maxBan) * 100}%` }} />
                       </div>
                     </div>
@@ -421,7 +421,7 @@ function DashboardContent() {
                 <RechartsTooltip content={<CustomBrawlerTooltip />} cursor={{ fill: '#2A2A2A' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="allyPickCount" name="Nossos Picks" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="ban" name="Bans" fill="#FF3366" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ban" name="Bans" fill="#6366F1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -446,7 +446,7 @@ function DashboardContent() {
                 <div
                   key={b.id}
                   onClick={() => setSelectedHotBrawler(b)}
-                  className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-[#FF3366]/50 transition-colors relative"
+                  className="bg-slate-50 dark:bg-[#0A0A0A] border border-slate-200 dark:border-[#2A2A2A] rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer hover:border-[#6366F1]/50 transition-colors relative"
                 >
                   <span className="text-[10px] font-bold text-slate-400 absolute top-2 left-2">#{i + 1}</span>
                   <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-zinc-800 overflow-hidden mt-1">
@@ -510,10 +510,10 @@ function DashboardContent() {
                   <div className="flex-1">
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-bold text-slate-900 dark:text-white">{b?.name}</span>
-                      <span className="font-bold text-[#FF3366]">{b.ban} bans</span>
+                      <span className="font-bold text-[#6366F1]">{b.ban} bans</span>
                     </div>
                     <div className="w-full h-2 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#FF3366] rounded-full" style={{ width: `${Math.min((b.ban / 10) * 100, 100)}%` }} />
+                      <div className="h-full bg-[#6366F1] rounded-full" style={{ width: `${Math.min((b.ban / 10) * 100, 100)}%` }} />
                     </div>
                   </div>
                 </div>
