@@ -8,6 +8,7 @@ import { Brawler } from '../../types';
 import { syncBrawlersFromApi } from '../../services/catalogApiService';
 import { BrawlerArtwork } from '../ui/BrawlerArtwork';
 import { BrawlerModal } from './BrawlerModal';
+import { OrganizeMetaModal, type MetaTier } from './OrganizeMetaModal';
 
 import { analyticsService } from '../../services/analyticsService';
 import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from '../BrawlerFilters';
@@ -23,6 +24,7 @@ export function BrawlersHub() {
    const [loading, setLoading] = useState(false);
    const [isFetching, setIsFetching] = useState(true);
    const [isSyncing, setIsSyncing] = useState(false);
+   const [isMetaOpen, setIsMetaOpen] = useState(false);
    const [syncInfo, setSyncInfo] = useState('');
 
    const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean, action: (() => void) | null, title: string, message: string }>({ isOpen: false, action: null, title: '', message: '' });
@@ -67,6 +69,13 @@ export function BrawlersHub() {
       } finally {
          setIsSyncing(false);
       }
+   };
+
+   const applyMeta = async (brawlerIds: string[], tier: MetaTier) => {
+      await brawlerService.setTeamMetaTiers(brawlerIds, tier);
+      const updated = await brawlerService.getBrawlers();
+      setBrawlers(updated);
+      setSelectedBrawler(current => current ? updated.find(b => b.id === current.id) ?? null : null);
    };
 
    const filtered = applyBrawlerFilters(brawlers, brawlerFilters);
@@ -134,6 +143,10 @@ export function BrawlersHub() {
                </div>
                <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">Estatísticas detalhadas de todos os Brawlers</p>
             </div>
+            <button type="button" onClick={() => setIsMetaOpen(true)} disabled={isFetching}
+               className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-indigo-500/25 bg-indigo-600 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:cursor-not-allowed disabled:opacity-50">
+               <Edit2 size={17} aria-hidden="true" /> Organizar Meta
+            </button>
          </div>
 
          <div className="bg-white dark:bg-[#121212] border border-zinc-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden flex flex-col md:flex-row min-h-[600px] max-h-[800px] min-h-[500px] shadow-sm relative">
@@ -489,6 +502,13 @@ export function BrawlersHub() {
                )}
             </div>
          </div>
+
+         <OrganizeMetaModal
+            isOpen={isMetaOpen}
+            brawlers={brawlers}
+            onClose={() => setIsMetaOpen(false)}
+            onApply={applyMeta}
+         />
 
          <BrawlerModal
             isOpen={isModalOpen}
