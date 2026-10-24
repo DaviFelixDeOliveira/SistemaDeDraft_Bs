@@ -50,7 +50,7 @@ export function MapCatalogModal({ existingMaps, onClose, onSelect }: Props) {
               <MapPinned className="h-5 w-5 text-indigo-500" /> Buscar mapas
             </h3>
             <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
-              Encontre um mapa, visualize a imagem e confira os dados antes de adicionar.
+              Pesquise pelo nome em inglês do jogo; visualize antes de adicionar à rotação.
             </p>
           </div>
           <button type="button" aria-label="Fechar" onClick={onClose}
