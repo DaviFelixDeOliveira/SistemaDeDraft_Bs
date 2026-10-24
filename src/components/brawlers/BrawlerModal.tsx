@@ -194,7 +194,9 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
               <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Raridade *</label>
               <select 
                 value={formData.rarity || 'Comum'}
-                onChange={e => setFormData({ ...formData, rarity: e.target.value })}
+                disabled
+                 title="Raridade definida pelo jogo e sincronizada pelo catálogo"
+                 onChange={e => setFormData({ ...formData, rarity: e.target.value })}
                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               >
                 <option value="Comum">Comum</option>
@@ -243,7 +245,7 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
           </div>
 
           <div>
-             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Classes / Tags</label>
+             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Classe oficial (sincronizada pela API)</label>
              <div className="flex flex-wrap gap-2">
                 {AVAILABLE_CLASSES.map(cls => {
                    const isSelected = formData.type?.includes(cls);
@@ -251,7 +253,9 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                       <button
                          key={cls}
                          type="button"
-                         onClick={() => toggleClass(cls)}
+                         disabled
+                          title="Classe oficial: sincronizada pela API"
+                          onClick={() => toggleClass(cls)}
                          className={cn(
                             "px-3 py-1.5 rounded-full text-xs font-bold transition-colors border",
                             isSelected 
