@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { DraftWizard } from './components/draft/DraftWizard';
+import { DraftAutoLab } from './components/draftAuto/DraftAutoLab';
 import { Menu, Loader2, Swords } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Dashboard } from './components/dashboard/Dashboard';
@@ -221,6 +222,7 @@ export default function App() {
                     <DraftWizard />
                   </div>
                 )}
+                {currentView === 'draft-auto' && <DraftAutoLab />}
                 {currentView === 'players' && (
                   <div className="w-full max-w-full">
                     <PlayersHub />
