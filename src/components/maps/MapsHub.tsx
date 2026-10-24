@@ -5,7 +5,7 @@ import { brawlerService } from '../../services/brawlerService';
 import { GameMap, GameMode, Composition, Brawler } from '../../types';
 import { cn } from '../../lib/utils';
 import { ConfirmModal } from "../ui/ConfirmModal";
-import { Search, Map as MapIcon, Info, Flame, Shield, Crosshair, Archive, ArchiveRestore, Plus, Edit } from 'lucide-react';
+import { Search, Map as MapIcon, Info, Flame, Shield, Crosshair, Archive, ArchiveRestore, Plus, Edit, Trash2 } from 'lucide-react';
 import { MapDetailsModal, EditMapModal, AddCompModal } from './MapModals';
 import { MapCatalogModal } from './MapCatalogModal';
 import { addMapFromApi, type ExternalGameMap } from '../../services/catalogApiService';
@@ -99,6 +99,26 @@ export function MapsHub() {
         await mapService.updateMapStatus(mapId, nextStatus);
         setMaps(prev => prev.map(m => m.id === mapId ? { ...m, isActive: nextStatus, is_active: nextStatus } : m));
         setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const removeMap = (map: GameMap, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setConfirmConfig({
+      isOpen:true,
+      title:'Remover da rotação',
+      message:`Remover "${map.name}" da rotação desta equipe? Se já houver partidas ou composições, o mapa será arquivado automaticamente, preservando todo o histórico. O catálogo global não será alterado.`,
+      processingText:'Conferindo histórico...',
+      successText:'Rotação atualizada com segurança.',
+      action:async () => {
+        const outcome = await mapService.removeMapFromRotation(map.id);
+        const latest = await mapService.getMaps();
+        setMaps(latest);
+        setConfirmConfig(prev=>({...prev,isOpen:false}));
+        if (outcome === 'archived') {
+          setViewActive(false);
+        }
       }
     });
   };
@@ -359,6 +379,11 @@ export function MapsHub() {
                             title="Editar Mapa"
                           >
                             <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button type="button" onClick={(event) => removeMap(map,event)}
+                            className="p-1.5 rounded-md text-zinc-500 hover:text-red-500 hover:bg-red-500/10 dark:text-zinc-400"
+                            title="Remover da rotação (arquiva se houver histórico)" aria-label={`Remover ${map.name} da rotação`}>
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                           <button 
                             onClick={(e) => toggleMapStatus(map.id, e)}
