@@ -1,5 +1,6 @@
 import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from "../BrawlerFilters";
 import { getBrawlerBgColor } from "../../lib/utils";
+import { BrawlerArtwork } from "../ui/BrawlerArtwork";
 import React from "react";
 import { X } from 'lucide-react';
 import { Player } from '../../types';
@@ -242,14 +243,8 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
     }
   }, [player, isOpen]);
 
-  const [brawlerSearch, setBrawlerSearch] = useState('');
-  
-  const filteredComfortBrawlers = brawlers.filter(b => 
-    brawlerSearch ? b.name.toLowerCase().includes(brawlerSearch.toLowerCase()) : (b.tier === 'S' || b.tier === 'A' || b.tier === 'B')
-  ).slice(0, 24);
+  const filteredComfortBrawlers = applyBrawlerFilters(brawlers, brawlerFilters);
 
-  // A clean robust way would be a useEffect, but we'll do simple assignment to avoid complex re-renders in this mock setup.
-  
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -391,13 +386,16 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                        <button
                          key={b.id}
                          type="button"
+                         title={b.name}
+                         aria-label={`${b.name}: ${isSelected ? 'remover dos' : 'adicionar aos'} Comfort Picks`}
+                         aria-pressed={isSelected}
                          onClick={() => toggleBrawler(b.id)}
                          className={cn(
                            "relative rounded-lg overflow-hidden border-2 transition-all group aspect-square", getBrawlerBgColor(b),
                            isSelected ? "border-[#22D3EE] shadow-[0_0_10px_rgba(34,211,238,0.3)] scale-105 z-10" : "border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 opacity-70 hover:opacity-100"
                          )}
                        >
-                         {b.iconUrl && <img src={b.iconUrl} alt={b.name} className="w-full h-full object-cover" />}
+                         <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl} className="h-full w-full" />
                          {isSelected && (
                            <div className="absolute inset-0 bg-[#22D3EE]/20 flex items-center justify-center">
                              <div className="bg-[#22D3EE] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md">
@@ -409,6 +407,12 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
                      )
                    })}
                 </div>
+                {filteredComfortBrawlers.length === 0 && (
+                  <p role="status" className="py-8 text-center text-sm text-zinc-500">
+                    Nenhum brawler encontrado. Ajuste a busca ou os filtros.
+                  </p>
+                )}
+                <p className="mt-3 text-right text-xs text-zinc-500">{filteredComfortBrawlers.length} brawlers encontrados</p>
               </div>
             </div>
           </div>

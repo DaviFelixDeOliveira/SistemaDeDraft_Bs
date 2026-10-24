@@ -78,8 +78,10 @@ export function BrawlerFilterBar({ filters, compact = false, onKeyDown, autoFocu
             autoFocus={autoFocus}
           />
         </div>
-        <button
+        <button type="button"
           onClick={() => setIsExpanded(!isExpanded)}
+          aria-label="Mostrar filtros de brawlers"
+          aria-expanded={isExpanded}
           className={`px-3 flex items-center justify-center rounded-lg border transition-colors ${isExpanded || filters.tier || filters.brawlerClass || filters.rarity || filters.sortOrder !== 'none'
             ? 'bg-[#FF3366]/10 border-[#FF3366]/20 text-[#FF3366]'
             : 'bg-zinc-50 dark:bg-[#0A0A0A] border-zinc-200 dark:border-[#2A2A2A] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -98,7 +100,7 @@ export function BrawlerFilterBar({ filters, compact = false, onKeyDown, autoFocu
             <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Tier</label>
             <div className="flex flex-wrap gap-1.5">
               {['S', 'A', 'B', 'C', 'D'].map(t => (
-                <button
+                <button type="button"
                   key={t}
                   onClick={() => filters.setTier(filters.tier === t ? '' : t)}
                   className={cn(
@@ -117,8 +119,8 @@ export function BrawlerFilterBar({ filters, compact = false, onKeyDown, autoFocu
           <div className="flex flex-col gap-2">
             <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Classe</label>
             <div className="flex flex-wrap gap-1.5">
-              {['Algoz', 'Controle', 'Destruidor', 'Suporte', 'Tanque', 'Tiro Preciso'].map(c => (
-                <button
+              {['Algoz', 'Controle', 'Dano', 'Destruidor', 'Artilharia', 'Suporte', 'Tanque', 'Tiro preciso', 'Tiro Preciso'].map(c => (
+                <button type="button"
                   key={c}
                   onClick={() => filters.setBrawlerClass(filters.brawlerClass === c ? '' : c)}
                   className={cn(
@@ -139,12 +141,12 @@ export function BrawlerFilterBar({ filters, compact = false, onKeyDown, autoFocu
             <div className="flex flex-wrap gap-1.5">
               {[
                 { name: 'Raro', label: 'Raro', color: 'hover:border-green-400 hover:text-green-400', active: 'bg-green-500 border-green-500 text-white' },
-                { name: 'Super Raro', label: 'Super Raro', color: 'hover:border-blue-500 hover:text-blue-500', active: 'bg-blue-600 border-blue-600 text-white' },
+                { name: 'Super-Raro', label: 'Super Raro', color: 'hover:border-blue-500 hover:text-blue-500', active: 'bg-blue-600 border-blue-600 text-white' },
                 { name: 'Épico', label: 'Épico', color: 'hover:border-purple-400 hover:text-purple-400', active: 'bg-purple-500 border-purple-500 text-white' },
                 { name: 'Mítico', label: 'Mítico', color: 'hover:border-red-400 hover:text-red-400', active: 'bg-red-500 border-red-500 text-white' },
                 { name: 'Lendário', label: 'Lendário', color: 'hover:border-yellow-400 hover:text-yellow-400', active: 'bg-yellow-500 border-yellow-500 text-black' }
               ].map(r => (
-                <button
+                <button type="button"
                   key={r.name}
                   onClick={() => filters.setRarity(filters.rarity === r.name ? '' : r.name)}
                   className={cn(
@@ -162,19 +164,19 @@ export function BrawlerFilterBar({ filters, compact = false, onKeyDown, autoFocu
 
           <div className="pt-3 mt-1 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
             <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
-              <button
+              <button type="button"
                 onClick={() => filters.setSortOrder('name_asc')}
                 className={cn("px-2 py-1 rounded-md text-xs font-medium transition-colors", filters.sortOrder === 'name_asc' ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
               >
                 A-Z
               </button>
-              <button
+              <button type="button"
                 onClick={() => filters.setSortOrder('name_desc')}
                 className={cn("px-2 py-1 rounded-md text-xs font-medium transition-colors", filters.sortOrder === 'name_desc' ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
               >
                 Z-A
               </button>
-              <button
+              <button type="button"
                 onClick={() => filters.setSortOrder('none')}
                 className={cn("px-2 py-1 rounded-md text-xs font-medium transition-colors", filters.sortOrder === 'none' ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300")}
               >
@@ -183,7 +185,7 @@ export function BrawlerFilterBar({ filters, compact = false, onKeyDown, autoFocu
             </div>
 
             {(filters.tier || filters.brawlerClass || filters.rarity || filters.sortOrder !== 'none') && (
-              <button
+              <button type="button"
                 onClick={() => {
                   filters.setTier('');
                   filters.setBrawlerClass('');
