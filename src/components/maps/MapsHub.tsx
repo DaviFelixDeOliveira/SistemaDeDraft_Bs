@@ -8,6 +8,7 @@ import { ConfirmModal } from "../ui/ConfirmModal";
 import { Search, Map as MapIcon, Info, Flame, Shield, Crosshair, Archive, ArchiveRestore, Plus, Edit } from 'lucide-react';
 import { MapDetailsModal, EditMapModal, AddCompModal } from './MapModals';
 import { MapCatalogModal } from './MapCatalogModal';
+import { addMapFromApi, type ExternalGameMap } from '../../services/catalogApiService';
 
 import { analyticsService } from '../../services/analyticsService';
 
@@ -31,6 +32,7 @@ export function MapsHub() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [editingMap, setEditingMap] = useState<GameMap | null>(null);
+  const [importMapDraft, setImportMapDraft] = useState<GameMap | null>(null);
   const [isAddCompModalOpen, setIsAddCompModalOpen] = useState(false);
 
   const [dashStats, setDashStats] = useState({ totalMatches: 0, winrate: 0 });
@@ -101,21 +103,56 @@ export function MapsHub() {
     });
   };
 
+  const handleMapSelected = (external: ExternalGameMap) => {
+    const existing = maps.find(map => map.id === external.id);
+    if (existing) {
+      // Os nomes oficiais já cadastrados em português são reutilizados.
+      setEditingMap(existing);
+      setImportMapDraft(null);
+    } else {
+      setEditingMap(null);
+      setImportMapDraft({
+        id: external.id,
+        name: external.name, // não traduzir automaticamente nomes próprios
+        mode: external.mode,
+        terrain: 'Misto',
+        imageUrl: external.imageUrl || undefined,
+        isActive: true,
+      });
+    }
+    setIsCatalogOpen(false);
+    setIsAddModalOpen(true);
+  };
+
   const handleSaveMap = (mapData: Partial<GameMap>) => {
-    const isEditing = !!mapData.id;
+    const name = mapData.name?.trim();
+    if (!name || !mapData.id || !mapData.terrain) return;
+    const isImport = !!importMapDraft && !editingMap;
+    const id = mapData.id;
     setConfirmConfig({
       isOpen: true,
-      title: isEditing ? 'Editar Mapa' : 'Adicionar Mapa',
-      message: isEditing ? 'Deseja salvar as alterações neste mapa?' : 'Deseja confirmar a adição deste mapa?',
+      title: isImport ? 'Adicionar mapa' : 'Salvar alterações do mapa',
+      message: isImport
+        ? `Adicionar "${name}" à rotação desta equipe?`
+        : `Salvar nome e terreno de "${name}" para esta equipe?`,
       action: async () => {
-        if (isEditing && mapData.id) {
-          setMaps(prev => prev.map(m => m.id === mapData.id ? { ...m, ...mapData } as GameMap : m));
+        let mode = mapData.mode || 'Pique-Gema';
+        if (isImport) {
+          const added = await addMapFromApi(id, { name, terrain: mapData.terrain! });
+          mode = added.mode;
         } else {
-          const created = await mapService.createMap(mapData as Omit<GameMap, 'id'>);
-          setMaps(prev => [...prev, created]);
+          await mapService.updateMapPreferences({
+            id, name, terrain: mapData.terrain!,
+          });
         }
+        const updated = await mapService.getMaps();
+        setMaps(updated);
+        setActiveMode(mode);
+        setViewActive(true);
+        setSearchQuery('');
         setIsAddModalOpen(false);
         setEditingMap(null);
+        setImportMapDraft(null);
         setConfirmConfig(prev => ({ ...prev, isOpen: false }));
       }
     });
@@ -155,12 +192,12 @@ export function MapsHub() {
             <button
               type="button"
               onClick={() => setIsCatalogOpen(true)}
-              title="Buscar mapas na BrawlAPI e ativar para sua equipe"
-              aria-label="Buscar mapas na API"
+              title="Pesquisar mapas e adicionar à sua equipe"
+              aria-label="Buscar mapas"
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
             >
               <Search className="h-4 w-4" aria-hidden="true" />
-              Buscar mapas na API
+              Buscar mapas
             </button>
           )}
         </div>
@@ -381,17 +418,9 @@ export function MapsHub() {
       
       {isCatalogOpen && (
         <MapCatalogModal
-          existingIds={maps.map(m => m.id)}
+          existingMaps={maps}
           onClose={() => setIsCatalogOpen(false)}
-          onImported={async (mapId, mode) => {
-            const updated = await mapService.getMaps();
-            setMaps(updated);
-            setActiveMode(mode);
-            setViewActive(true);
-            setSearchQuery('');
-            const found = updated.find(m => m.id === mapId);
-            if (!found) throw new Error('O mapa foi cadastrado, mas não apareceu para esta equipe.');
-          }}
+          onSelect={handleMapSelected}
         />
       )}
       <MapDetailsModal 
@@ -403,9 +432,10 @@ export function MapsHub() {
       />
 
       <EditMapModal
-        map={editingMap} 
+        map={editingMap}
+        initialValues={importMapDraft}
         isOpen={isAddModalOpen}
-        onClose={() => { setIsAddModalOpen(false); setEditingMap(null); }}
+        onClose={() => { setIsAddModalOpen(false); setEditingMap(null); setImportMapDraft(null); }}
         onSave={handleSaveMap}
       />
       
