@@ -18,6 +18,7 @@ function add(index: number, mapId: string, ally: string[], enemy: string[], won:
 for(let i=0;i<8;i++)add(i+1,'gem',['mortis','gray','doug'],['dynamike','shelly','nita'],i<6);
 for(let i=0;i<5;i++)add(i+20,'heist',['mortis','gray','doug'],['dynamike','shelly','nita'],i===0);
 for(let i=0;i<6;i++)add(i+30,'gem',['allie','doug','gus'],['edgar','piper','buzz'],i<5,'davi');
+for(let i=0;i<6;i++)add(i+50,'gem',['colt','gus','allie'],['piper','nita','buzz'],true);
 const perf=buildEvidence(matches,picks,maps);
 
 describe('Evidence-based draft',()=>{
@@ -58,7 +59,8 @@ describe('Evidence-based draft',()=>{
      {id:'linc',nickname:'Linc',name:'Linc',isActive:true,comfortBrawlers:[]},
      {id:'davi',nickname:'Davi',name:'Davi',isActive:true,comfortBrawlers:['mortis']}
    ];
-   expect(perf.comfort('mortis',players).find(x=>x.playerId==='linc')?.inferred).toBe(true);
+   expect(perf.comfort('colt',players).find(x=>x.playerId==='linc')?.inferred).toBe(true);
+   expect(perf.comfort('mortis',players).find(x=>x.playerId==='linc')).toBeUndefined();
    expect(perf.comfort('mortis',players).find(x=>x.playerId==='davi')?.manual).toBe(true);
  });
 });
