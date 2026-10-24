@@ -7,6 +7,7 @@ import { cn } from '../../lib/utils';
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Search, Map as MapIcon, Info, Flame, Shield, Crosshair, Archive, ArchiveRestore, Plus, Edit } from 'lucide-react';
 import { MapDetailsModal, EditMapModal, AddCompModal } from './MapModals';
+import { MapCatalogModal } from './MapCatalogModal';
 
 import { analyticsService } from '../../services/analyticsService';
 
@@ -28,6 +29,7 @@ export function MapsHub() {
   const [viewActive, setViewActive] = useState(true);
   const [isLoadingSwitch, setIsLoadingSwitch] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [editingMap, setEditingMap] = useState<GameMap | null>(null);
   const [isAddCompModalOpen, setIsAddCompModalOpen] = useState(false);
 
@@ -151,7 +153,7 @@ export function MapsHub() {
           
           {!isPlayerMode && (
             <button 
-              onClick={() => { setEditingMap(undefined); setIsAddModalOpen(true); }}
+              onClick={() => setIsCatalogOpen(true)}
               className="bg-[#6366F1] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm h-full"
             >
               <Plus className="w-4 h-4" />
@@ -374,6 +376,21 @@ export function MapsHub() {
         </div>
       </div>
       
+      {isCatalogOpen && (
+        <MapCatalogModal
+          existingIds={maps.map(m => m.id)}
+          onClose={() => setIsCatalogOpen(false)}
+          onImported={async (mapId, mode) => {
+            const updated = await mapService.getMaps();
+            setMaps(updated);
+            setActiveMode(mode);
+            setViewActive(true);
+            setSearchQuery('');
+            const found = updated.find(m => m.id === mapId);
+            if (!found) throw new Error('O mapa foi cadastrado, mas não apareceu para esta equipe.');
+          }}
+        />
+      )}
       <MapDetailsModal 
         map={selectedMap}
         isOpen={!!selectedMap}
