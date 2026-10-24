@@ -352,6 +352,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     const map = maps.find(m => m.id === draftState.mapId);
 
     const snipers = allyBrawlers.filter(b => b.type.includes('Tiro preciso')).length;
+    const controllers = allyBrawlers.filter(b => b.type.includes('Controle')).length;
     const throwers = allyBrawlers.filter(b => b.type.includes('Artilharia')).length;
     const tanks = allyBrawlers.filter(b => b.type.includes('Tanque')).length;
 
@@ -359,8 +360,8 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     if (throwers >= 3) return "Atenção: Composição com 3 Lançadores — Vulnerabilidade crítica contra Assassinos.";
     if (tanks >= 3) return "Atenção: Composição com 3 Tanques — Risco contra Brawlers de Controle e Anti-Tanques.";
     
-    if (map?.terrain === 'Aberto' && allyBrawlers.length >= 2 && snipers === 0) {
-      return "Atenção: Faltam Atiradores/Controle para este mapa longo.";
+    if (map?.terrain === 'Aberto' && allyBrawlers.length >= 2 && snipers === 0 && controllers === 0) {
+      return "Atenção: não há Tiro preciso nem Controle nesta composição para mapa aberto.";
     }
 
     return null;
