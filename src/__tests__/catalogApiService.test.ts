@@ -32,7 +32,7 @@ describe('Catálogo BrawlAPI', () => {
   it('rejeita IDs externos não numéricos e respostas inválidas', async () => {
     await expect(addMapFromApi('javascript:evil', { name: 'Mapa', terrain: 'Misto' })).rejects.toThrow(/inválido/);
     hooks.invoke.mockResolvedValue({ data: { ok: false, error: 'Mapa desconhecido' }, error: null });
-    await expect(addMapFromApi('15000292')).rejects.toThrow('Mapa desconhecido');
+    await expect(addMapFromApi('15000292', { name: 'Aberto', terrain: 'Misto' })).rejects.toThrow('Mapa desconhecido');
   });
 
   it('não utiliza chave de serviço no frontend para atualizar brawlers', async () => {
