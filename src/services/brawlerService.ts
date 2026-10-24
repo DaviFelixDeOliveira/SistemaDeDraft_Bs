@@ -109,6 +109,23 @@ export const brawlerService = {
     return null;
   },
 
+  /** Altera somente tiers da equipe autenticada, em uma operação atômica no banco. */
+  setTeamMetaTiers: async (brawlerIds: string[], tier: 'S' | 'A' | 'B' | 'C' | 'D'): Promise<number> => {
+    const uniqueIds = [...new Set(brawlerIds)].filter(Boolean);
+    if (!['S', 'A', 'B', 'C', 'D'].includes(tier)) throw new Error('Tier inválido.');
+    if (uniqueIds.length === 0 || uniqueIds.length > 150) {
+      throw new Error('Selecione entre 1 e 150 brawlers.');
+    }
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) throw new Error('Faça login na sua equipe para organizar o meta.');
+    const { data, error } = await supabase.rpc('set_team_brawler_tiers', {
+      p_ids: uniqueIds,
+      p_tier: tier,
+    });
+    if (error) throw new Error('Não foi possível salvar os tiers da equipe: ' + error.message);
+    return typeof data === 'number' ? data : uniqueIds.length;
+  },
+
   deleteBrawler: async (id: string): Promise<void> => {
     await brawlerService.updateBrawler(id, { is_active: false });
   }
