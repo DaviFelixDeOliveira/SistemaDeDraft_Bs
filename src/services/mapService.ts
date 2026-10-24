@@ -47,7 +47,7 @@ export const mapService = {
     if (error) throw error;
     if (preferencesError) throw preferencesError;
     const perTeam = new Map((settings || []).map(s => [s.map_id, s]));
-    return (data || []).map(row => {
+    return (data || []).filter(row => perTeam.has(row.id)).map(row => {
       const map = mapFromSupabase(row);
       const preference = perTeam.get(map.id);
       return !preference ? map : {
@@ -92,6 +92,14 @@ export const mapService = {
     const { error } = await supabase.from('team_map_settings')
       .upsert({ team_id: auth.user.id, map_id: id, is_active: isActive }, { onConflict: 'team_id,map_id' });
     if (error) throw error;
+  },
+
+  /** Remove da lista da equipe se não houver dados; com histórico, arquiva em vez de apagar. */
+  removeMapFromRotation: async (id: string): Promise<'archived' | 'removed'> => {
+    const { data, error } = await supabase.rpc('remove_team_map_from_rotation', { p_map_id: id });
+    if (error) throw new Error('Não foi possível remover o mapa da rotação: ' + error.message);
+    if (data !== 'archived' && data !== 'removed') throw new Error('O servidor não confirmou a remoção.');
+    return data;
   },
 
   // ─── Composições ────────────────────────────────────────────────────────────
