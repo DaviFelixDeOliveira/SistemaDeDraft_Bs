@@ -92,8 +92,16 @@ export function buildEvidence(matches: Match[], picks: MatchPick[], maps: GameMa
       const manual = manualIds.includes(related);
       const all = kind === 'partner' ? withAlly(id, related) : against(id, related).global;
       // Automaticamente inferido apenas com 5+ confrontos e sinal consistente.
+      // Repetir sempre o mesmo trio inimigo não isola um counter do restante
+      // da composição. Exigir ao menos duas configurações distintas para
+      // associações automáticas de matchup.
+      const compositions = new Set(get(id).filter(m => m.enemies.includes(related))
+        .map(m => m.enemies.filter(enemy => enemy !== related).sort().join('|')));
+      const variedOpponents = compositions.size >= 2;
       const inferred = all.matches >= 5 && (kind === 'partner' ||
-        (kind === 'counter' ? all.winrate !== null && all.winrate >= 60 : all.winrate !== null && all.winrate <= 40));
+        (variedOpponents && (kind === 'counter'
+          ? all.winrate !== null && all.winrate >= 60
+          : all.winrate !== null && all.winrate <= 40)));
       if (!manual && !inferred) continue;
       const contextual = kind === 'partner' ? all : against(id, related, mode, mapId).global;
       relations.push({ ...contextual, id: related, manual, inferred });
