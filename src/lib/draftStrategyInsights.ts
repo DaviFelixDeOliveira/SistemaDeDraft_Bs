@@ -75,10 +75,10 @@ export function planDraftOpening(brawlers:Brawler[],map:GameMap,allyStarts:boole
 /** Aviso de funções críticas considera Controle de forma explícita. */
 export function compositionBalanceAlert(ourTeam:Brawler[],map:GameMap|null):string|null{
   const n=(name:string)=>ourTeam.filter(b=>b.type.includes(name)).length;
-  if(n('Tiro preciso')>=3)return 'Atenção: composição com três Atiradores; considere cobertura contra avanços rápidos.';
-  if(n('Artilharia')>=3)return 'Atenção: composição com três Artilharias; cuidado contra personagens de avanço.';
-  if(n('Tanque')>=3)return 'Atenção: composição com três Tanques; cuidado contra anti-tanques e Controle.';
+  if(n('Tiro preciso')>=3)return 'Atenção: composição com três Atiradores! Considere brawlers anti tanques, que sirvamcontra avanços rápidos.';
+  if(n('Artilharia')>=3)return 'Atenção: composição com três Artilharias! Cuidado contra personagens de avanço.';
+  if(n('Tanque')>=3)return 'Atenção: composição com três Tanques! Cuidado contra anti-tanques e brawlers de controle.';
   if(map?.terrain==='Aberto' && ourTeam.length>=2 && n('Tiro preciso')===0 && n('Controle')===0)
-    return 'Atenção: não há Tiro preciso nem Controle nesta composição para mapa aberto.';
+    return 'Atenção: não há nenhum tiro preciso nem controle nesta composição! Considere isso ao escolher brawlers para o time.';
   return null;
 }

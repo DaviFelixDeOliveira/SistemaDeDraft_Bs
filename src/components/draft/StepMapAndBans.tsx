@@ -275,8 +275,8 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-3">{banRecs.reason}</p>
                   {draftState.allyStarts && firstPickCandidates.length>0 && (
                     <div className="mb-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
-                      <p className="text-xs font-bold text-emerald-500">Primeiro pick — considerar reservar, não banir</p>
-                      <p className="mt-1 text-xs text-zinc-500">{firstPickCandidates.map(b=>b.name).join(' · ')}. Escolha estratégica preliminar, não vitória garantida.</p>
+                      <p className="text-xs font-bold text-emerald-500">Considere reservar os brawlers a seguir:</p>
+                      <p className="mt-1 text-xs text-zinc-500">{firstPickCandidates.map(b=>b.name).join(' · ')}. Sugestões baseadas em estatísticas e desempenho.</p>
                     </div>
                   )}
                   {compInsights.length>0&&(

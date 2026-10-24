@@ -623,7 +623,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                    </div>
                    <div>
                      <div className="font-medium text-slate-900 dark:text-white text-sm">{brawler.name}</div>
-                     <div className="text-[10px] text-slate-500 dark:text-zinc-500">{isPickedByUs ? 'Já Selecionado' : 'Clique para Pickar'}</div>
+                     <div className="text-[10px] text-slate-500 dark:text-zinc-500">{isPickedByUs ? 'Já Selecionado' : 'Clique para pegar'}</div>
                    </div>
                 </div>
               );

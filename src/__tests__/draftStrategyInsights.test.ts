@@ -25,10 +25,28 @@ describe('Confiabilidade de drafts e composições',()=>{
    expect(ours.reserved.has(ours.plannedPicks[0].id)).toBe(true);
    expect(planDraftOpening(brawlers,map,false,[]).reserved.size).toBe(0);
  });
- it('Finx atende controle em mapa aberto e remove alerta, mesmo sem sniper',()=>{
-   expect(compositionBalanceAlert([brawlers[1],brawlers[0]],map)).toBeNull();
-   expect(compositionBalanceAlert([brawlers[1],brawlers[2]],map)).toContain('Tiro preciso nem Controle');
- });
+it('qualquer brawler da classe Controle remove o aviso em mapa aberto', () => {
+  const shade = brawlers[1];
+  const mortis = brawlers[2];
+  const finx = brawlers[0];
+
+  const outroControle = b('controle-generico', 'B', 'Controle');
+
+  // Sem Controle e sem Tiro preciso, deve existir um aviso.
+  expect(
+    compositionBalanceAlert([shade, mortis], map)
+  ).not.toBeNull();
+
+  // Finx é Controle, portanto não deve existir aviso.
+  expect(
+    compositionBalanceAlert([shade, finx], map)
+  ).toBeNull();
+
+  // Qualquer outro brawler da classe Controle também funciona.
+  expect(
+    compositionBalanceAlert([shade, outroControle], map)
+  ).toBeNull();
+});
  it('uma partida de Shade da nossa equipe já entra no mapa e modo',()=>{
    const data=buildEvidence([match(1,false),match(2,true)],[pick(1,'enemy','shade'),pick(2,'ally','shade')],[map]);
    expect(data.breakdown('shade')[0].sample.matches).toBe(1);
