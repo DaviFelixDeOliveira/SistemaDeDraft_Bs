@@ -38,6 +38,8 @@ export interface Player {
   id: string; // UUID
   name: string;
   nickname: string;
+  brawlTag?: string | null;
+  brawlTagCheckedAt?: string | null;
   status?: 'Titular' | 'Reserva';
   isActive: boolean;
   is_active?: boolean;
