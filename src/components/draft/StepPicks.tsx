@@ -200,6 +200,10 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         comfortPlayerName = 'playerName' in comfortPlayer ? comfortPlayer.playerName : (comfortPlayer.nickname || comfortPlayer.name);
         // computeComfortBonus aplica +350 (bom/neutro) ou +100 (fraco) conforme modeFit
         score += computeComfortBonus(brawler, map?.mode, true);
+        if ('sample' in comfortPlayer && comfortPlayer.sample.matches >= 5) {
+          if (comfortPlayer.sample.adjustedWinrate >= 60) score += 130;
+          if (comfortPlayer.sample.adjustedWinrate <= 40) score -= 150;
+        }
       }
 
       // 3. Adaptação ao Terreno e Mecânicas Únicas
@@ -240,6 +244,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       const activeEnemyCountersList: string[] = []; // Inimigos que ele countera
       const activeEnemySufferingList: string[] = []; // Inimigos para os quais ele sofre
       const interactionNotes: string[] = [];
+      let interactionScore = 0;
 
       enemyBrawlers.forEach(enemy => {
         // Verifica se o nosso brawler tem esse inimigo na lista 'counters' (ou se o inimigo tem o nosso na lista 'counteredBy')
@@ -287,7 +292,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         }
         for (const enemy of enemyBrawlers) {
           const vs = evidence.against(brawler.id,enemy.id,map.mode,map.id);
-          score += confrontationBonus(vs);
+          interactionScore += confrontationBonus(vs);
           if (vs.global.matches >= 5 && vs.global.winrate !== null) {
             if (vs.global.winrate >= 60 && !activeEnemyCountersList.includes(enemy.name)) activeEnemyCountersList.push(enemy.name);
             if (vs.global.winrate <= 40 && !activeEnemySufferingList.includes(enemy.name)) activeEnemySufferingList.push(enemy.name);
@@ -298,6 +303,8 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
             interactionNotes.push(`Contra equipe com ${enemy.name}: ${vs.global.winrate}%/${vs.global.matches}j${modeNote}${mapNote}. Resultado do trio, não duelo isolado.`);
           }
         }
+        // Os confrontos contra três inimigos da mesma partida não são independentes.
+        score += Math.max(-450,Math.min(450,interactionScore));
       }
 
       // 7. Aviso Preditivo de Counter-Threat (1.4 — não afeta score)
@@ -312,7 +319,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         if (threatNames.length > 0) {
           const namesStr = threatNames.join(', ');
           counterThreatWarning =
-            `Atenção: desempenho desfavorável contra equipes com ${namesStr}; não é prova de duelo.`;
+            `Possível ameaça (curadoria ou histórico): ${namesStr}. Não é prova de duelo.`;
         }
       }
 
