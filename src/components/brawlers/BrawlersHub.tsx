@@ -57,12 +57,12 @@ export function BrawlersHub() {
       try {
          const result = await syncBrawlersFromApi();
          await loadBrawlers();
-         if (!quiet || result.created > 0) {
+         if (!quiet || result.created > 0 || result.updated > 0) {
             setSyncInfo(result.skipped
                ? 'Catálogo já atualizado recentemente.'
-               : result.created > 0
-                  ? result.created + ' novo(s) brawler(s) incorporado(s) ao catálogo.'
-                  : 'Catálogo verificado. Nenhum brawler novo foi encontrado.');
+               : result.created > 0 || result.updated > 0
+                  ? `${result.created} novo(s) brawler(s) · ${result.updated} ficha(s) oficial(is) de classe/raridade atualizada(s).`
+                  : 'Catálogo conferido; não houve mudanças oficiais reconhecidas.');
          }
       } catch (err) {
          if (!quiet) setSyncInfo(err instanceof Error ? err.message : 'A API está indisponível. O catálogo anterior foi preservado.');
