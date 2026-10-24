@@ -103,7 +103,7 @@ export function MapCatalogModal({ existingMaps, onClose, onSelect }: Props) {
                 <button type="button" onClick={() => onSelect(map)}
                   className="inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-cyan-400">
                   {existing.has(map.id) ? <Check size={15} /> : <Plus size={15} />}
-                  {existing.has(map.id) ? 'Editar' : 'Adicionar'}
+                  {existing.has(map.id) ? (existing.get(map.id)?.isActive ? 'Editar' : 'Reativar') : 'Adicionar'}
                 </button>
               </div>
             </div>
@@ -114,7 +114,7 @@ export function MapCatalogModal({ existingMaps, onClose, onSelect }: Props) {
           )}
         </div>
         <footer className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500 dark:border-white/10 dark:text-zinc-500">
-          Nome e terreno podem ser alterados no próximo passo, sem afetar outras equipes.
+          Ao adicionar, o nome em inglês é usado inicialmente. Você pode editá-lo depois, sem afetar outras equipes.
         </footer>
         {preview && (
           <MapPreviewModal
