@@ -13,19 +13,41 @@ interface BrawlerArtworkProps {
 }
 
 /**
- * O catálogo BrawlAPI pode listar um brawler antes de suas imagens serem
- * distribuídas pela CDN. Tenta os dois retratos, mas nunca exibe o "ícone
- * quebrado" do navegador. A próxima montagem do componente tenta novamente
- * (assim as imagens voltam a aparecer quando o CDN for atualizado).
+ * A BrawlAPI pode publicar dados antes dos retratos chegarem à Brawlify.
+ * A BSInfo CDN e seu repositório público mantêm imagens por ID do jogo.
+ * Usamos esses endereços APENAS quando os links cadastrados falham;
+ * nenhum valor de tier ou dado de equipe é modificado.
  */
+export function getBrawlerArtworkSources(
+  iconUrl?: string | null,
+  imageUrl?: string | null,
+  preferPortrait = false
+): string[] {
+  const ordered = preferPortrait ? [imageUrl, iconUrl] : [iconUrl, imageUrl];
+  const candidates = ordered.filter(
+    (url): url is string => typeof url === 'string' && /^https:\/\//.test(url)
+  );
+  const gameId = candidates.map(url => url.match(/(160\d{5})\.(?:png|webp)(?:[?#]|$)/)?.[1]).find(Boolean);
+  if (gameId) {
+    const folder = preferPortrait ? 'portrait' : 'border';
+    const alternate = preferPortrait ? 'border' : 'portrait';
+    candidates.push(
+      `https://cdn.bsinfox.com/brawlers/${folder}/${gameId}.png`,
+      `https://cdn.bsinfox.com/brawlers/${alternate}/${gameId}.png`,
+      `https://raw.githubusercontent.com/lot-xq/BSInfo-CDN/main/brawlers/${folder}/${gameId}.png`,
+      `https://raw.githubusercontent.com/lot-xq/BSInfo-CDN/main/brawlers/${alternate}/${gameId}.png`,
+    );
+  }
+  return [...new Set(candidates)];
+}
 export function BrawlerArtwork({
   name, iconUrl, imageUrl, preferPortrait = false,
   large = false, className, imageClassName
 }: BrawlerArtworkProps) {
-  const sources = useMemo(() => [...new Set(
-    (preferPortrait ? [imageUrl, iconUrl] : [iconUrl, imageUrl])
-      .filter((url): url is string => typeof url === 'string' && /^https:\/\//.test(url))
-  )], [iconUrl, imageUrl, preferPortrait]);
+  const sources = useMemo(
+    () => getBrawlerArtworkSources(iconUrl, imageUrl, preferPortrait),
+    [iconUrl, imageUrl, preferPortrait]
+  );
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => setAttempt(0), [iconUrl, imageUrl, preferPortrait]);
