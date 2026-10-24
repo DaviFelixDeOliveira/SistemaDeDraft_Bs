@@ -1,7 +1,7 @@
 import { getBrawlerBgColor, getBrawlerClassIcon } from "../../lib/utils";
 import React, { useState, useEffect } from 'react';
 import { brawlerService } from '../../services/brawlerService';
-import { Search, Flame, Target, ChevronRight, X, Activity, Plus, Edit2, Users, ShieldAlert, Zap, ArrowLeft, Loader2, Trash2 } from 'lucide-react';
+import { Search, Flame, Target, ChevronRight, X, Activity, Plus, Edit2, Users, ShieldAlert, Zap, ArrowLeft, Loader2 } from 'lucide-react';
 import { cn, fuzzySearch } from '../../lib/utils';
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Brawler } from '../../types';
@@ -107,22 +107,6 @@ export function BrawlersHub() {
             }
             setIsModalOpen(false);
             setEditingBrawler(null);
-            setConfirmConfig(prev => ({ ...prev, isOpen: false }));
-         }
-      });
-   };
-
-   const handleDeleteBrawler = (brawlerId: string, brawlerName: string) => {
-      setConfirmConfig({
-         isOpen: true,
-         title: 'Excluir Brawler',
-         message: `Tem certeza que deseja excluir ${brawlerName}? Esta ação não pode ser desfeita.`,
-         action: async () => {
-            await brawlerService.deleteBrawler(brawlerId);
-            setBrawlers(prev => prev.filter(b => b.id !== brawlerId));
-            if (selectedBrawler?.id === brawlerId) {
-               setSelectedBrawler(null);
-            }
             setConfirmConfig(prev => ({ ...prev, isOpen: false }));
          }
       });
@@ -262,22 +246,7 @@ export function BrawlersHub() {
                                        >
                                           <Edit2 className="w-4 h-4" /> Editar
                                        </button>
-                                       <button
-                                          onClick={() => {
-                                             setConfirmConfig({
-                                                isOpen: true,
-                                                title: 'Excluir Brawler',
-                                                message: `Tem certeza que deseja excluir ${selectedBrawler.name}? Esta ação não pode ser desfeita.`,
-                                                action: () => {
-                                                   setBrawlers(prev => prev.filter(b => b.id !== selectedBrawler.id));
-                                                   setSelectedBrawler(null);
-                                                }
-                                             });
-                                          }}
-                                          className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-2"
-                                       >
-                                          <Trash2 className="w-4 h-4" /> Excluir
-                                       </button>
+                                       
                                     </div>
                                  )}
                               </div>
