@@ -254,18 +254,19 @@ interface EditMapModalProps {
   onClose: () => void;
   onSave: (map: Partial<GameMap>) => void;
   map?: GameMap | null;
+  initialValues?: Partial<GameMap> | null;
 }
 
-export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps) {
-  const [formData, setFormData] = useState<Partial<GameMap>>(map || {
+export function EditMapModal({ isOpen, onClose, onSave, map, initialValues }: EditMapModalProps) {
+  const [formData, setFormData] = useState<Partial<GameMap>>(map || initialValues || {
     name: '',
     mode: 'Pique-Gema',
     terrain: 'Aberto'
   });
 
   useEffect(() => {
-    if (map) {
-      setFormData(map);
+    if (map || initialValues) {
+      setFormData(map || initialValues || {});
     } else {
       setFormData({
         name: '',
@@ -273,7 +274,9 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
         terrain: 'Aberto'
       });
     }
-  }, [map]);
+  }, [map, initialValues, isOpen]);
+  const [imageError, setImageError] = useState(false);
+  useEffect(() => { setImageError(false); }, [formData.imageUrl]);
   if (!isOpen) return null;
 
   return (
@@ -304,7 +307,9 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Modo de Jogo</label>
             <select 
               value={formData.mode || 'Pique-Gema'}
-              onChange={e => setFormData({ ...formData, mode: e.target.value as any })}
+              onChange={e => setFormData({ ...formData, mode: e.target.value as GameMap['mode'] })}
+              disabled={!!map || !!initialValues}
+              title="Modo preservado para manter as estatísticas vinculadas ao mapa correto"
               className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
             >
               <option value="Pique-Gema">Pique-Gema</option>
@@ -332,33 +337,20 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
 
           <div>
             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Código do Mapa *</label>
-            <input 
-              type="text" 
-              value={formData.imageUrl ? (formData.imageUrl.match(/\d+/) ? formData.imageUrl.match(/\d+/)[0] : '') : ''}
-              onChange={e => {
-                const val = e.target.value.replace(/\D/g, '');
-                if (val) {
-                  setFormData({ ...formData, imageUrl: `https://raw.githubusercontent.com/Brawlify/CDN/master/maps/regular/${val}.png` });
-                } else {
-                  setFormData({ ...formData, imageUrl: '' });
-                }
-              }}
-              className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
-              placeholder="Ex: 15000703"
-              required
+            <input
+              type="text"
+              value={formData.id || ''}
+              readOnly
+              aria-label="Código do mapa"
+              className="w-full cursor-not-allowed rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:border-white/10 dark:bg-[#0A0A0A] dark:text-zinc-300"
             />
-            <p className="text-xs text-zinc-500 mt-1">Apenas os números (ex: 15000703)</p>
+            <p className="mt-1 text-xs text-zinc-500">Código original preservado para vincular imagens e estatísticas.</p>
             {formData.imageUrl && (
-              <div className="mt-3 aspect-video bg-zinc-100 dark:bg-[#0A0A0A] rounded-lg border border-zinc-200 dark:border-[#2A2A2A] overflow-hidden flex items-center justify-center">
-                 <img 
-                   src={formData.imageUrl} 
-                   alt="Preview do Mapa" 
-                   className="w-full h-full object-contain"
-                   onError={(e) => {
-                     e.target.style.display = 'none';
-                     e.target.parentElement.innerHTML = '<span class="text-zinc-500 text-sm">Imagem não encontrada</span>';
-                   }}
-                 />
+              <div className="mt-3 flex min-h-[145px] items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-white/10 dark:bg-[#0A0A0A]">
+                {!imageError ? <img src={formData.imageUrl} alt={`Mapa ${formData.name || ''}`}
+                  className="max-h-48 w-auto max-w-full object-contain"
+                  onError={() => setImageError(true)} /> :
+                  <span className="p-4 text-center text-sm text-zinc-500">Imagem temporariamente indisponível</span>}
               </div>
             )}
           </div>
@@ -375,7 +367,7 @@ export function EditMapModal({ isOpen, onClose, onSave, map }: EditMapModalProps
             onClick={() => {
               if (formData.name) onSave(formData);
             }}
-            disabled={!formData.name}
+            disabled={!formData.name?.trim() || !formData.id}
             className="px-6 py-3 bg-[#6366F1] hover:bg-[#E62E5C] disabled:bg-zinc-200 dark:disabled:bg-zinc-800 text-white text-sm font-bold rounded-lg transition-colors"
           >
             Salvar
