@@ -152,12 +152,15 @@ export function MapsHub() {
           </div>
           
           {!isPlayerMode && (
-            <button 
+            <button
+              type="button"
               onClick={() => setIsCatalogOpen(true)}
-              className="bg-[#6366F1] hover:bg-[#E62E5C] text-white px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm h-full"
+              title="Buscar mapas na BrawlAPI e ativar para sua equipe"
+              aria-label="Buscar mapas na API"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
             >
-              <Plus className="w-4 h-4" />
-              Novo Mapa
+              <Search className="h-4 w-4" aria-hidden="true" />
+              Buscar mapas na API
             </button>
           )}
         </div>
