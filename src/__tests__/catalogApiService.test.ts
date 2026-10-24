@@ -23,14 +23,14 @@ describe('Catálogo BrawlAPI', () => {
     expect(() => parseExternalMaps({ error: 'invalid' })).toThrow(/inesperada/);
   });
 
-  it('usa a função protegida e não grava mapas diretamente no navegador', async () => {
+  it('envia à função protegida o nome confirmado para a equipe', async () => {
     hooks.invoke.mockResolvedValue({ data: { ok: true, mapId: '15000292', mode: 'Zona Estratégica' }, error: null });
-    expect(await addMapFromApi('15000292')).toMatchObject({ mapId: '15000292' });
-    expect(hooks.invoke).toHaveBeenCalledWith('catalog-sync', { body: { action: 'add-map', mapId: 15000292 } });
+    expect(await addMapFromApi('15000292', { name: 'Aberto', terrain: 'Misto' })).toMatchObject({ mapId: '15000292' });
+    expect(hooks.invoke).toHaveBeenCalledWith('catalog-sync', { body: { action: 'add-map', mapId: 15000292, displayName: 'Aberto', terrain: 'Misto' } });
   });
 
   it('rejeita IDs externos não numéricos e respostas inválidas', async () => {
-    await expect(addMapFromApi('javascript:evil')).rejects.toThrow(/inválido/);
+    await expect(addMapFromApi('javascript:evil', { name: 'Mapa', terrain: 'Misto' })).rejects.toThrow(/inválido/);
     hooks.invoke.mockResolvedValue({ data: { ok: false, error: 'Mapa desconhecido' }, error: null });
     await expect(addMapFromApi('15000292')).rejects.toThrow('Mapa desconhecido');
   });
