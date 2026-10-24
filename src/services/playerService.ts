@@ -6,6 +6,8 @@ function mapFromSupabase(data: any): Player {
     id: data.id,
     name: data.name,
     nickname: data.nickname,
+    brawlTag: data.brawl_tag ?? null,
+    brawlTagCheckedAt: data.brawl_tag_checked_at ?? null,
     status: data.status || 'Titular',
     isActive: data.is_active ?? true,
     is_active: data.is_active ?? true,
@@ -19,6 +21,8 @@ function mapToSupabase(player: Partial<Player>): any {
   if (player.id !== undefined) row.id = player.id;
   if (player.name !== undefined) row.name = player.name;
   if (player.nickname !== undefined) row.nickname = player.nickname;
+  if (player.brawlTag !== undefined) row.brawl_tag = player.brawlTag;
+  if (player.brawlTagCheckedAt !== undefined) row.brawl_tag_checked_at = player.brawlTagCheckedAt;
   if (player.status !== undefined) row.status = player.status;
   if (player.isActive !== undefined) row.is_active = player.isActive;
   if (player.is_active !== undefined) row.is_active = player.is_active;
@@ -50,6 +54,7 @@ export const playerService = {
     const nickname = player.nickname?.trim();
     if (!nickname) throw new Error('Informe o nickname do jogador.');
     const name = player.name?.trim() || nickname;
+    if (player.brawlTag && !/^#[A-Z0-9]{3,16}$/.test(player.brawlTag)) throw new Error('Tag de jogador inválida.');
     const id = player.id?.trim() || crypto.randomUUID();
     const row = mapToSupabase({ ...player, id, name, nickname });
 
