@@ -91,7 +91,8 @@ export function getModeFit(brawler: Brawler, mode: GameMode): ModeFit {
     brawler.breaksWalls ||
     (!!brawler.howBreaksWalls && brawler.howBreaksWalls !== 'N/A');
 
-  const hasType = (...t: string[]): boolean => t.some(cls => types.includes(cls));
+  const hasType = (...t: string[]): boolean => t.some(cls =>
+    types.includes(cls) || (cls === 'Destruidor' && types.includes('Dano')));
 
   switch (mode) {
     case 'Roubo': {
