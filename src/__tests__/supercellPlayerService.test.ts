@@ -19,7 +19,7 @@ describe('Supercell player API client', () => {
   });
 
   it('rejeita tags inválidas antes de consultar a API', async () => {
-    await expect(supercellPlayerService.lookup('xx!')).rejects.toThrow(/tag válida/);
+    expect(() => supercellPlayerService.lookup('xx!')).toThrow(/tag válida/);
     expect(mocks.invoke).not.toHaveBeenCalled();
   });
 
