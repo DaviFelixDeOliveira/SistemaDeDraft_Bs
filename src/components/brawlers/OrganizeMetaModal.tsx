@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Check, CheckCircle2, Loader2, Search, SlidersHorizontal, X } from 'lucide-react';
 import type { Brawler } from '../../types';
-import { fuzzySearch } from '../../lib/utils';
 import { BrawlerArtwork } from '../ui/BrawlerArtwork';
 
 export const META_TIERS = ['S', 'A', 'B', 'C', 'D'] as const;
@@ -17,7 +16,7 @@ export function metaTierCounts(brawlers: Brawler[]): Record<MetaTier, number> {
 
 export function findMetaCandidates(brawlers: Brawler[], search: string, target: MetaTier): Brawler[] {
   return brawlers
-    .filter(b => !search.trim() || fuzzySearch(search.trim(), b.name))
+    .filter(b => !search.trim() || b.name.toLocaleLowerCase('pt-BR').includes(search.trim().toLocaleLowerCase('pt-BR')))
     .sort((a, b) => {
       if ((a.tier === target) !== (b.tier === target)) return a.tier === target ? 1 : -1;
       return a.name.localeCompare(b.name, 'pt-BR');
