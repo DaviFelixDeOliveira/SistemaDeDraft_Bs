@@ -101,12 +101,41 @@ export const brawlerService = {
     for (const [key, value] of Object.entries(mapped)) {
       if (allowed.has(key)) payload[key] = value;
     }
-    const { error } = await supabase.from('team_brawler_settings').upsert(
-      { ...payload, team_id: auth.user.id, brawler_id: id },
-      { onConflict: 'team_id,brawler_id' }
-    );
-    if (error) throw error;
+    // Para uma edição manual, atualize apenas as colunas informadas.
+    // Um upsert parcial poderia sobrescrever o tier definido no Organizar Meta.
+    if (Object.keys(payload).length === 0) return null;
+    const { data: existing, error: lookupError } = await supabase.from('team_brawler_settings')
+      .select('brawler_id').eq('team_id', auth.user.id).eq('brawler_id', id).maybeSingle();
+    if (lookupError) throw lookupError;
+    if (existing) {
+      const { data: updated, error } = await supabase.from('team_brawler_settings')
+        .update(payload).eq('team_id', auth.user.id).eq('brawler_id', id)
+        .select('brawler_id').single();
+      if (error) throw error;
+      if (!updated) throw new Error('A alteração do brawler não foi confirmada.');
+    } else {
+      const { error } = await supabase.from('team_brawler_settings')
+        .insert({ ...payload, team_id: auth.user.id, brawler_id: id });
+      if (error) throw error;
+    }
     return null;
+  },
+
+  /** Altera somente tiers da equipe autenticada, em uma operação atômica no banco. */
+  setTeamMetaTiers: async (brawlerIds: string[], tier: 'S' | 'A' | 'B' | 'C' | 'D'): Promise<number> => {
+    const uniqueIds = [...new Set(brawlerIds)].filter(Boolean);
+    if (!['S', 'A', 'B', 'C', 'D'].includes(tier)) throw new Error('Tier inválido.');
+    if (uniqueIds.length === 0 || uniqueIds.length > 150) {
+      throw new Error('Selecione entre 1 e 150 brawlers.');
+    }
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) throw new Error('Faça login na sua equipe para organizar o meta.');
+    const { data, error } = await supabase.rpc('set_team_brawler_tiers', {
+      p_ids: uniqueIds,
+      p_tier: tier,
+    });
+    if (error) throw new Error('Não foi possível salvar os tiers da equipe: ' + error.message);
+    return typeof data === 'number' ? data : uniqueIds.length;
   },
 
   deleteBrawler: async (id: string): Promise<void> => {
