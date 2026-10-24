@@ -40,7 +40,7 @@ export function PlayersHub() {
     setPlayers(pData);
     setBrawlers(bData);
     // Atualização automática ao abrir a seção, limitada aos perfis com mais de 24h.
-    // Não depende do navegador estar aberto nem muda IDs históricos.
+    // Funciona quando a seção é aberta; não muda IDs históricos.
     void refreshNames(pData);
 
     const statsMap: Record<string, any> = {};
