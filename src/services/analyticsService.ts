@@ -342,58 +342,6 @@ export const analyticsService = {
     const totalAllyBans = brawlerBans.filter(b => b.team === 'ally').length;
     const totalEnemyBans = brawlerBans.filter(b => b.team === 'enemy').length;
 
-    // Parceiros por WR ponderado (mínimo 2 partidas juntos para prioridade)
-    const realPartners = Object.entries(partnerGames)
-      .map(([id, stats]) => {
-        const wr = stats.total > 0 ? (stats.wins / stats.total) : 0;
-        return { brawler: brawlersMap.get(id), count: stats.total, wins: stats.wins, wr };
-      })
-      .filter(item => item.brawler)
-      .sort((a, b) => {
-        // Ordena por WR e número de jogos
-        if (b.wr !== a.wr) return b.wr - a.wr;
-        return b.count - a.count;
-      })
-      .slice(0, 3)
-      .map(item => item.brawler as Brawler);
-
-    // Counters: dados reais de vitórias + curadoria manual
-    const realCounters = Object.entries(enemyCounterCounts)
-      .map(([id, count]) => ({ brawler: brawlersMap.get(id), count }))
-      .filter(item => item.brawler)
-      .sort((a, b) => b.count - a.count)
-      .map(item => item.brawler as Brawler);
-
-    const manualCounters = (targetBrawler?.counters || [])
-      .map(id => brawlersMap.get(id))
-      .filter(Boolean) as Brawler[];
-
-    // Une sem duplicatas (priorizando os manuais cadastrados)
-    const combinedCountersMap = new Map<string, Brawler>();
-    manualCounters.forEach(b => combinedCountersMap.set(b.id, b));
-    realCounters.forEach(b => {
-      if (!combinedCountersMap.has(b.id)) combinedCountersMap.set(b.id, b);
-    });
-    const counters = Array.from(combinedCountersMap.values()).slice(0, 6);
-
-    // Ameaças: dados reais de derrotas + curadoria manual (Sofre para)
-    const realThreats = Object.entries(threatCounts)
-      .map(([id, count]) => ({ brawler: brawlersMap.get(id), count }))
-      .filter(item => item.brawler)
-      .sort((a, b) => b.count - a.count)
-      .map(item => item.brawler as Brawler);
-
-    const manualThreats = (targetBrawler?.counteredBy || [])
-      .map(id => brawlersMap.get(id))
-      .filter(Boolean) as Brawler[];
-
-    const combinedThreatsMap = new Map<string, Brawler>();
-    manualThreats.forEach(b => combinedThreatsMap.set(b.id, b));
-    realThreats.forEach(b => {
-      if (!combinedThreatsMap.has(b.id)) combinedThreatsMap.set(b.id, b);
-    });
-    const threats = Array.from(combinedThreatsMap.values()).slice(0, 6);
-
     return {
       totalBans,
       totalAllyBans, totalEnemyBans,
