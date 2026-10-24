@@ -295,7 +295,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
               ? ` · modo ${vs.mode.winrate}%/${vs.mode.matches}j` : '';
             const mapNote = vs.map.matches >= 3 && vs.map.winrate !== null
               ? ` · mapa ${vs.map.winrate}%/${vs.map.matches}j` : '';
-            interactionNotes.push(`Contra equipe com ${enemy.name}: ${vs.global.winrate}%/${vs.global.matches}j${modeNote}${mapNote}. Resultado do trio, não duelo isolado.`);
+            interactionNotes.push(`Contra equipe com ${enemy.name}: geral ${vs.global.winrate}% em ${vs.global.matches}j; últimas ${vs.global.recentMatches}: ${vs.global.recentWins} vitória(s)${modeNote}${mapNote}. Resultado do trio, não duelo isolado.`);
           }
         }
         // Os confrontos contra três inimigos da mesma partida não são independentes.
