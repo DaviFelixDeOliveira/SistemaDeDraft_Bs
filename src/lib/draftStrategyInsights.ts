@@ -71,3 +71,14 @@ export function planDraftOpening(brawlers:Brawler[],map:GameMap,allyStarts:boole
  const plannedPicks=allyStarts?available.slice(0,3):[];
  return {plannedPicks,reserved:new Set(plannedPicks.map(p=>p.id))};
 }
+
+/** Aviso de funções críticas considera Controle de forma explícita. */
+export function compositionBalanceAlert(ourTeam:Brawler[],map:GameMap|null):string|null{
+  const n=(name:string)=>ourTeam.filter(b=>b.type.includes(name)).length;
+  if(n('Tiro preciso')>=3)return 'Atenção: composição com três Atiradores; considere cobertura contra avanços rápidos.';
+  if(n('Artilharia')>=3)return 'Atenção: composição com três Artilharias; cuidado contra personagens de avanço.';
+  if(n('Tanque')>=3)return 'Atenção: composição com três Tanques; cuidado contra anti-tanques e Controle.';
+  if(map?.terrain==='Aberto' && ourTeam.length>=2 && n('Tiro preciso')===0 && n('Controle')===0)
+    return 'Atenção: não há Tiro preciso nem Controle nesta composição para mapa aberto.';
+  return null;
+}
