@@ -239,10 +239,13 @@ export function computeBanScore(
     if (brawler.type.includes('Algoz') || brawler.type.includes('Controle')) ruleScore += 15;
   }
 
-  // Bônus histórico (zero em cold start)
+  // 1-2 partidas são observações, não evidência suficiente para dominar o ban.
+  // Winrate suavizado com 4 pseudo-partidas a 50%, amostra e bônus limitados.
   const stat = enemyPickStats[brawler.id];
-  if (stat && stat.picks > 0) {
-    const historicalBanBonus = (stat.winrate - 50) * Math.min(stat.picks, 10) * 8;
+  if (stat && stat.picks >= 3) {
+    const smoothedWr = (stat.wins + 2) * 100 / (stat.picks + 4);
+    const reliability = Math.min((stat.picks - 2) / 8, 1);
+    const historicalBanBonus = Math.max(-65, Math.min(65, (smoothedWr - 50) * reliability * 3));
     ruleScore += historicalBanBonus;
   }
 
