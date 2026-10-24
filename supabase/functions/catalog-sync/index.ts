@@ -74,7 +74,7 @@ Deno.serve(async (request: Request) => {
   const { data: verified, error: verifyError } = await database.auth.getUser(token);
   if (verifyError || !verified.user) return json({ error: 'Sessão inválida.' }, 401);
 
-  let body: { action?: string; mapId?: number };
+  let body: { action?: string; mapId?: number; displayName?: string; terrain?: string };
   try { body = await request.json(); } catch { return json({ error: 'JSON inválido.' }, 400); }
 
   try {
@@ -156,6 +156,14 @@ Deno.serve(async (request: Request) => {
       }
       const mode = modePt[safeName(external.gameMode?.name).toLowerCase()];
       if (!mode) return json({ error: 'Este modo de jogo não é suportado pelo sistema.' }, 422);
+      const rawName = body.displayName;
+      if (typeof rawName !== 'string' || rawName.trim().length < 1 || rawName.trim().length > 100) {
+        return json({ error: 'O nome do mapa deve conter de 1 a 100 caracteres.' }, 400);
+      }
+      const terrains = ['Aberto', 'Semi-Aberto', 'Fechado', 'Misto'];
+      if (!body.terrain || !terrains.includes(body.terrain)) {
+        return json({ error: 'Tipo de terreno inválido.' }, 400);
+      }
       const imageUrl = safeAsset(external.imageUrl);
       const { error: mapError } = await database.from('maps').upsert({
         id: String(id), name: safeName(external.name), mode,
@@ -164,6 +172,7 @@ Deno.serve(async (request: Request) => {
       if (mapError) throw mapError;
       const { error: teamError } = await database.from('team_map_settings').upsert({
         team_id: verified.user.id, map_id: String(id), is_active: true,
+        display_name: rawName.trim(), terrain_override: body.terrain,
       }, { onConflict: 'team_id,map_id' });
       if (teamError) throw teamError;
       return json({ ok: true, mapId: String(id), name: safeName(external.name), mode, notice: external.disabled ? 'O mapa está sinalizado como desativado na fonte. A seleção competitiva é manual.' : null });
