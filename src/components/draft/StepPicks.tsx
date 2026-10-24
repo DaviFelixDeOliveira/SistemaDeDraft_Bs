@@ -18,6 +18,7 @@ import {
 import { Brawler, GameMap, Player } from '../../types';
 import { cn, fuzzySearch } from '../../lib/utils';
 import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2, Undo2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { BrawlerArtwork } from '../ui/BrawlerArtwork';
 
 interface StepPicksProps {
   onUndo?: () => void;
@@ -459,7 +460,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                 )}
               >
                 <div className="w-12 h-12 rounded bg-slate-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-[#2A2A2A]">
-                   {brawler && <img src={brawler.imageUrl || brawler.iconUrl} alt="" className="w-full h-full object-cover" />}
+                   {brawler && <BrawlerArtwork name={brawler.name} imageUrl={brawler.imageUrl} iconUrl={brawler.iconUrl} preferPortrait className="h-full w-full" />}
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
                   {brawler ? (
@@ -520,7 +521,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                   )}
                 </div>
                 <div className="w-12 h-12 rounded bg-slate-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-[#2A2A2A]">
-                   {brawler && <img src={brawler.imageUrl || brawler.iconUrl} alt="" className="w-full h-full object-cover" />}
+                   {brawler && <BrawlerArtwork name={brawler.name} imageUrl={brawler.imageUrl} iconUrl={brawler.iconUrl} preferPortrait className="h-full w-full" />}
                 </div>
               </div>
             );
@@ -551,7 +552,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                   )}
                 >
                    <div className="w-10 h-10 rounded bg-slate-200 dark:bg-zinc-800 flex-shrink-0 overflow-hidden">
-                     {brawler.iconUrl && <img src={brawler.iconUrl} alt="" className="w-full h-full object-cover" />}
+                     <BrawlerArtwork name={brawler.name} imageUrl={brawler.imageUrl} iconUrl={brawler.iconUrl} className="h-full w-full" />
                    </div>
                    <div>
                      <div className="font-medium text-slate-900 dark:text-white text-sm">{brawler.name}</div>
@@ -584,7 +585,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                 )}
               >
                  <div className="w-10 h-10 rounded bg-slate-200 dark:bg-zinc-800 flex-shrink-0 overflow-hidden">
-                   {rec.iconUrl && <img src={rec.iconUrl} alt="" className="w-full h-full object-cover" />}
+                   <BrawlerArtwork name={rec.name} imageUrl={rec.imageUrl} iconUrl={rec.iconUrl} className="h-full w-full" />
                  </div>
                  <div className="flex-1">
                     <div className="font-medium text-slate-900 dark:text-white flex items-center justify-between gap-1">
@@ -722,7 +723,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                       )}
                     </div>
                     <div className="w-12 h-12 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
-                      {brawler.iconUrl && <img src={brawler.iconUrl} alt="" className="w-full h-full object-cover" />}
+                      <BrawlerArtwork name={brawler.name} imageUrl={brawler.imageUrl} iconUrl={brawler.iconUrl} className="h-full w-full" />
                     </div>
                     <span className="text-xs font-medium text-slate-900 dark:text-white truncate w-full text-center">{brawler.name}</span>
                     {!isUnavailable && <span className={cn("text-[10px] font-bold", isTierS ? "text-[#22D3EE]" : "text-slate-500 dark:text-zinc-500")}>Tier {brawler.tier}</span>}
