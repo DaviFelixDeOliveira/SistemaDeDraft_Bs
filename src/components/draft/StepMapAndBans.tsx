@@ -286,7 +286,7 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
                         <div key={composition.id} className="text-xs text-zinc-500 dark:text-zinc-300">
                           <strong>{composition.brawlers.map(id=>brawlers.find(b=>b.id===id)?.name||id).join(' + ')}</strong>
                           <span> · {matches? `${wins}/${matches} vitórias com o trio` : 'ainda não testada no histórico'}</span>
-                          {threats.filter(t=>!banned.includes(t.brawlerId)).slice(0,3).map(t=>(
+                          {threats.filter(t=>!draftState.allyBans.includes(t.brawlerId) && !draftState.enemyBans.includes(t.brawlerId)).slice(0,3).map(t=>(
                             <p key={t.brawlerId} className="mt-1 text-amber-500">
                               ⚠️ Se pretende usar este trio, considere banir {brawlers.find(b=>b.id===t.brawlerId)?.name||t.brawlerId}:
                               {t.losses} derrotas em {t.matches} confrontos. {t.matches<5?'Amostra muito pequena: é só um alerta, não um counter comprovado.':'A interação inclui os três adversários.'}
