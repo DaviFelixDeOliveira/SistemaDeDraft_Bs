@@ -10,12 +10,11 @@ import { analyticsService } from '../../services/analyticsService';
 import {
   getModeFit,
   computeComfortBonus,
-  computeMatchupPenalty,
-  computeHistoricalBonus,
   ThreatsCacheMap,
 } from '../../lib/draftEngineUtils';
 
 import { Brawler, GameMap, Player } from '../../types';
+import { buildEvidence, evidenceBonus, confrontationBonus } from '../../lib/matchupEvidence';
 import { cn, fuzzySearch } from '../../lib/utils';
 import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2, Undo2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { BrawlerArtwork } from '../ui/BrawlerArtwork';
@@ -40,8 +39,8 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [maps, setMaps] = useState<GameMap[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [mapDetailStats, setMapDetailStats] = useState<any>(null);
   const [threatsCache, setThreatsCache] = useState<ThreatsCacheMap>(new Map());
+  const [evidence, setEvidence] = useState<ReturnType<typeof buildEvidence> | null>(null);
 
   useEffect(() => {
     async function loadRealData() {
@@ -54,23 +53,21 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       setMaps(mData);
       setPlayers(pData);
 
-      // Carrega o cache de ameaças históricas para todos os brawlers (1.3)
-      // Uma única passagem nos dados — evita N chamadas ao analyticsService.
-      if (bData.length > 0) {
-        const allIds = bData.map(b => b.id);
-        analyticsService.getBrawlerThreatsMap(allIds).then(cache => {
-          setThreatsCache(cache);
-        });
-      }
+      // Índice único de partidas para recomendações de todos os brawlers.
+      const [recordedMatches, recordedPicks] = await Promise.all([
+        analyticsService.getAllMatches(), analyticsService.getAllPicks()
+      ]);
+      const index = buildEvidence(recordedMatches,recordedPicks,mData);
+      setEvidence(index);
+      const threats = new Map<string,{brawlerId:string; count:number}[]>();
+      for(const b of bData) threats.set(b.id,index.relationEntries(b.id,'threat',b.counteredBy)
+        .map(t => ({brawlerId:t.id,count:t.matches})));
+      setThreatsCache(threats);
     }
     loadRealData();
   }, []);
 
-  useEffect(() => {
-    if (draftState.mapId) {
-      analyticsService.getMapDetailStats(draftState.mapId).then(setMapDetailStats);
-    }
-  }, [draftState.mapId]);
+
 
   
   const pickOrder = getPickOrder(draftState.allyStarts);
@@ -129,7 +126,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
    *    - Caminha na Água (walksOnWater): +100 pts.
    * 4. Counters e Sinergias:
    *    - Contra 2+ Lançadores inimigos (Hard counters Mortis/Edgar/Mico): +10000 pts.
-   *    - Contra 1+ Tanque inimigo (Destruidores/Controle): +150 pts.
+   *    - Contra 1+ Tanque inimigo (Destruidor/Controle): +150 pts.
    *    - Equilíbrio de Papéis do Trio Nossa equipe: +30 pts.
    * 5. Penalidade de Matchup Específico (1.3):
    *    - Por ameaça histórica já na equipe inimiga: -min(count,10)*10 pts por ameaça.
@@ -149,6 +146,8 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     isStrongMapComfort: boolean;
     mapWinrate: number;
     mapPicksCount: number;
+    contextSummary?: string;
+    interactionNotes?: string[];
     modeFit: 'good' | 'neutral' | 'poor';
     counterThreatWarning?: string;
   })[] => {
@@ -182,24 +181,24 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       else if (brawler.tier === 'D') score += 200;
 
       // 2. Comfort Picks do Elenco Ativo — com verificação de encaixe de modo (1.1)
-      const comfortPlayer = players.find(p => {
-        if (p.isActive === false || p.is_active === false) return false;
-        if (!p.comfortBrawlers || !Array.isArray(p.comfortBrawlers)) return false;
-        return p.comfortBrawlers.some(cb =>
-          cb === brawler.id ||
-          cb.toLowerCase() === brawler.id.toLowerCase() ||
-          cb.toLowerCase() === brawler.name.toLowerCase()
-        );
-      });
-
-      // Classificação de encaixe no modo atual
+      const comfortPlayer = evidence?.comfort(brawler.id,
+         players.filter(p => p.isActive !== false && p.is_active !== false))[0]
+         ?? players.filter(p => p.isActive !== false && p.is_active !== false)
+           .find(p => (p.comfortBrawlers || []).includes(brawler.id));
+       // Classificação de encaixe no modo atual
       const modeFit = map ? getModeFit(brawler, map.mode) : 'neutral';
+       if (modeFit === 'poor') score -= 340;
+       if (modeFit === 'good') score += 80;
 
       if (comfortPlayer) {
         isComfort = true;
-        comfortPlayerName = comfortPlayer.nickname || comfortPlayer.name;
+        comfortPlayerName = 'playerName' in comfortPlayer ? comfortPlayer.playerName : (comfortPlayer.nickname || comfortPlayer.name);
         // computeComfortBonus aplica +350 (bom/neutro) ou +100 (fraco) conforme modeFit
         score += computeComfortBonus(brawler, map?.mode, true);
+        if ('sample' in comfortPlayer && comfortPlayer.sample.matches >= 5) {
+          if (comfortPlayer.sample.adjustedWinrate >= 60) score += 130;
+          if (comfortPlayer.sample.adjustedWinrate <= 40) score -= 150;
+        }
       }
 
       // 3. Adaptação ao Terreno e Mecânicas Únicas
@@ -224,13 +223,13 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
 
       // 4. Counters Diretos e Sinergias do Trio
       const enemyTanksCount = enemyBrawlers.filter(b => b.type.includes('Tanque')).length;
-      if (enemyTanksCount >= 1 && (brawler.type.includes('Destruidores') || brawler.type.includes('Controle'))) {
+      if (enemyTanksCount >= 1 && (brawler.type.includes('Destruidor') || brawler.type.includes('Controle'))) {
         score += 150;
       }
 
-      const enemyThrowersCount = enemyBrawlers.filter(b => b.type.includes('Lancadores')).length;
+      const enemyThrowersCount = enemyBrawlers.filter(b => b.type.includes('Artilharia')).length;
       if (enemyThrowersCount >= 2 && (brawler.name === 'Mortis' || brawler.name === 'Mico' || brawler.name === 'Edgar')) {
-        score += 10000; // Absolute top hard counter
+        score += 180; // bônus heurístico limitado
       } else if (enemyThrowersCount >= 1 && (brawler.type.includes('Algoz') || brawler.type.includes('Tanque'))) {
         score += 250;
       }
@@ -239,17 +238,19 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       // Identifica quais picks do time inimigo este brawler countera ou sofre para
       const activeEnemyCountersList: string[] = []; // Inimigos que ele countera
       const activeEnemySufferingList: string[] = []; // Inimigos para os quais ele sofre
+      const interactionNotes: string[] = [];
+      let interactionScore = 0;
 
       enemyBrawlers.forEach(enemy => {
         // Verifica se o nosso brawler tem esse inimigo na lista 'counters' (ou se o inimigo tem o nosso na lista 'counteredBy')
         if (brawler.counters?.includes(enemy.id) || enemy.counteredBy?.includes(brawler.id)) {
           activeEnemyCountersList.push(enemy.name);
-          score += 350; // Bônus por ter vantagem estratégica sobre o pick inimigo
+          score += 170; // bônus manual
         }
         // Verifica se o nosso brawler sofre para esse inimigo
         if (brawler.counteredBy?.includes(enemy.id) || enemy.counters?.includes(brawler.id)) {
           activeEnemySufferingList.push(enemy.name);
-          score -= 300; // Penalidade ponderada, mas NUNCA esconde o brawler
+          score -= 170; // penalidade manual
         }
       });
 
@@ -266,26 +267,40 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         score -= 500;
       }
 
-      // 5. Ponderação Histórica Progressiva (Picks e Winrate no Mapa — 1.5)
-      if (mapDetailStats?.topTbkPicks) {
-        const brawlerMapPick = mapDetailStats.topTbkPicks.find((tp: any) =>
-          tp.brawler?.id === brawler.id || tp.brawler?.name === brawler.name
-        );
-        if (brawlerMapPick) {
-          mapPicksCount = brawlerMapPick.picks || 0;
-          mapWinrate = brawlerMapPick.winrate || 50;
-          score += computeHistoricalBonus(mapWinrate, mapPicksCount);
-
-          // Super bônus: comfort pick E alto winrate no mapa
-          if (isComfort && mapWinrate >= 70 && mapPicksCount >= 2) {
-            isStrongMapComfort = true;
-            score += 500;
+      // Todos os brawlers são analisados por histórico geral, modo e mapa.
+      let contextSummary: string | undefined;
+      if (evidence && map) {
+        const perf = evidence.performance(brawler.id,map.mode,map.id);
+        mapPicksCount = perf.map.matches;
+        mapWinrate = perf.map.winrate ?? 50;
+        score += evidenceBonus(perf);
+        const fmt = (sample: typeof perf.global) => sample.matches
+          ? `${sample.winrate}% (${sample.wins}/${sample.matches})` : 'sem dados';
+        contextSummary = `Geral: ${fmt(perf.global)} · Modo: ${fmt(perf.mode)} · Mapa: ${fmt(perf.map)}`;
+        if (isComfort && perf.map.matches >= 5 && perf.map.adjustedWinrate >= 60) {
+          isStrongMapComfort = true;
+          score += 140;
+        }
+        for (const ally of allyBrawlers) {
+          const together = evidence.withAlly(brawler.id,ally.id);
+          if (together.matches >= 5) score += Math.round((together.adjustedWinrate-50)*2*Math.min(together.matches/10,1));
+        }
+        for (const enemy of enemyBrawlers) {
+          const vs = evidence.against(brawler.id,enemy.id,map.mode,map.id);
+          interactionScore += confrontationBonus(vs);
+          if (vs.global.matches >= 5 && vs.global.winrate !== null) {
+            if (vs.global.winrate >= 60 && !activeEnemyCountersList.includes(enemy.name)) activeEnemyCountersList.push(enemy.name);
+            if (vs.global.winrate <= 40 && !activeEnemySufferingList.includes(enemy.name)) activeEnemySufferingList.push(enemy.name);
+            const modeNote = vs.mode.matches >= 3 && vs.mode.winrate !== null
+              ? ` · modo ${vs.mode.winrate}%/${vs.mode.matches}j` : '';
+            const mapNote = vs.map.matches >= 3 && vs.map.winrate !== null
+              ? ` · mapa ${vs.map.winrate}%/${vs.map.matches}j` : '';
+            interactionNotes.push(`Contra equipe com ${enemy.name}: geral ${vs.global.winrate}% em ${vs.global.matches}j; últimas ${vs.global.recentMatches}: ${vs.global.recentWins} vitória(s)${modeNote}${mapNote}. Resultado do trio, não duelo isolado.`);
           }
         }
+        // Os confrontos contra três inimigos da mesma partida não são independentes.
+        score += Math.max(-450,Math.min(450,interactionScore));
       }
-
-      // 6. Penalidade de Matchup Específico Histórico (1.3)
-      score += computeMatchupPenalty(brawler.id, enemyTeamIds, threatsCache);
 
       // 7. Aviso Preditivo de Counter-Threat (1.4 — não afeta score)
       let counterThreatWarning: string | undefined;
@@ -299,7 +314,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         if (threatNames.length > 0) {
           const namesStr = threatNames.join(', ');
           counterThreatWarning =
-            `Atenção: historicamente perde para ${namesStr}, que o inimigo ainda pode pegar.`;
+            `Possível ameaça (curadoria ou histórico): ${namesStr}. Não é prova de duelo.`;
         }
       }
 
@@ -311,6 +326,8 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         isStrongMapComfort,
         mapWinrate,
         mapPicksCount,
+        contextSummary,
+        interactionNotes,
         modeFit,
         counterThreatWarning,
         activeEnemyCountersList,
@@ -325,7 +342,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     () => getRecommendedBrawlers(),
     // threatsCache incluído para que o aviso de counter-threat e a penalidade de matchup
     // sejam recalculados quando o cache carrega ou quando o draft muda
-    [draftState, unavailableBrawlerIds, brawlers, maps, players, mapDetailStats, threatsCache]
+    [draftState, unavailableBrawlerIds, brawlers, maps, players, evidence, threatsCache]
   );
   const bestRecommendationId = recommendations[0]?.id;
 
@@ -335,7 +352,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     const map = maps.find(m => m.id === draftState.mapId);
 
     const snipers = allyBrawlers.filter(b => b.type.includes('Tiro preciso')).length;
-    const throwers = allyBrawlers.filter(b => b.type.includes('Lancadores')).length;
+    const throwers = allyBrawlers.filter(b => b.type.includes('Artilharia')).length;
     const tanks = allyBrawlers.filter(b => b.type.includes('Tanque')).length;
 
     if (snipers >= 3) return "Atenção: Composição com 3 Atiradores — Alto risco contra Assassinos/Tanques avançados.";
@@ -570,7 +587,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         <div className="bg-white dark:bg-[#1A1A1A] border border-[#22D3EE]/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.1)]">
           <div className="flex items-center gap-2 mb-3">
             <Target className="w-5 h-5 text-[#22D3EE]" />
-            <h3 className="font-semibold text-[#22D3EE]">Recomendação da IA</h3>
+            <h3 className="font-semibold text-[#22D3EE]">Sugestões por meta e histórico</h3>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             {recommendations.map((rec, i) => (

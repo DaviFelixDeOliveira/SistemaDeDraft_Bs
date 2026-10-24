@@ -93,9 +93,11 @@ Deno.serve(async (request: Request) => {
         return json({ error: 'Dados de brawlers inesperados; o catálogo antigo foi preservado.' }, 502);
       }
       const { data: existing, error: selectError } = await database.from('brawlers')
-        .select('id,name,image_url,icon_url');
+        .select('id,name,image_url,icon_url,rarity,type');
       if (selectError) throw selectError;
       const rows = existing || [];
+      const storedById = new Map(rows.map(row => [row.id,row]));
+      const metadataUpdates: {id:string;rarity:string;type:string[]}[] = [];
       const byGameId = new Map<string, string>();
       const byName = new Map<string, string>();
       const usedIds = new Set<string>();
@@ -111,7 +113,17 @@ Deno.serve(async (request: Request) => {
             record.released === false || !safeName(record.name)) continue;
         const name = safeName(record.name);
         const key = nameKey(name);
-        if (byGameId.has(String(record.id)) || byName.has(key)) continue;
+        const officialRarity = rarityPt[safeName(record.rarity?.name).toLowerCase()];
+        const officialClass = classPt[safeName(record.class?.name).toLowerCase()];
+        const registeredId = byGameId.get(String(record.id)) || byName.get(key);
+        if (registeredId) {
+          const stored = storedById.get(registeredId);
+          if (stored && officialRarity && officialClass &&
+              (stored.rarity !== officialRarity || stored.type?.[0] !== officialClass)) {
+            metadataUpdates.push({id:registeredId,rarity:officialRarity,type:[officialClass]});
+          }
+          continue;
+        }
         const slug = slugify(name) || 'brawler-' + record.id;
         const id = usedIds.has(slug) ? 'brawler-' + record.id : slug;
         if (usedIds.has(id)) continue;
@@ -136,13 +148,20 @@ Deno.serve(async (request: Request) => {
           .upsert(candidates, { onConflict: 'id', ignoreDuplicates: true });
         if (writeError) throw writeError;
       }
+      // Sincroniza exclusivamente metadados oficiais existentes; tier e estatísticas intactos.
+      for(let offset=0;offset<metadataUpdates.length;offset+=5) {
+        const results = await Promise.all(metadataUpdates.slice(offset,offset+5).map(patch =>
+          database.from('brawlers').update({rarity:patch.rarity,type:patch.type}).eq('id',patch.id)));
+        const failed = results.find(x=>x.error);
+        if(failed?.error) throw failed.error;
+      }
       const now = new Date().toISOString();
       const { error: updateError } = await database.from('catalog_sync_state').upsert({
         source: 'brawlapi-brawlers', last_sync_at: now,
-        source_count: list.length, created_count: candidates.length, updated_count: 0
+        source_count: list.length, created_count: candidates.length, updated_count: metadataUpdates.length
       }, { onConflict: 'source' });
       if (updateError) throw updateError;
-      return json({ ok: true, sourceCount: list.length, created: candidates.length, updated: 0, lastSync: now });
+      return json({ ok: true, sourceCount: list.length, created: candidates.length, updated: metadataUpdates.length, lastSync: now });
     }
 
     if (body.action === 'add-map') {

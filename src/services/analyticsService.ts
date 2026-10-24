@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { buildEvidence } from '../lib/matchupEvidence';
 import { Match, MatchPick, MatchBan, MatchRecordData, Brawler, GameMap, Player } from '../types';
 import { toDbResult, fromDbResult, toDbTeam, fromDbTeam } from '../lib/utils';
 import { brawlerService } from './brawlerService';
@@ -310,129 +311,60 @@ export const analyticsService = {
 
     const winrate = allyPicks.length > 0 ? Math.round((allyWins / allyPicks.length) * 100) : 0;
 
-    // Comfort picks (atletas que usaram este brawler)
-    const playerPicksCount: Record<string, { total: number; wins: number }> = {};
-    allyPicks.forEach(p => {
-      if (p.player_id) {
-        if (!playerPicksCount[p.player_id]) playerPicksCount[p.player_id] = { total: 0, wins: 0 };
-        playerPicksCount[p.player_id].total++;
-        const match = matchesMap.get(p.match_id);
-        if (match && match.result === 'victory') {
-          playerPicksCount[p.player_id].wins++;
-        }
-      }
-    });
-
-    // Players who marked as comfort pick
-    const comfortStats = players
-      .filter(p => p.comfortBrawlers && p.comfortBrawlers.includes(brawlerId))
-      .map(p => {
-        const data = playerPicksCount[p.id] || { total: 0, wins: 0 };
-        const wr = data.total > 0 ? Math.round((data.wins / data.total) * 100) : 0;
-        return {
-          playerName: p.nickname || p.name || 'Atleta',
-          matches: data.total,
-          winrate: wr,
-          isComfort: true
-        };
-      }).sort((a, b) => b.matches - a.matches);
-
-    // Sinergias (Melhores Parceiros Nossa equipe baseados em Winrate real da dupla)
-    const partnerGames: Record<string, { total: number; wins: number }> = {};
-    const enemyCounterCounts: Record<string, number> = {}; // Brawlers inimigos derrotados por este
-    const threatCounts: Record<string, number> = {}; // Brawlers inimigos que venceram contra este
-
-    allyPicks.forEach(p => {
-      const match = matchesMap.get(p.match_id);
-      if (!match) return;
-
-      const sameMatchPicks = picks.filter(pk => pk.match_id === p.match_id);
-      const allyPartners = sameMatchPicks.filter(pk => pk.team === 'ally' && pk.brawler_id !== brawlerId);
-      const enemyEnemies = sameMatchPicks.filter(pk => pk.team === 'enemy');
-
-      allyPartners.forEach(partner => {
-        if (!partnerGames[partner.brawler_id]) partnerGames[partner.brawler_id] = { total: 0, wins: 0 };
-        partnerGames[partner.brawler_id].total++;
-        if (match.result === 'victory') partnerGames[partner.brawler_id].wins++;
-      });
-
-      if (match.result === 'victory') {
-        enemyEnemies.forEach(e => {
-          enemyCounterCounts[e.brawler_id] = (enemyCounterCounts[e.brawler_id] || 0) + 1;
-        });
-      } else {
-        enemyEnemies.forEach(e => {
-          threatCounts[e.brawler_id] = (threatCounts[e.brawler_id] || 0) + 1;
-        });
-      }
-    });
-
+    // As relações são calculadas no índice de partidas, sem confundir derrota
+    // conjunta com causalidade de um counter e sem fazer filtros O(n²).
     const targetBrawler = brawlersMap.get(brawlerId);
-
-    // Parceiros por WR ponderado (mínimo 2 partidas juntos para prioridade)
-    const realPartners = Object.entries(partnerGames)
-      .map(([id, stats]) => {
-        const wr = stats.total > 0 ? (stats.wins / stats.total) : 0;
-        return { brawler: brawlersMap.get(id), count: stats.total, wins: stats.wins, wr };
-      })
-      .filter(item => item.brawler)
-      .sort((a, b) => {
-        // Ordena por WR e número de jogos
-        if (b.wr !== a.wr) return b.wr - a.wr;
-        return b.count - a.count;
-      })
-      .slice(0, 3)
-      .map(item => item.brawler as Brawler);
-
-    // Counters: dados reais de vitórias + curadoria manual
-    const realCounters = Object.entries(enemyCounterCounts)
-      .map(([id, count]) => ({ brawler: brawlersMap.get(id), count }))
-      .filter(item => item.brawler)
-      .sort((a, b) => b.count - a.count)
-      .map(item => item.brawler as Brawler);
-
-    const manualCounters = (targetBrawler?.counters || [])
-      .map(id => brawlersMap.get(id))
-      .filter(Boolean) as Brawler[];
-
-    // Une sem duplicatas (priorizando os manuais cadastrados)
-    const combinedCountersMap = new Map<string, Brawler>();
-    manualCounters.forEach(b => combinedCountersMap.set(b.id, b));
-    realCounters.forEach(b => {
-      if (!combinedCountersMap.has(b.id)) combinedCountersMap.set(b.id, b);
+    const history = buildEvidence(matches,picks,maps);
+    // Comparação sempre por partidas completas, com amostra mínima para achados automáticos.
+    const mapRelation = (entry: ReturnType<typeof history.relationEntries>[number]) => ({
+      brawler: brawlersMap.get(entry.id),
+      matches: entry.matches, wins: entry.wins, winrate: entry.winrate,
+      recentWins: entry.recentWins, recentMatches: entry.recentMatches,
+      manual: entry.manual, inferred: entry.inferred,
     });
-    const counters = Array.from(combinedCountersMap.values()).slice(0, 6);
-
-    // Ameaças: dados reais de derrotas + curadoria manual (Sofre para)
-    const realThreats = Object.entries(threatCounts)
-      .map(([id, count]) => ({ brawler: brawlersMap.get(id), count }))
-      .filter(item => item.brawler)
-      .sort((a, b) => b.count - a.count)
-      .map(item => item.brawler as Brawler);
-
-    const manualThreats = (targetBrawler?.counteredBy || [])
-      .map(id => brawlersMap.get(id))
-      .filter(Boolean) as Brawler[];
-
-    const combinedThreatsMap = new Map<string, Brawler>();
-    manualThreats.forEach(b => combinedThreatsMap.set(b.id, b));
-    realThreats.forEach(b => {
-      if (!combinedThreatsMap.has(b.id)) combinedThreatsMap.set(b.id, b);
-    });
-    const threats = Array.from(combinedThreatsMap.values()).slice(0, 6);
+    // O cadastro manual pode estar em qualquer lado do par A/B.
+    const manualCounterIds = [...new Set([
+      ...(targetBrawler?.counters || []),
+      ...brawlers.filter(b => b.counteredBy?.includes(brawlerId)).map(b => b.id)
+    ])];
+    const manualThreatIds = [...new Set([
+      ...(targetBrawler?.counteredBy || []),
+      ...brawlers.filter(b => b.counters?.includes(brawlerId)).map(b => b.id)
+    ])];
+    const partnerDetails = history.relationEntries(brawlerId,'partner')
+      .map(mapRelation).filter(e => e.brawler);
+    const counterDetails = history.relationEntries(brawlerId,'counter',manualCounterIds)
+      .map(mapRelation).filter(e => e.brawler);
+    const threatDetails = history.relationEntries(brawlerId,'threat',manualThreatIds)
+      .map(mapRelation).filter(e => e.brawler);
+    const modeBreakdown = history.breakdown(brawlerId);
+    const dynamicComfort = history.comfort(brawlerId,players);
+    const totalAllyBans = brawlerBans.filter(b => b.team === 'ally').length;
+    const totalEnemyBans = brawlerBans.filter(b => b.team === 'enemy').length;
 
     return {
       totalBans,
-      topModeBans,
-      topMapBans,
-      winrate,
-      allyPicksCount: allyPicks.length,
+      totalAllyBans, totalEnemyBans,
+      topModeBans, topMapBans,
+      winrate, allyPicksCount: allyPicks.length,
       enemyPicksCount: enemyPicks.length,
       totalPicksCount: brawlerPicks.length,
-      comfortStats,
-      partners: realPartners,
-      counters,
-      threats
+      // Manual nunca removido; inferido apenas quando uso dominante e resultado sustentado.
+      comfortStats: dynamicComfort.map(c => ({
+        playerName: c.playerName, matches: c.sample.matches,
+        winrate: c.sample.winrate, isComfort: true, manual: c.manual, inferred: c.inferred,
+        share: c.share
+      })),
+      partners: partnerDetails.slice(0,6).map(e => e.brawler),
+      counters: counterDetails.slice(0,6).map(e => e.brawler),
+      threats: threatDetails.slice(0,6).map(e => e.brawler),
+      partnerDetails: partnerDetails.slice(0,12),
+      counterDetails: counterDetails.slice(0,12),
+      threatDetails: threatDetails.slice(0,12),
+      modeBreakdown,
+      mostPlayedMode: modeBreakdown[0] ?? null,
+      mostPlayedMap: modeBreakdown.flatMap(m=>m.maps)
+        .sort((a,b)=>b.sample.matches-a.sample.matches)[0] ?? null
     };
   },
 

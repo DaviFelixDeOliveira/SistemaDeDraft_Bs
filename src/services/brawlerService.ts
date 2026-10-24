@@ -72,8 +72,8 @@ export const brawlerService = {
       if (!own) return mapFromSupabase(row);
       const merged: Record<string, any> = { ...row };
       for (const key of [
-        'tier', 'is_active', 'is_hot_pick', 'counters', 'countered_by', 'rarity',
-        'health', 'health_value', 'type', 'walks_on_water', 'breaks_walls',
+        'tier', 'is_active', 'is_hot_pick', 'counters', 'countered_by',
+        'health', 'health_value', 'walks_on_water', 'breaks_walls',
         'how_breaks_walls', 'image_url', 'icon_url'
       ]) {
         if (own[key] !== null && own[key] !== undefined) merged[key] = own[key];
@@ -93,7 +93,7 @@ export const brawlerService = {
     // Apenas as configurações particulares são gravadas; o catálogo global permanece intacto.
     const allowed = new Set([
       'tier', 'is_active', 'is_hot_pick', 'counters', 'countered_by',
-      'rarity', 'health', 'health_value', 'type', 'walks_on_water',
+      'health', 'health_value', 'walks_on_water',
       'breaks_walls', 'how_breaks_walls', 'image_url', 'icon_url'
     ]);
     const mapped = mapToSupabase(changes);

@@ -19,6 +19,7 @@ export function BrawlersHub() {
    const brawlerFilters = useBrawlerFilters();
    const [selectedBrawler, setSelectedBrawler] = useState<Brawler | null>(null);
    const [brawlerStatsDetail, setBrawlerStatsDetail] = useState<any>(null);
+   const [expandedMode, setExpandedMode] = useState<string | null>(null);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [editingBrawler, setEditingBrawler] = useState<Brawler | null>(null);
    const [loading, setLoading] = useState(false);
@@ -56,12 +57,12 @@ export function BrawlersHub() {
       try {
          const result = await syncBrawlersFromApi();
          await loadBrawlers();
-         if (!quiet || result.created > 0) {
+         if (!quiet || result.created > 0 || result.updated > 0) {
             setSyncInfo(result.skipped
                ? 'Catálogo já atualizado recentemente.'
-               : result.created > 0
-                  ? result.created + ' novo(s) brawler(s) incorporado(s) ao catálogo.'
-                  : 'Catálogo verificado. Nenhum brawler novo foi encontrado.');
+               : result.created > 0 || result.updated > 0
+                  ? `${result.created} novo(s) brawler(s) · ${result.updated} ficha(s) oficial(is) de classe/raridade atualizada(s).`
+                  : 'Catálogo conferido; não houve mudanças oficiais reconhecidas.');
          }
       } catch (err) {
          if (!quiet) setSyncInfo(err instanceof Error ? err.message : 'A API está indisponível. O catálogo anterior foi preservado.');
@@ -328,6 +329,7 @@ export function BrawlersHub() {
                                  </div>
                               </div>
 
+                              <p className="text-xs text-zinc-500">Nossos bans: <strong>{brawlerStatsDetail?.totalAllyBans ?? 0}</strong> · Bans inimigos: <strong>{brawlerStatsDetail?.totalEnemyBans ?? 0}</strong></p>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                  <div className="bg-zinc-50 dark:bg-[#1A1A1A] p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
                                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">Por Modo (Top 3)</span>
@@ -380,6 +382,25 @@ export function BrawlersHub() {
                                  </div>
                               </div>
 
+                              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-white/10 dark:bg-[#090909]">
+                                <h5 className="mb-2 text-sm font-bold">Histórico por Modo e Mapa</h5>
+                                <p className="mb-2 text-xs text-zinc-500">Modo mais jogado: {brawlerStatsDetail?.mostPlayedMode?.mode || 'sem dados'} · Mapa mais jogado: {brawlerStatsDetail?.mostPlayedMap?.name || 'sem dados'}</p>
+                                {(brawlerStatsDetail?.modeBreakdown || []).map((entry: any) => (
+                                  <div key={entry.mode} className="border-t border-zinc-200 py-1 dark:border-white/10">
+                                    <button type="button" aria-expanded={expandedMode === entry.mode}
+                                      onClick={() => setExpandedMode(current => current === entry.mode ? null : entry.mode)}
+                                      className="flex w-full justify-between gap-2 py-2 text-left text-xs">
+                                      <strong>{entry.mode}</strong><span>{entry.sample.matches} picks · {entry.sample.winrate}% WR {expandedMode === entry.mode ? '▲' : '▼'}</span>
+                                    </button>
+                                    {expandedMode === entry.mode && entry.maps.map((m: any) => (
+                                      <div key={m.id} className="flex justify-between gap-2 rounded-md bg-white p-2 text-xs dark:bg-white/5">
+                                        <span>{m.name}</span><span>{m.sample.wins}/{m.sample.matches} vitórias · {m.sample.winrate}% WR</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ))}
+                                {!brawlerStatsDetail?.modeBreakdown?.length && <p className="text-xs text-zinc-500">Sem picks registrados neste brawler.</p>}
+                              </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                                  <div className="flex flex-col">
                                     <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Picks (Nossa equipe vs Inimigos)</span>
@@ -403,15 +424,15 @@ export function BrawlersHub() {
                                           brawlerStatsDetail.comfortStats.map((cs: any, idx: number) => (
                                              <div key={idx} className="flex items-center gap-2 text-sm bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-lg">
                                                 <div className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold text-[10px]">{idx + 1}</div>
-                                                <span className="text-zinc-700 dark:text-zinc-300 font-semibold flex-1 truncate">{cs.playerName}</span>
+                                                <span className="text-zinc-700 dark:text-zinc-300 font-semibold flex-1 truncate">{cs.playerName}{cs.inferred && !cs.manual ? ' · Sugerido' : ' · Manual'}</span>
                                                 <div className="flex flex-col items-end">
-                                                   <span className="font-black text-emerald-500 text-xs">{cs.winrate}% WR</span>
+                                                   <span className="font-black text-emerald-500 text-xs">{cs.winrate === null ? 'Sem amostra' : `${cs.winrate}% WR`}</span>
                                                    <span className="text-[10px] text-zinc-500 font-medium">{cs.matches} {cs.matches === 1 ? 'partida' : 'partidas'}</span>
                                                 </div>
                                              </div>
                                           ))
                                        ) : (
-                                          <span className="text-xs text-zinc-500 italic">Nenhum atleta marcou como conforto.</span>
+                                          <span className="text-xs text-zinc-500 italic">Sem confortos manuais ou sugeridos com evidência suficiente.</span>
                                        )}
                                     </div>
                                  </div>
@@ -432,16 +453,19 @@ export function BrawlersHub() {
                                        <Users className="w-3.5 h-3.5" /> Melhores Parceiros
                                     </div>
                                     <div className="space-y-2">
-                                       {brawlerStatsDetail?.partners && brawlerStatsDetail.partners.length > 0 ? (
-                                          brawlerStatsDetail.partners.map((b: Brawler) => (
-                                             <div key={b.id} className="flex items-center gap-2 bg-zinc-50 dark:bg-[#1A1A1A] p-2 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
-                                                <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl}
-                                                   className="w-6 h-6 rounded flex-shrink-0" />
-                                                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{b.name}</span>
-                                             </div>
-                                          ))
-                                       ) : (
-                                          <span className="text-xs text-zinc-500 italic">Sem dados de partidas ainda</span>
+                                       {brawlerStatsDetail?.partnerDetails?.length ? (
+    brawlerStatsDetail.partnerDetails.slice(0,6).map((entry: any) => (
+      <div key={entry.brawler.id} className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-white/10 dark:bg-[#1A1A1A]">
+        <BrawlerArtwork name={entry.brawler.name} iconUrl={entry.brawler.iconUrl} imageUrl={entry.brawler.imageUrl} className="h-7 w-7 shrink-0 rounded"/>
+        <div className="min-w-0">
+          <span className="block truncate text-xs font-semibold">{entry.brawler.name}{entry.manual ? ' ✎' : ''}</span>
+          <span className="text-[10px] text-zinc-500">{entry.matches ? `${entry.wins}/${entry.matches} vitórias · ${entry.winrate}% WR` : 'Sem confrontos'}
+            {' · '}{entry.manual ? 'Manual' : 'Histórico'}
+          </span>
+        </div>
+      </div>
+    ))
+  ) : (<span className="text-xs text-zinc-500 italic">Sem dados de partidas ainda</span>
                                        )}
                                     </div>
                                  </div>
@@ -452,16 +476,19 @@ export function BrawlersHub() {
                                        <Target className="w-3.5 h-3.5 text-emerald-500" /> Ele Countera
                                     </div>
                                     <div className="space-y-2">
-                                       {brawlerStatsDetail?.counters && brawlerStatsDetail.counters.length > 0 ? (
-                                          brawlerStatsDetail.counters.map((b: Brawler) => (
-                                             <div key={b.id} className="flex items-center gap-2 bg-zinc-50 dark:bg-[#1A1A1A] p-2 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
-                                                <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl}
-                                                   className="w-6 h-6 rounded flex-shrink-0" />
-                                                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{b.name}</span>
-                                             </div>
-                                          ))
-                                       ) : (
-                                          <span className="text-xs text-zinc-500 italic">Sem dados de partidas ainda</span>
+                                       {brawlerStatsDetail?.counterDetails?.length ? (
+    brawlerStatsDetail.counterDetails.slice(0,6).map((entry: any) => (
+      <div key={entry.brawler.id} className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-white/10 dark:bg-[#1A1A1A]">
+        <BrawlerArtwork name={entry.brawler.name} iconUrl={entry.brawler.iconUrl} imageUrl={entry.brawler.imageUrl} className="h-7 w-7 shrink-0 rounded"/>
+        <div className="min-w-0">
+          <span className="block truncate text-xs font-semibold">{entry.brawler.name}{entry.manual ? ' ✎' : ''}</span>
+          <span className="text-[10px] text-zinc-500">{entry.matches ? `${entry.wins}/${entry.matches} vitórias · ${entry.winrate}% WR` : 'Sem confrontos'}
+            {' · '}{entry.manual ? 'Manual' : 'Histórico'}
+          </span>
+        </div>
+      </div>
+    ))
+  ) : (<span className="text-xs text-zinc-500 italic">Sem dados de partidas ainda</span>
                                        )}
                                     </div>
                                  </div>
@@ -472,16 +499,19 @@ export function BrawlersHub() {
                                        <ShieldAlert className="w-3.5 h-3.5 text-red-500" /> Ameaças (Sofre para)
                                     </div>
                                     <div className="space-y-2">
-                                       {brawlerStatsDetail?.threats && brawlerStatsDetail.threats.length > 0 ? (
-                                          brawlerStatsDetail.threats.map((b: Brawler) => (
-                                             <div key={b.id} className="flex items-center gap-2 bg-red-50 dark:bg-red-950/20 p-2 rounded-lg border border-red-100 dark:border-red-900/30">
-                                                <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl}
-                                                   className="w-6 h-6 rounded flex-shrink-0" />
-                                                <span className="text-sm font-medium text-red-700 dark:text-red-400">{b.name}</span>
-                                             </div>
-                                          ))
-                                       ) : (
-                                          <span className="text-xs text-zinc-500 italic">Sem dados de partidas ainda</span>
+                                       {brawlerStatsDetail?.threatDetails?.length ? (
+    brawlerStatsDetail.threatDetails.slice(0,6).map((entry: any) => (
+      <div key={entry.brawler.id} className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-white/10 dark:bg-[#1A1A1A]">
+        <BrawlerArtwork name={entry.brawler.name} iconUrl={entry.brawler.iconUrl} imageUrl={entry.brawler.imageUrl} className="h-7 w-7 shrink-0 rounded"/>
+        <div className="min-w-0">
+          <span className="block truncate text-xs font-semibold">{entry.brawler.name}{entry.manual ? ' ✎' : ''}</span>
+          <span className="text-[10px] text-zinc-500">{entry.matches ? `${entry.wins}/${entry.matches} vitórias · ${entry.winrate}% WR` : 'Sem confrontos'}
+            {' · '}{entry.manual ? 'Manual' : 'Histórico'}
+          </span>
+        </div>
+      </div>
+    ))
+  ) : (<span className="text-xs text-zinc-500 italic">Sem dados de partidas ainda</span>
                                        )}
                                     </div>
                                  </div>
