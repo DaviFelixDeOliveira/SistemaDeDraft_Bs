@@ -2,7 +2,8 @@ import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from "../Bra
 import { getBrawlerBgColor } from "../../lib/utils";
 import { BrawlerArtwork } from "../ui/BrawlerArtwork";
 import React from "react";
-import { X } from 'lucide-react';
+import { X, Search, Loader2, CheckCircle2 } from 'lucide-react';
+import { normalizeBrawlTag, supercellPlayerService } from '../../services/supercellPlayerService';
 import { Player } from '../../types';
 import { cn } from '../../lib/utils';
 import { useState, useEffect } from 'react';
@@ -222,6 +223,9 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
     comfortBrawlers: [],
     tags: []
   });
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+  const [verifiedTag, setVerifiedTag] = useState<string | null>(null);
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
 
   useEffect(() => {
@@ -241,15 +245,47 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
         tags: []
       });
     }
+    setLoadingProfile(false);
+    setProfileMessage('');
+    setVerifiedTag(player?.brawlTag ?? null);
   }, [player, isOpen]);
 
   const filteredComfortBrawlers = applyBrawlerFilters(brawlers, brawlerFilters);
 
   if (!isOpen) return null;
 
+  const handleProfileLookup = async () => {
+    const rawTag = formData.brawlTag?.trim();
+    if (!rawTag) { setProfileMessage('Digite a tag do jogador para buscar.'); return; }
+    setLoadingProfile(true);
+    setProfileMessage('');
+    setVerifiedTag(null);
+    try {
+      const profile = await supercellPlayerService.lookup(rawTag);
+      setFormData(prev => ({
+        ...prev,
+        brawlTag: profile.tag,
+        nickname: profile.nickname,
+        brawlTagCheckedAt: new Date().toISOString()
+      }));
+      setVerifiedTag(profile.tag);
+      setProfileMessage('Perfil confirmado: ' + profile.nickname);
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : 'Falha ao buscar jogador.');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData as Player);
+    if (loadingProfile) return;
+    if (formData.brawlTag && normalizeBrawlTag(formData.brawlTag) !== verifiedTag) {
+      setProfileMessage('Clique em Buscar jogador para confirmar a nova tag antes de salvar.');
+      return;
+    }
+    onSave({ ...formData, brawlTag: formData.brawlTag ? verifiedTag : null,
+      brawlTagCheckedAt: formData.brawlTag ? formData.brawlTagCheckedAt : null } as Player);
     onClose();
   };
 
@@ -305,6 +341,43 @@ export function EditModal({ player, isOpen, onClose, onSave }: EditModalProps) {
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
+              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 sm:p-4">
+                <label htmlFor="brawl-player-tag" className="mb-2 block text-sm font-bold text-zinc-700 dark:text-zinc-200">
+                  Tag do Brawl Stars <span className="text-xs font-normal text-zinc-500">(opcional)</span>
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="brawl-player-tag"
+                    value={formData.brawlTag ?? ''}
+                    type="text"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="Ex.: #22QJ0JPVJ"
+                    maxLength={20}
+                    onChange={e => {
+                      const value = e.target.value.toUpperCase();
+                      setFormData(prev => ({ ...prev, brawlTag: value, brawlTagCheckedAt: null }));
+                      setVerifiedTag(null);
+                      setProfileMessage('');
+                    }}
+                    className="min-w-0 w-full flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 outline-none focus:border-indigo-500 dark:border-white/15 dark:bg-[#090909] dark:text-white"
+                  />
+                  <button type="button" onClick={() => void handleProfileLookup()}
+                    disabled={loadingProfile || !formData.brawlTag?.trim()}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
+                    {loadingProfile ? <Loader2 size={17} className="animate-spin" /> : <Search size={17} />}
+                    {loadingProfile ? 'Consultando...' : 'Buscar jogador'}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  A busca preenche o nickname oficial. A atualização posterior não altera o histórico de partidas.
+                  Você pode deixar o campo vazio para manter um cadastro manual.
+                </p>
+                {profileMessage && <p role="status" className="mt-2 flex items-start gap-2 rounded-lg border border-indigo-400/25 bg-indigo-500/10 p-2.5 text-xs text-indigo-700 dark:text-indigo-200">
+                  {verifiedTag && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
+                  {profileMessage}
+                </p>}
+              </div>
               <div>
                 <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Nickname *</label>
                 <input 
