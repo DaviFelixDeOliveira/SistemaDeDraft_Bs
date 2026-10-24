@@ -59,21 +59,21 @@ export type EnemyPickStatsMap = Record<string, EnemyPickStat>;
  * Mapeamento por modo
  * -------------------
  * Roubo (Heist) — objetivo: danificar o cofre inimigo
- *   Forte:   Destruidores OU Tanque com breaksWalls (dano direto ao cofre)
+ *   Forte:   Destruidor OU Tanque com breaksWalls (dano direto ao cofre)
  *   Neutro:  Controle (segura área de ataque)
  *   Fraco:   Suporte puro, Algoz puro, Tiro preciso de saúde Baixa
  *            (sem pressão de dano sustentado no cofre)
  *
  * Caça-Estrelas (Bounty) — objetivo: eliminar e não morrer
- *   Forte:   Tiro preciso, Algoz, Destruidores (dano de longa distância ou burst)
+ *   Forte:   Tiro preciso, Algoz, Destruidor (dano de longa distância ou burst)
  *   Fraco:   Tanque de saúde Alta sem alcance (alvo lento e fácil de acumular estrelas)
  *
  * Zona Estratégica (Hot Zone) — objetivo: segurar zonas de controle
- *   Forte:   Controle, Suporte, Destruidores (presença sustentada na zona)
+ *   Forte:   Controle, Suporte, Destruidor (presença sustentada na zona)
  *   Fraco:   Algoz puro sem capacidade de segurar zona (entra e sai, não ancora)
  *
  * Nocaute (Knockout) — objetivo: eliminar todos sem ressurreição
- *   Forte:   Algoz, Destruidores, Controle (pressão de eliminação)
+ *   Forte:   Algoz, Destruidor, Controle (pressão de eliminação)
  *   Fraco:   Suporte puro sem nenhum tipo de dano (cura sem pressão de elim)
  *
  * Fute-Brawl (Brawlball) — objetivo: marcar gols no campo adversário
@@ -81,7 +81,7 @@ export type EnemyPickStatsMap = Record<string, EnemyPickStat>;
  *   Fraco:   Tiro preciso puro sem mobilidade (alcance, mas sem seguir a bola)
  *
  * Pique-Gema (Gem Grab) — objetivo: coletar e segurar gemas até o countdown
- *   Forte:   Controle, Suporte, Destruidores (carregam gemas e controlam área)
+ *   Forte:   Controle, Suporte, Destruidor (carregam gemas e controlam área)
  *   Fraco:   Algoz puro sem Controle/Suporte (não consegue carregar gemas com segurança)
  */
 export function getModeFit(brawler: Brawler, mode: GameMode): ModeFit {
@@ -95,47 +95,47 @@ export function getModeFit(brawler: Brawler, mode: GameMode): ModeFit {
 
   switch (mode) {
     case 'Roubo': {
-      // Forte: Destruidores ou Tanque com breaksWalls
-      if (hasType('Destruidores', 'Tanque') && hasBreaksWalls) return 'good';
+      // Forte: Destruidor ou Tanque com breaksWalls
+      if (hasType('Destruidor', 'Tanque') && hasBreaksWalls) return 'good';
       // Neutro: Controle (segura área)
       if (hasType('Controle') && !hasType('Algoz')) return 'neutral';
       // Fraco: Suporte sem dano, Algoz puro, Sniper de saúde Baixa
-      if (hasType('Suporte') && !hasType('Destruidores', 'Tanque', 'Controle')) return 'poor';
-      if (hasType('Algoz') && !hasType('Destruidores', 'Tanque', 'Controle')) return 'poor';
-      if (hasType('Tiro preciso') && health === 'Baixa' && !hasType('Destruidores', 'Tanque')) return 'poor';
+      if (hasType('Suporte') && !hasType('Destruidor', 'Tanque', 'Controle')) return 'poor';
+      if (hasType('Algoz') && !hasType('Destruidor', 'Tanque', 'Controle')) return 'poor';
+      if (hasType('Tiro preciso') && health === 'Baixa' && !hasType('Destruidor', 'Tanque')) return 'poor';
       return 'neutral';
     }
 
     case 'Caça-Estrelas': {
-      // Forte: Tiro preciso, Algoz, Destruidores
-      if (hasType('Tiro preciso', 'Algoz', 'Destruidores')) return 'good';
+      // Forte: Tiro preciso, Algoz, Destruidor
+      if (hasType('Tiro preciso', 'Algoz', 'Destruidor')) return 'good';
       // Fraco: Tanque de saúde Alta sem alcance (acumula estrelas p/ o inimigo)
       if (
         hasType('Tanque') &&
         health === 'Alta' &&
-        !hasType('Tiro preciso', 'Algoz', 'Destruidores')
+        !hasType('Tiro preciso', 'Algoz', 'Destruidor')
       ) return 'poor';
       return 'neutral';
     }
 
     case 'Zona Estratégica': {
-      // Forte: Controle, Suporte, Destruidores
-      if (hasType('Controle', 'Suporte', 'Destruidores')) return 'good';
+      // Forte: Controle, Suporte, Destruidor
+      if (hasType('Controle', 'Suporte', 'Destruidor')) return 'good';
       // Fraco: Algoz puro (sem capacidade de segurar zona)
       if (
         hasType('Algoz') &&
-        !hasType('Controle', 'Suporte', 'Destruidores', 'Tanque')
+        !hasType('Controle', 'Suporte', 'Destruidor', 'Tanque')
       ) return 'poor';
       return 'neutral';
     }
 
     case 'Nocaute': {
-      // Forte: Algoz, Destruidores, Controle (pressão de eliminação)
-      if (hasType('Algoz', 'Destruidores', 'Controle')) return 'good';
+      // Forte: Algoz, Destruidor, Controle (pressão de eliminação)
+      if (hasType('Algoz', 'Destruidor', 'Controle')) return 'good';
       // Fraco: Suporte puro sem pressão de dano
       if (
         hasType('Suporte') &&
-        !hasType('Destruidores', 'Algoz', 'Controle', 'Tanque', 'Tiro preciso')
+        !hasType('Destruidor', 'Algoz', 'Controle', 'Tanque', 'Tiro preciso')
       ) return 'poor';
       return 'neutral';
     }
@@ -149,12 +149,12 @@ export function getModeFit(brawler: Brawler, mode: GameMode): ModeFit {
     }
 
     case 'Pique-Gema': {
-      // Forte: Controle, Suporte, Destruidores (carregam e protegem gemas)
-      if (hasType('Controle', 'Suporte', 'Destruidores')) return 'good';
+      // Forte: Controle, Suporte, Destruidor (carregam e protegem gemas)
+      if (hasType('Controle', 'Suporte', 'Destruidor')) return 'good';
       // Fraco: Algoz puro (sem capacidade de carregar gemas com segurança)
       if (
         hasType('Algoz') &&
-        !hasType('Controle', 'Suporte', 'Destruidores', 'Tanque')
+        !hasType('Controle', 'Suporte', 'Destruidor', 'Tanque')
       ) return 'poor';
       return 'neutral';
     }
