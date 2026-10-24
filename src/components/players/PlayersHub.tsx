@@ -1,7 +1,8 @@
 import { getBrawlerBgColor } from "../../lib/utils";
 import React, { useState, useEffect } from 'react';
-import { User, Plus, Edit2, Trash2, Award, Zap, Trophy, Shield, Crosshair, Archive, ArchiveRestore } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, Award, Zap, Trophy, Shield, Crosshair, Archive, ArchiveRestore, RefreshCw } from 'lucide-react';
 import { playerService } from '../../services/playerService';
+import { supercellPlayerService } from '../../services/supercellPlayerService';
 import { brawlerService } from '../../services/brawlerService';
 import { Player, Brawler } from '../../types';
 import { cn } from '../../lib/utils';
@@ -20,6 +21,8 @@ export function PlayersHub() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [viewActive, setViewActive] = useState(true);
+  const [refreshingNames, setRefreshingNames] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState('');
 
   const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean, action: (() => void) | null, title: string, message: string, processingText?: string, successText?: string }>({ isOpen: false, action: null, title: '', message: '' });
 
@@ -36,12 +39,48 @@ export function PlayersHub() {
     ]);
     setPlayers(pData);
     setBrawlers(bData);
+    // Atualização automática ao abrir a seção, limitada aos perfis com mais de 24h.
+    // Não depende do navegador estar aberto nem muda IDs históricos.
+    void refreshNames(pData);
 
     const statsMap: Record<string, any> = {};
     await Promise.all(pData.map(async (p) => {
       statsMap[p.id] = await analyticsService.getPlayerStats(p.id);
     }));
     setPlayerStatsMap(statsMap);
+  };
+
+  const refreshNames = async (source: Player[], manual = false) => {
+    const linked = source.filter(player => player.brawlTag && (manual ||
+      !player.brawlTagCheckedAt || Date.now() - new Date(player.brawlTagCheckedAt).getTime() >= 24 * 60 * 60 * 1000));
+    if (!linked.length) {
+      if (manual) setRefreshMessage('Não há tags cadastradas para atualizar.');
+      return;
+    }
+    setRefreshingNames(true);
+    if (manual) setRefreshMessage('');
+    let refreshed = 0;
+    let failed = 0;
+    try {
+      for (const player of linked) {
+        try {
+          const result = await supercellPlayerService.refresh(player.id);
+          setPlayers(current => current.map(old => old.id === player.id
+            ? { ...old, nickname: result.nickname, brawlTagCheckedAt: result.lastCheckedAt }
+            : old));
+          refreshed++;
+        } catch (error) {
+          failed++;
+          console.warn('Falha ao atualizar jogador da equipe:', player.id, error);
+        }
+      }
+      if (manual) setRefreshMessage(
+        failed ? refreshed + ' jogador(es) atualizado(s), ' + failed + ' não consultado(s). Verifique a chave/IP e tente novamente.'
+          : refreshed + ' perfil(is) verificado(s) com a Supercell.'
+      );
+    } finally {
+      setRefreshingNames(false);
+    }
   };
 
   const filteredPlayers = players.filter(p => (p.isActive !== false) === viewActive);
@@ -144,6 +183,14 @@ export function PlayersHub() {
               Arquivados
             </button>
           </div>
+          {players.some(player => !!player.brawlTag) && (
+            <button type="button" disabled={refreshingNames}
+              onClick={() => void refreshNames(players, true)}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-2 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-500/20 dark:text-indigo-200 disabled:opacity-60">
+              <RefreshCw className={cn('h-4 w-4', refreshingNames && 'animate-spin')} />
+              {refreshingNames ? 'Consultando...' : 'Atualizar nicknames'}
+            </button>
+          )}
           {!isPlayerMode && (
             <button
               onClick={() => setIsAddModalOpen(true)}
@@ -156,6 +203,7 @@ export function PlayersHub() {
         </div>
       </div>
 
+      {refreshMessage && <p role="status" className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-3 text-sm text-indigo-700 dark:text-indigo-200">{refreshMessage}</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredPlayers.map(player => {
           const stats = getPlayerStats(player.id);
@@ -168,6 +216,12 @@ export function PlayersHub() {
                 className="p-5 border-b border-zinc-100 dark:border-[#2A2A2A] relative cursor-pointer"
                 onClick={() => setSelectedPlayer(player)}
               >
+                {player.brawlTag && (
+                  <span className="mb-2 inline-flex rounded-md border border-indigo-500/20 bg-indigo-500/10 px-2 py-1 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300"
+                    title="Identificador oficial de Brawl Stars">
+                    {player.brawlTag}
+                  </span>
+                )}
                 {!isPlayerMode && (
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <button
