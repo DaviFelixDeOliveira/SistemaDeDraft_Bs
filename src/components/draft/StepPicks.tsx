@@ -15,7 +15,7 @@ import {
 
 import { Brawler, GameMap, Player } from '../../types';
 import { buildEvidence, evidenceBonus, confrontationBonus } from '../../lib/matchupEvidence';
-import { analyzeCompositions, type CompositionInsight } from '../../lib/draftStrategyInsights';
+import { analyzeCompositions, compositionBalanceAlert, type CompositionInsight } from '../../lib/draftStrategyInsights';
 import { cn, fuzzySearch } from '../../lib/utils';
 import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2, Undo2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { BrawlerArtwork } from '../ui/BrawlerArtwork';
@@ -362,20 +362,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     const allyBrawlers = allyTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
     const map = maps.find(m => m.id === draftState.mapId);
 
-    const snipers = allyBrawlers.filter(b => b.type.includes('Tiro preciso')).length;
-    const controllers = allyBrawlers.filter(b => b.type.includes('Controle')).length;
-    const throwers = allyBrawlers.filter(b => b.type.includes('Artilharia')).length;
-    const tanks = allyBrawlers.filter(b => b.type.includes('Tanque')).length;
-
-    if (snipers >= 3) return "Atenção: Composição com 3 Atiradores — Alto risco contra Assassinos/Tanques avançados.";
-    if (throwers >= 3) return "Atenção: Composição com 3 Lançadores — Vulnerabilidade crítica contra Assassinos.";
-    if (tanks >= 3) return "Atenção: Composição com 3 Tanques — Risco contra Brawlers de Controle e Anti-Tanques.";
-    
-    if (map?.terrain === 'Aberto' && allyBrawlers.length >= 2 && snipers === 0 && controllers === 0) {
-      return "Atenção: não há Tiro preciso nem Controle nesta composição para mapa aberto.";
-    }
-
-    return null;
+    return compositionBalanceAlert(allyBrawlers,map??null);
   }, [draftState.picks, draftState.mapId, brawlers, maps]);
 
   // Composições serão planejadas em sessão futura com tabela dedicada no banco
@@ -398,7 +385,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
           || enemy.counters?.includes(member.id)).map(member=>`${enemy.name} ameaça ${member.name} (curadoria manual)`);
       });
       return {...entry,brawlersList,threats,manualWarnings,description:entry.composition.description||'Trio cadastrado',
-        weight:allies.length*150+brawlersList.reduce((total,b)=>total+({S:100,A:80,B:60,C:40,D:20}[b.tier]??40),0)
+        weight:allies.length*150+brawlersList.reduce((total,b)=>total+(({S:100,A:80,B:60,C:40,D:20} as Record<string,number>)[b.tier]??40),0)
           +Math.min(entry.matches,10)*(entry.winrate===null?0:(entry.winrate-50)*0.6)
           -threats.reduce((total,t)=>total+Math.min(35,t.matches*8),0)
           -manualWarnings.length*45
