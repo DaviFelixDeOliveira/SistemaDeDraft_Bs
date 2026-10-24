@@ -15,6 +15,7 @@ import {
 
 import { Brawler, GameMap, Player } from '../../types';
 import { buildEvidence, evidenceBonus, confrontationBonus } from '../../lib/matchupEvidence';
+import { analyzeCompositions, compositionBalanceAlert, type CompositionInsight } from '../../lib/draftStrategyInsights';
 import { cn, fuzzySearch } from '../../lib/utils';
 import { Search, Shield, Target, Swords, Flame, AlertTriangle, MapPin, Gamepad2, Undo2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { BrawlerArtwork } from '../ui/BrawlerArtwork';
@@ -41,6 +42,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
   const [players, setPlayers] = useState<Player[]>([]);
   const [threatsCache, setThreatsCache] = useState<ThreatsCacheMap>(new Map());
   const [evidence, setEvidence] = useState<ReturnType<typeof buildEvidence> | null>(null);
+  const [savedCompositions, setSavedCompositions] = useState<CompositionInsight[]>([]);
 
   useEffect(() => {
     async function loadRealData() {
@@ -70,6 +72,15 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
 
 
   
+  useEffect(()=>{
+    let cancelled=false;
+    if(!draftState.mapId){setSavedCompositions([]);return;}
+    Promise.all([mapService.getCompsByMap(draftState.mapId),analyticsService.getAllMatches(),analyticsService.getAllPicks()])
+      .then(([comps,matches,picks])=>{if(!cancelled)setSavedCompositions(analyzeCompositions(comps,matches,picks));})
+      .catch(error=>{console.warn('Composições indisponíveis',error);if(!cancelled)setSavedCompositions([]);});
+    return ()=>{cancelled=true;};
+  },[draftState.mapId]);
+
   const pickOrder = getPickOrder(draftState.allyStarts);
   const currentPickIndex = draftState.picks.length;
   const isDraftComplete = currentPickIndex === 6;
@@ -351,23 +362,44 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     const allyBrawlers = allyTeamIds.map(id => brawlers.find(b => b.id === id)!).filter(Boolean);
     const map = maps.find(m => m.id === draftState.mapId);
 
-    const snipers = allyBrawlers.filter(b => b.type.includes('Tiro preciso')).length;
-    const throwers = allyBrawlers.filter(b => b.type.includes('Artilharia')).length;
-    const tanks = allyBrawlers.filter(b => b.type.includes('Tanque')).length;
-
-    if (snipers >= 3) return "Atenção: Composição com 3 Atiradores — Alto risco contra Assassinos/Tanques avançados.";
-    if (throwers >= 3) return "Atenção: Composição com 3 Lançadores — Vulnerabilidade crítica contra Assassinos.";
-    if (tanks >= 3) return "Atenção: Composição com 3 Tanques — Risco contra Brawlers de Controle e Anti-Tanques.";
-    
-    if (map?.terrain === 'Aberto' && allyBrawlers.length >= 2 && snipers === 0) {
-      return "Atenção: Faltam Atiradores/Controle para este mapa longo.";
-    }
-
-    return null;
+    return compositionBalanceAlert(allyBrawlers,map??null);
   }, [draftState.picks, draftState.mapId, brawlers, maps]);
 
   // Composições serão planejadas em sessão futura com tabela dedicada no banco
-  const recommendedComp = null;
+  const recommendedComp = useMemo(()=>{
+    if(!currentTeamPicking || currentTeamPicking!=='ally')return null;
+    const allies=draftState.picks.filter(p=>p.team==='ally').map(p=>p.brawlerId);
+    const enemies=draftState.picks.filter(p=>p.team==='enemy').map(p=>p.brawlerId);
+    const blocked=new Set([...draftState.allyBans,...draftState.enemyBans,...enemies]);
+    const options=savedCompositions.filter(entry=>
+      entry.composition.mapId===draftState.mapId
+      && entry.composition.brawlers.every(id=>!blocked.has(id))
+      && allies.every(id=>entry.composition.brawlers.includes(id))
+    ).map(entry=>{
+      const brawlersList=entry.composition.brawlers.map(id=>brawlers.find(b=>b.id===id)).filter((b):b is Brawler=>Boolean(b));
+      const threats=entry.threats.filter(t=>
+        !draftState.allyBans.includes(t.brawlerId) && !draftState.enemyBans.includes(t.brawlerId));
+      const manualWarnings=enemies.flatMap(enemyId=>{
+        const enemy=brawlers.find(b=>b.id===enemyId);
+        if(!enemy)return [];
+        return brawlersList.filter(member=>member.counteredBy?.includes(enemyId)
+          || enemy.counters?.includes(member.id)).map(member=>`${enemy.name} ameaça ${member.name} (curadoria manual)`);
+      });
+      const manualAdvantages=enemies.flatMap(enemyId=>{
+        const enemy=brawlers.find(b=>b.id===enemyId);
+        if(!enemy)return [];
+        return brawlersList.filter(member=>member.counters?.includes(enemyId)
+          || enemy.counteredBy?.includes(member.id)).map(member=>`${member.name} apresenta vantagem cadastrada sobre ${enemy.name}`);
+      });
+      return {...entry,brawlersList,threats,manualWarnings,manualAdvantages,description:entry.composition.description||'Trio cadastrado',
+        weight:allies.length*150+brawlersList.reduce((total,b)=>total+(({S:100,A:80,B:60,C:40,D:20} as Record<string,number>)[b.tier]??40),0)
+          +Math.min(entry.matches,10)*(entry.winrate===null?0:(entry.winrate-50)*0.6)
+          -threats.reduce((total,t)=>total+Math.min(35,t.matches*8),0)
+          -manualWarnings.length*45+Math.min(manualAdvantages.length*30,90)
+      };
+    }).filter(entry=>entry.brawlersList.length===3);
+    return options.sort((a,b)=>b.weight-a.weight)[0]??null;
+  },[savedCompositions,brawlers,draftState.picks,draftState.allyBans,draftState.enemyBans,draftState.mapId,currentTeamPicking]);
 
   const filteredBrawlers = useMemo(() => {
     return applyBrawlerFilters(brawlers, brawlerFilters);
@@ -552,9 +584,27 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-5 h-5 text-emerald-400" />
             <h3 className="font-semibold text-emerald-400">Composição Recomendada: {recommendedComp.description}</h3>
-            <span className="ml-auto text-xs font-bold text-emerald-400 bg-emerald-500/20 px-2 py-1 rounded-full">{recommendedComp.winrate}% WR</span>
+            <span className="ml-auto text-xs font-bold text-emerald-400 bg-emerald-500/20 px-2 py-1 rounded-full">{recommendedComp.matches ? `${recommendedComp.winrate}% WR (${recommendedComp.wins}/${recommendedComp.matches})` : 'Sem histórico com trio'}</span>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
+            <p className="mb-3 text-xs text-zinc-500">
+              Trio salvo: {recommendedComp.matches
+                ? `${recommendedComp.wins} vitórias de ${recommendedComp.matches} partidas (últimas ${recommendedComp.lastFive.matches}: ${recommendedComp.lastFive.wins} vitórias).`
+                : 'sem partidas registradas com estes três brawlers juntos neste mapa.'}
+              {' '}As estatísticas correspondem ao time inteiro, não a duelos isolados.
+            </p>
+            {recommendedComp.threats.map(t=>(
+              <p key={t.brawlerId} className="mb-2 text-xs text-amber-500">
+                ⚠️ {brawlers.find(b=>b.id===t.brawlerId)?.name||'Inimigo'}: {t.losses} derrotas em {t.matches} jogos com o trio.
+                {t.matches<5?' Amostra pequena; não é counter confirmado.':' Considere a composição inimiga completa.'}
+              </p>
+            ))}
+            {recommendedComp.manualAdvantages.map((note,i)=>(
+              <p key={i} className="mb-2 text-xs text-emerald-400">✓ {note}. Esta interação individual não garante a vitória do trio.</p>
+            ))}
+            {recommendedComp.manualWarnings.map((warning,i)=>(
+              <p key={i} className="mb-2 text-xs text-red-400">⚠️ {warning}.</p>
+            ))}
             {recommendedComp.brawlersList.map((brawler, i) => {
               const isPickedByUs = draftState.picks.some(p => p.team === 'ally' && p.brawlerId === brawler.id);
               return (
@@ -583,7 +633,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       )}
 
       {/* Engine Recommendations */}
-      {!isDraftComplete && currentTeamPicking === 'ally' && !recommendedComp && recommendations.length > 0 && (
+      {!isDraftComplete && currentTeamPicking === 'ally' && recommendations.length > 0 && (
         <div className="bg-white dark:bg-[#1A1A1A] border border-[#22D3EE]/50 rounded-xl p-4 mb-6 relative overflow-hidden shadow-[0_0_15px_rgba(34,211,238,0.1)]">
           <div className="flex items-center gap-2 mb-3">
             <Target className="w-5 h-5 text-[#22D3EE]" />
@@ -618,7 +668,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                           : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                       )}>
                         <span className="truncate">
-                          {rec.mapPicksCount < 5 ? '⚠️ Baixa amostragem' : '✅ Alta Confiança'} ({rec.mapPicksCount} {rec.mapPicksCount === 1 ? 'jogo' : 'jogos'})
+                          {rec.mapPicksCount < 12 ? '⚠️ Amostra limitada' : '📊 Histórico mais amplo'} ({rec.mapPicksCount} {rec.mapPicksCount === 1 ? 'jogo' : 'jogos'})
                         </span>
                         <span>{rec.mapWinrate}% WR</span>
                       </div>

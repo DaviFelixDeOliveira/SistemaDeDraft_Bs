@@ -11,6 +11,7 @@ import { MapDetailsView } from '../ui/MapDetailsView';
 import { BrawlerSelectDropdown } from '../ui/BrawlerSelectDropdown';
 import { cn, fuzzySearch } from '../../lib/utils';
 import { computeBanScore, EnemyPickStatsMap } from '../../lib/draftEngineUtils';
+import { analyzeCompositions, planDraftOpening, type CompositionInsight } from '../../lib/draftStrategyInsights';
 import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from '../BrawlerFilters';
 
 interface StepMapAndBansProps {
@@ -28,6 +29,8 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
   const [banRecs, setBanRecs] = useState<{ brawlers: Brawler[]; reason: string }>({ brawlers: [], reason: '' });
+  const [firstPickCandidates, setFirstPickCandidates] = useState<Brawler[]>([]);
+  const [compInsights, setCompInsights] = useState<CompositionInsight[]>([]);
 
   useEffect(() => {
     Promise.all([mapService.getMaps(), brawlerService.getBrawlers()]).then(([mData, bData]) => {
@@ -52,48 +55,40 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
 
     setIsSuggestionsLoading(true);
 
-    analyticsService.getMapDetailStats(draftState.mapId).then(stats => {
-      const enemyPickStats: EnemyPickStatsMap = (stats as any).allEnemyPickStats ?? {};
-      const hasHistoricalData = Object.values(enemyPickStats).some(s => s.picks > 0);
-      const totalMapMatches = stats.totalMatches ?? 0;
+    let cancelled=false;
+    void Promise.all([
+      analyticsService.getMapDetailStats(draftState.mapId),
+      mapService.getCompsByMap(draftState.mapId),
+      analyticsService.getAllMatches(),
+      analyticsService.getAllPicks()
+    ]).then(([stats,comps,matches,picks])=>{
+      if(cancelled)return;
+      const enemyPickStats:EnemyPickStatsMap=stats.allEnemyPickStats??{};
+      const banned=[...draftState.allyBans,...draftState.enemyBans].filter(Boolean) as string[];
+      const {plannedPicks,reserved}=planDraftOpening(brawlers,selectedMap,draftState.allyStarts,banned);
+      setFirstPickCandidates(plannedPicks);
+      const findings=analyzeCompositions(comps,matches,picks);
+      setCompInsights(findings);
 
-      // Calcula scores de ban para todos os brawlers disponíveis
-      const available = brawlers.filter(
-        b => !draftState.allyBans.includes(b.id) && !draftState.enemyBans.includes(b.id)
-      );
-
-      const scored = available
-        .map(b => ({
-          brawler: b,
-          score: computeBanScore(b, selectedMap.terrain, draftState.allyStarts, enemyPickStats),
-        }))
-        .sort((a, b) => b.score - a.score);
-
-      const topBrawlers = scored.slice(0, 4).map(s => s.brawler);
-
-      // Razão dinâmica: data-driven ou cold start
-      let reason: string;
-      if (hasHistoricalData) {
-        reason = `Baseado em ${totalMapMatches} partida${totalMapMatches !== 1 ? 's' : ''} neste mapa — brawlers com alto winrate inimigo no mapa recebem prioridade de ban.`;
-      } else if (!draftState.allyStarts) {
-        if (selectedMap.terrain === 'Aberto') {
-          reason = 'O Inimigo tem o First Pick num Mapa Aberto. Priorize banir Snipers ou Brawlers Tier S.';
-        } else {
-          reason = 'O Inimigo tem o First Pick. Priorize banir os brawlers mais fortes do Meta (Tier S).';
-        }
-      } else {
-        if (selectedMap.terrain === 'Aberto') {
-          reason = 'Nós temos o First Pick num Mapa Aberto. Foque em banir assassinos (algozes) que possam ser counters do nosso pick.';
-        } else {
-          reason = 'Nós temos o First Pick. Elimine os counters mais versáteis ou algozes para proteger sua escolha.';
-        }
+      // Os melhores first picks da nossa equipe não são banidos por nós.
+      const scored=brawlers.filter(b=>!banned.includes(b.id)&&!reserved.has(b.id))
+        .map(b=>{
+          const relevant=findings.flatMap(entry=>entry.threats.filter(t=>t.brawlerId===b.id));
+          const compositionCaution=Math.min(18,relevant.length*8);
+          return {brawler:b,score:computeBanScore(b,selectedMap.terrain,draftState.allyStarts,enemyPickStats)+compositionCaution};
+        }).sort((a,b)=>b.score-a.score);
+      const reason=draftState.allyStarts
+        ? `Nossa equipe escolhe primeiro: os principais candidatos a first pick aparecem separados e são preservados da sugestão de ban. Histórico de ${stats.totalMatches??0} partida(s) no mapa, com cautela para amostras pequenas.`
+        : `Inimigo escolhe primeiro: priorize impedir escolhas fortes no mapa. Histórico de ${stats.totalMatches??0} partida(s); 1 ou 2 resultados isolados não definem o ranking.`;
+      setBanRecs({brawlers:scored.slice(0,4).map(x=>x.brawler),reason});
+    }).catch(error=>{
+      if(!cancelled){
+        console.warn('Falha ao analisar bans e composições',error);
+        setBanRecs({brawlers:[],reason:'As sugestões estão indisponíveis. Você ainda pode escolher os bans manualmente.'});
+        setCompInsights([]);setFirstPickCandidates([]);
       }
-
-      setBanRecs({ brawlers: topBrawlers, reason });
-      setIsSuggestionsLoading(false);
-    }).catch(() => {
-      setIsSuggestionsLoading(false);
-    });
+    }).finally(()=>{if(!cancelled)setIsSuggestionsLoading(false);});
+    return ()=>{cancelled=true;};
   }, [draftState.mapId, draftState.allyStarts, draftState.allyBans, draftState.enemyBans, brawlers, maps]);
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -278,6 +273,30 @@ export function StepMapAndBans({ draftState, setDraftState, onNext }: StepMapAnd
               ) : (
                 <>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-3">{banRecs.reason}</p>
+                  {draftState.allyStarts && firstPickCandidates.length>0 && (
+                    <div className="mb-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                      <p className="text-xs font-bold text-emerald-500">Primeiro pick — considerar reservar, não banir</p>
+                      <p className="mt-1 text-xs text-zinc-500">{firstPickCandidates.map(b=>b.name).join(' · ')}. Escolha estratégica preliminar, não vitória garantida.</p>
+                    </div>
+                  )}
+                  {compInsights.length>0&&(
+                    <div className="mb-3 space-y-2 rounded-lg border border-indigo-500/25 bg-indigo-500/5 p-3">
+                      <p className="text-xs font-bold text-indigo-400">Composições cadastradas neste mapa ({compInsights.length})</p>
+                      {compInsights.slice(0,4).map(({composition,matches,wins,threats})=>(
+                        <div key={composition.id} className="text-xs text-zinc-500 dark:text-zinc-300">
+                          <strong>{composition.brawlers.map(id=>brawlers.find(b=>b.id===id)?.name||id).join(' + ')}</strong>
+                          <span> · {matches? `${wins}/${matches} vitórias com o trio` : 'ainda não testada no histórico'}</span>
+                          {threats.filter(t=>!draftState.allyBans.includes(t.brawlerId) && !draftState.enemyBans.includes(t.brawlerId)).slice(0,3).map(t=>(
+                            <p key={t.brawlerId} className="mt-1 text-amber-500">
+                              ⚠️ Se pretende usar este trio, considere banir {brawlers.find(b=>b.id===t.brawlerId)?.name||t.brawlerId}:
+                              {t.losses} derrotas em {t.matches} confrontos. {t.matches<5?'Amostra muito pequena: é só um alerta, não um counter comprovado.':'A interação inclui os três adversários.'}
+                            </p>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
 
                   <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                     {banRecs.brawlers.map(b => (
