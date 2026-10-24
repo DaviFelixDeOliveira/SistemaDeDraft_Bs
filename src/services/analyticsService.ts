@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { buildEvidence } from '../lib/matchupEvidence';
 import { Match, MatchPick, MatchBan, MatchRecordData, Brawler, GameMap, Player } from '../types';
 import { toDbResult, fromDbResult, toDbTeam, fromDbTeam } from '../lib/utils';
 import { brawlerService } from './brawlerService';
@@ -368,6 +369,33 @@ export const analyticsService = {
     });
 
     const targetBrawler = brawlersMap.get(brawlerId);
+    const history = buildEvidence(matches,picks,maps);
+    // Comparação sempre por partidas completas, com amostra mínima para achados automáticos.
+    const mapRelation = (entry: ReturnType<typeof history.relationEntries>[number]) => ({
+      brawler: brawlersMap.get(entry.id),
+      matches: entry.matches, wins: entry.wins, winrate: entry.winrate,
+      recentWins: entry.recentWins, recentMatches: entry.recentMatches,
+      manual: entry.manual, inferred: entry.inferred,
+    });
+    // O cadastro manual pode estar em qualquer lado do par A/B.
+    const manualCounterIds = [...new Set([
+      ...(targetBrawler?.counters || []),
+      ...brawlers.filter(b => b.counteredBy?.includes(brawlerId)).map(b => b.id)
+    ])];
+    const manualThreatIds = [...new Set([
+      ...(targetBrawler?.counteredBy || []),
+      ...brawlers.filter(b => b.counters?.includes(brawlerId)).map(b => b.id)
+    ])];
+    const partnerDetails = history.relationEntries(brawlerId,'partner')
+      .map(mapRelation).filter(e => e.brawler);
+    const counterDetails = history.relationEntries(brawlerId,'counter',manualCounterIds)
+      .map(mapRelation).filter(e => e.brawler);
+    const threatDetails = history.relationEntries(brawlerId,'threat',manualThreatIds)
+      .map(mapRelation).filter(e => e.brawler);
+    const modeBreakdown = history.breakdown(brawlerId);
+    const dynamicComfort = history.comfort(brawlerId,players);
+    const totalAllyBans = brawlerBans.filter(b => b.team === 'ally').length;
+    const totalEnemyBans = brawlerBans.filter(b => b.team === 'enemy').length;
 
     // Parceiros por WR ponderado (mínimo 2 partidas juntos para prioridade)
     const realPartners = Object.entries(partnerGames)
@@ -423,16 +451,27 @@ export const analyticsService = {
 
     return {
       totalBans,
-      topModeBans,
-      topMapBans,
-      winrate,
-      allyPicksCount: allyPicks.length,
+      totalAllyBans, totalEnemyBans,
+      topModeBans, topMapBans,
+      winrate, allyPicksCount: allyPicks.length,
       enemyPicksCount: enemyPicks.length,
       totalPicksCount: brawlerPicks.length,
-      comfortStats,
-      partners: realPartners,
-      counters,
-      threats
+      // Manual nunca removido; inferido apenas quando uso dominante e resultado sustentado.
+      comfortStats: dynamicComfort.map(c => ({
+        playerName: c.playerName, matches: c.sample.matches,
+        winrate: c.sample.winrate, isComfort: true, manual: c.manual, inferred: c.inferred,
+        share: c.share
+      })),
+      partners: partnerDetails.slice(0,6).map(e => e.brawler),
+      counters: counterDetails.slice(0,6).map(e => e.brawler),
+      threats: threatDetails.slice(0,6).map(e => e.brawler),
+      partnerDetails: partnerDetails.slice(0,12),
+      counterDetails: counterDetails.slice(0,12),
+      threatDetails: threatDetails.slice(0,12),
+      modeBreakdown,
+      mostPlayedMode: modeBreakdown[0] ?? null,
+      mostPlayedMap: modeBreakdown.flatMap(m=>m.maps)
+        .sort((a,b)=>b.sample.matches-a.sample.matches)[0] ?? null
     };
   },
 
