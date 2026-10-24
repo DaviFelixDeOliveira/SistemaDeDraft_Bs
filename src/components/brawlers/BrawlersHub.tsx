@@ -5,6 +5,7 @@ import { Search, Flame, Target, ChevronRight, X, Activity, Plus, Edit2, Users, S
 import { cn, fuzzySearch } from '../../lib/utils';
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Brawler } from '../../types';
+import { syncBrawlersFromApi } from '../../services/catalogApiService';
 import { BrawlerModal } from './BrawlerModal';
 
 import { analyticsService } from '../../services/analyticsService';
@@ -20,12 +21,15 @@ export function BrawlersHub() {
    const [editingBrawler, setEditingBrawler] = useState<Brawler | null>(null);
    const [loading, setLoading] = useState(false);
    const [isFetching, setIsFetching] = useState(true);
+   const [isSyncing, setIsSyncing] = useState(false);
+   const [syncInfo, setSyncInfo] = useState('');
 
    const [confirmConfig, setConfirmConfig] = useState<{ isOpen: boolean, action: (() => void) | null, title: string, message: string }>({ isOpen: false, action: null, title: '', message: '' });
    const [brawlers, setBrawlers] = useState<Brawler[]>([]);
 
    useEffect(() => {
-      loadBrawlers();
+      void loadBrawlers();
+      void syncCatalog(true);
    }, []);
 
    useEffect(() => {
@@ -41,6 +45,27 @@ export function BrawlersHub() {
       const data = await brawlerService.getBrawlers();
       setBrawlers(data);
       setIsFetching(false);
+   };
+
+   const syncCatalog = async (quiet = false) => {
+      setIsSyncing(true);
+      if (!quiet) setSyncInfo('');
+      try {
+         const result = await syncBrawlersFromApi();
+         await loadBrawlers();
+         if (!quiet || result.created > 0) {
+            setSyncInfo(result.skipped
+               ? 'Catálogo já atualizado recentemente.'
+               : result.created > 0
+                  ? result.created + ' novo(s) brawler(s) incorporado(s) ao catálogo.'
+                  : 'Catálogo verificado. Nenhum brawler novo foi encontrado.');
+         }
+      } catch (err) {
+         if (!quiet) setSyncInfo(err instanceof Error ? err.message : 'A API está indisponível. O catálogo anterior foi preservado.');
+         console.warn('BrawlAPI indisponível:', err);
+      } finally {
+         setIsSyncing(false);
+      }
    };
 
    const filtered = applyBrawlerFilters(brawlers, brawlerFilters);
@@ -118,15 +143,16 @@ export function BrawlersHub() {
             )}>
                <div className="p-4 border-b border-zinc-200 dark:border-[#2A2A2A] space-y-3">
                   {!isPlayerMode && (
-                     <button
-                        onClick={() => {
-                           setEditingBrawler(null);
-                           setIsModalOpen(true);
-                        }}
-                        className="w-full bg-[#6366F1] hover:bg-[#E62E5C] text-white px-6 py-3 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
-                     >
-                        <Plus className="w-4 h-4" /> Adicionar  Brawler
-                     </button>
+                     <div className="space-y-2">
+                       <button type="button" disabled={isSyncing}
+                          onClick={() => void syncCatalog()}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
+                          {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                          {isSyncing ? 'Verificando catálogo...' : 'Atualizar brawlers da API'}
+                       </button>
+                       {syncInfo && <p role="status" className="rounded-lg bg-indigo-500/10 p-2 text-xs leading-relaxed text-indigo-700 dark:text-indigo-200">{syncInfo}</p>}
+                       <p className="text-[11px] text-slate-500 dark:text-zinc-400">Novos brawlers são adicionados sem alterar tiers e dados já registrados.</p>
+                     </div>
                   )}
                   <BrawlerFilterBar
                      filters={brawlerFilters}
