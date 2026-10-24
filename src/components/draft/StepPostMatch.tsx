@@ -13,6 +13,7 @@ import { mapService } from '../../services/mapService';
 import { playerService } from '../../services/playerService';
 import { Brawler, GameMap, Player } from '../../types';
 import { BrawlerSelectDropdown } from '../ui/BrawlerSelectDropdown';
+import { BrawlerArtwork } from '../ui/BrawlerArtwork';
 import { MapPreviewModal } from '../ui/MapPreviewModal';
 import { recordVariationSeries } from '../../services/variationService';
 
@@ -267,7 +268,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                 <div key={brawlerId} className="bg-white dark:bg-[#1A1A1A] border border-emerald-500/20 rounded-lg p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={cn("w-10 h-10 rounded border border-zinc-200 dark:border-[#2A2A2A] overflow-hidden", getBrawlerBgColor(brawler))}>
-                      {brawler?.imageUrl && <img src={brawler.imageUrl} alt="" className="w-full h-full object-cover" />}
+                      {brawler && <BrawlerArtwork name={brawler.name} imageUrl={brawler.imageUrl} iconUrl={brawler.iconUrl} preferPortrait className="h-full w-full" />}
                     </div>
                     <span className="font-medium text-slate-900 dark:text-white">{brawler?.name}</span>
                   </div>
@@ -308,7 +309,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                 return (
                   <div key={i} className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1">
                     <div className="w-4 h-4 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
-                      {b?.iconUrl && <img src={b?.iconUrl} alt="" className="w-full h-full object-cover" />}
+                      {b && <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl} className="h-full w-full" />}
                     </div>
                     {b?.name}
                   </div>
@@ -327,7 +328,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
               return (
                 <div key={brawlerId} className="bg-white dark:bg-[#1A1A1A] border border-red-500/20 rounded-lg p-3 flex flex-col items-center gap-2 flex-1">
                   <div className="w-12 h-12 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
-                    {brawler?.imageUrl && <img src={brawler.imageUrl} alt="" className="w-full h-full object-cover" />}
+                    {brawler && <BrawlerArtwork name={brawler.name} imageUrl={brawler.imageUrl} iconUrl={brawler.iconUrl} preferPortrait className="h-full w-full" />}
                   </div>
                   <span className="font-medium text-slate-900 dark:text-white">{brawler?.name}</span>
                 </div>
@@ -344,7 +345,7 @@ export function StepPostMatch({ draftState, setDraftState, onFinish, onPrev, onR
                 return (
                   <div key={i} className="text-sm text-slate-500 dark:text-zinc-400 flex items-center gap-1">
                     <div className="w-4 h-4 rounded bg-slate-200 dark:bg-zinc-800 overflow-hidden">
-                      {b?.iconUrl && <img src={b?.iconUrl} alt="" className="w-full h-full object-cover" />}
+                      {b && <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl} className="h-full w-full" />}
                     </div>
                     {b?.name}
                   </div>

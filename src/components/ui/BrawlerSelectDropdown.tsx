@@ -3,6 +3,7 @@ import { ChevronDown, Search, Lightbulb, Ban } from 'lucide-react';
 import { Brawler } from '../../types';
 import { cn, getBrawlerBgColor } from '../../lib/utils';
 import { BrawlerFilterBar, useBrawlerFilters, applyBrawlerFilters } from '../BrawlerFilters';
+import { BrawlerArtwork } from './BrawlerArtwork';
 
 interface BrawlerSelectDropdownProps {
   disabledReasons?: Record<string, string>;
@@ -73,15 +74,8 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
       >
         {selectedBrawler ? (
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-slate-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {(selectedBrawler.iconUrl || selectedBrawler.imageUrl) ? (
-                <img src={selectedBrawler.iconUrl || selectedBrawler.imageUrl} alt="" className="w-full h-full object-cover" onError={e => {
-                  if (selectedBrawler.imageUrl && e.currentTarget.src !== selectedBrawler.imageUrl) e.currentTarget.src = selectedBrawler.imageUrl;
-                }} />
-              ) : (
-                <span className="text-[10px] text-slate-500 dark:text-zinc-500">IMG</span>
-              )}
-            </div>
+            <BrawlerArtwork name={selectedBrawler.name} iconUrl={selectedBrawler.iconUrl} imageUrl={selectedBrawler.imageUrl}
+              className="h-6 w-6 flex-shrink-0 rounded" />
             <span className="text-sm text-slate-900 dark:text-white">{selectedBrawler.name}</span>
             {icon}
           </div>
@@ -125,12 +119,8 @@ export function BrawlerSelectDropdown({ placeholder, value, onChange, disabledBr
                       }
                     }}
                   >
-                     <div className={cn("w-6 h-6 rounded flex-shrink-0 overflow-hidden relative", getBrawlerBgColor(brawler))}>
-                       {(brawler.iconUrl || brawler.imageUrl) && <img src={brawler.iconUrl || brawler.imageUrl} alt="" className="w-full h-full object-cover" onError={e => {
-                         if (brawler.imageUrl && e.currentTarget.src !== brawler.imageUrl) e.currentTarget.src = brawler.imageUrl;
-                       }} />}
-                       <div className="absolute bottom-0 left-0 right-0 h-1" style={{ backgroundColor: getBrawlerBgColor(brawler).replace('bg-', '').replace('border-', '') }} />
-                     </div>
+                     <BrawlerArtwork name={brawler.name} iconUrl={brawler.iconUrl} imageUrl={brawler.imageUrl}
+                       className="h-6 w-6 flex-shrink-0 rounded" />
                      <span className="flex-1">{brawler.name}</span>
                      {isSuggested && !isDisabled && (
                        <Lightbulb className="w-3.5 h-3.5 ml-auto text-cyan-300" />

@@ -6,6 +6,7 @@ import { cn, fuzzySearch } from '../../lib/utils';
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Brawler } from '../../types';
 import { syncBrawlersFromApi } from '../../services/catalogApiService';
+import { BrawlerArtwork } from '../ui/BrawlerArtwork';
 import { BrawlerModal } from './BrawlerModal';
 
 import { analyticsService } from '../../services/analyticsService';
@@ -174,9 +175,9 @@ export function BrawlersHub() {
                            selectedBrawler?.id === b.id ? "bg-white dark:bg-[#1A1A1A] shadow-sm border border-zinc-200 dark:border-zinc-700/50" : "hover:bg-zinc-100 dark:hover:bg-zinc-800/50 border border-transparent"
                         )}
                      >
-                        <div className={cn("w-10 h-10 rounded-md overflow-hidden flex-shrink-0 border border-zinc-200 dark:border-[#2A2A2A]", getBrawlerBgColor(b))}>
-                           {b.iconUrl && <img src={b.iconUrl} alt={b.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />}
-                        </div>
+                        <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl}
+                           className="w-10 h-10 rounded-md flex-shrink-0 border border-zinc-200 dark:border-[#2A2A2A]"
+                           imageClassName="group-hover:scale-110 transition-transform duration-300" />
                         <div className="flex-1 min-w-0">
                            <div className="text-sm font-bold text-zinc-900 dark:text-white truncate">{b.name}</div>
                            <div className="text-[10px] text-zinc-500 truncate mt-0.5 flex items-center gap-1">
@@ -221,7 +222,9 @@ export function BrawlersHub() {
                               "w-24 h-24 sm:w-32 sm:h-32 rounded-2xl flex-shrink-0 relative overflow-hidden", getBrawlerBgColor(selectedBrawler),
                               selectedBrawler.tier === 'S' ? "border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.3)]" : "border-2 border-zinc-200 dark:border-zinc-700"
                            )}>
-                              {selectedBrawler.imageUrl && <img src={selectedBrawler.imageUrl} alt={selectedBrawler.name} className="w-full h-full object-cover" />}
+                              <BrawlerArtwork name={selectedBrawler.name} iconUrl={selectedBrawler.iconUrl}
+                                 imageUrl={selectedBrawler.imageUrl} preferPortrait large
+                                 className="h-full w-full" />
                               {selectedBrawler.isHotPick && (
                                  <div className="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-bl-lg flex items-center gap-1">
                                     <Flame className="w-3 h-3" /> HOT
@@ -419,9 +422,8 @@ export function BrawlersHub() {
                                        {brawlerStatsDetail?.partners && brawlerStatsDetail.partners.length > 0 ? (
                                           brawlerStatsDetail.partners.map((b: Brawler) => (
                                              <div key={b.id} className="flex items-center gap-2 bg-zinc-50 dark:bg-[#1A1A1A] p-2 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
-                                                <div className={cn("w-6 h-6 rounded overflow-hidden flex-shrink-0", getBrawlerBgColor(b))}>
-                                                   {(b.iconUrl || b.imageUrl) && <img src={b.iconUrl || b.imageUrl} alt="" className="w-full h-full object-cover" />}
-                                                </div>
+                                                <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl}
+                                                   className="w-6 h-6 rounded flex-shrink-0" />
                                                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{b.name}</span>
                                              </div>
                                           ))
@@ -440,9 +442,8 @@ export function BrawlersHub() {
                                        {brawlerStatsDetail?.counters && brawlerStatsDetail.counters.length > 0 ? (
                                           brawlerStatsDetail.counters.map((b: Brawler) => (
                                              <div key={b.id} className="flex items-center gap-2 bg-zinc-50 dark:bg-[#1A1A1A] p-2 rounded-lg border border-zinc-100 dark:border-zinc-800/50">
-                                                <div className={cn("w-6 h-6 rounded overflow-hidden flex-shrink-0", getBrawlerBgColor(b))}>
-                                                   {(b.iconUrl || b.imageUrl) && <img src={b.iconUrl || b.imageUrl} alt="" className="w-full h-full object-cover" />}
-                                                </div>
+                                                <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl}
+                                                   className="w-6 h-6 rounded flex-shrink-0" />
                                                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{b.name}</span>
                                              </div>
                                           ))
@@ -461,9 +462,8 @@ export function BrawlersHub() {
                                        {brawlerStatsDetail?.threats && brawlerStatsDetail.threats.length > 0 ? (
                                           brawlerStatsDetail.threats.map((b: Brawler) => (
                                              <div key={b.id} className="flex items-center gap-2 bg-red-50 dark:bg-red-950/20 p-2 rounded-lg border border-red-100 dark:border-red-900/30">
-                                                <div className={cn("w-6 h-6 rounded overflow-hidden flex-shrink-0", getBrawlerBgColor(b))}>
-                                                   {(b.iconUrl || b.imageUrl) && <img src={b.iconUrl || b.imageUrl} alt="" className="w-full h-full object-cover" />}
-                                                </div>
+                                                <BrawlerArtwork name={b.name} iconUrl={b.iconUrl} imageUrl={b.imageUrl}
+                                                   className="w-6 h-6 rounded flex-shrink-0" />
                                                 <span className="text-sm font-medium text-red-700 dark:text-red-400">{b.name}</span>
                                              </div>
                                           ))
