@@ -377,18 +377,25 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       && allies.every(id=>entry.composition.brawlers.includes(id))
     ).map(entry=>{
       const brawlersList=entry.composition.brawlers.map(id=>brawlers.find(b=>b.id===id)).filter((b):b is Brawler=>Boolean(b));
-      const threats=entry.threats.filter(t=>!blocked.has(t.brawlerId));
+      const threats=entry.threats.filter(t=>
+        !draftState.allyBans.includes(t.brawlerId) && !draftState.enemyBans.includes(t.brawlerId));
       const manualWarnings=enemies.flatMap(enemyId=>{
         const enemy=brawlers.find(b=>b.id===enemyId);
         if(!enemy)return [];
         return brawlersList.filter(member=>member.counteredBy?.includes(enemyId)
           || enemy.counters?.includes(member.id)).map(member=>`${enemy.name} ameaça ${member.name} (curadoria manual)`);
       });
-      return {...entry,brawlersList,threats,manualWarnings,description:entry.composition.description||'Trio cadastrado',
+      const manualAdvantages=enemies.flatMap(enemyId=>{
+        const enemy=brawlers.find(b=>b.id===enemyId);
+        if(!enemy)return [];
+        return brawlersList.filter(member=>member.counters?.includes(enemyId)
+          || enemy.counteredBy?.includes(member.id)).map(member=>`${member.name} apresenta vantagem cadastrada sobre ${enemy.name}`);
+      });
+      return {...entry,brawlersList,threats,manualWarnings,manualAdvantages,description:entry.composition.description||'Trio cadastrado',
         weight:allies.length*150+brawlersList.reduce((total,b)=>total+(({S:100,A:80,B:60,C:40,D:20} as Record<string,number>)[b.tier]??40),0)
           +Math.min(entry.matches,10)*(entry.winrate===null?0:(entry.winrate-50)*0.6)
           -threats.reduce((total,t)=>total+Math.min(35,t.matches*8),0)
-          -manualWarnings.length*45
+          -manualWarnings.length*45+Math.min(manualAdvantages.length*30,90)
       };
     }).filter(entry=>entry.brawlersList.length===3);
     return options.sort((a,b)=>b.weight-a.weight)[0]??null;
@@ -591,6 +598,9 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
                 ⚠️ {brawlers.find(b=>b.id===t.brawlerId)?.name||'Inimigo'}: {t.losses} derrotas em {t.matches} jogos com o trio.
                 {t.matches<5?' Amostra pequena; não é counter confirmado.':' Considere a composição inimiga completa.'}
               </p>
+            ))}
+            {recommendedComp.manualAdvantages.map((note,i)=>(
+              <p key={i} className="mb-2 text-xs text-emerald-400">✓ {note}. Esta interação individual não garante a vitória do trio.</p>
             ))}
             {recommendedComp.manualWarnings.map((warning,i)=>(
               <p key={i} className="mb-2 text-xs text-red-400">⚠️ {warning}.</p>
