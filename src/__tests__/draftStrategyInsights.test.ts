@@ -7,7 +7,7 @@ import {buildEvidence} from '../lib/matchupEvidence';
 const map={id:'anel',name:'Anel de Fogo',mode:'Zona Estratégica',terrain:'Aberto',isActive:true} as GameMap;
 const b=(id:string,tier:string,type:string):Brawler=>({
  id,name:id,rarity:'Épico',tier,health:'Média',type:[type],walksOnWater:false,breaksWalls:false,
- isActive:true
+ is_active:true
 });
 const brawlers=[b('finx','B','Controle'),b('shade','S','Algoz'),b('mortis','A','Algoz'),b('bull','B','Tanque'),b('gray','A','Suporte'),b('doug','C','Suporte'),b('dina','B','Artilharia')];
 const composition={id:'comp',mapId:'anel',brawlers:['mortis','gray','doug'],winrate:0,matchesPlayed:0} as Composition;
