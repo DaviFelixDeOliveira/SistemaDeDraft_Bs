@@ -5,7 +5,7 @@ import { brawlerService } from '../../services/brawlerService';
 import { GameMap, GameMode, Composition, Brawler } from '../../types';
 import { cn } from '../../lib/utils';
 import { ConfirmModal } from "../ui/ConfirmModal";
-import { Search, Map as MapIcon, Info, Flame, Shield, Crosshair, Archive, ArchiveRestore, Plus, Edit } from 'lucide-react';
+import { Search, Map as MapIcon, Info, Flame, Shield, Crosshair, Plus, Edit, Trash2 } from 'lucide-react';
 import { MapDetailsModal, EditMapModal, AddCompModal } from './MapModals';
 import { MapCatalogModal } from './MapCatalogModal';
 import { addMapFromApi, type ExternalGameMap } from '../../services/catalogApiService';
@@ -32,7 +32,6 @@ export function MapsHub() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [editingMap, setEditingMap] = useState<GameMap | null>(null);
-  const [importMapDraft, setImportMapDraft] = useState<GameMap | null>(null);
   const [isAddCompModalOpen, setIsAddCompModalOpen] = useState(false);
 
   const [dashStats, setDashStats] = useState({ totalMatches: 0, winrate: 0 });
@@ -82,78 +81,62 @@ export function MapsHub() {
     map.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const toggleMapStatus = (mapId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const map = maps.find(m => m.id === mapId);
-    if (!map) return;
-    const isArchiving = map.isActive !== false;
-
+  const removeMap = (map: GameMap, event: React.MouseEvent) => {
+    event.stopPropagation();
     setConfirmConfig({
-      isOpen: true,
-      title: isArchiving ? 'Arquivar Mapa' : 'Desarquivar Mapa',
-      message: `Tem certeza que deseja ${isArchiving ? 'arquivar' : 'desarquivar'} o mapa ${map.name}?`,
-      processingText: isArchiving ? 'Arquivando...' : 'Desarquivando...',
-      successText: isArchiving ? '✅ Arquivado com sucesso!' : '✅ Desarquivado com sucesso!',
-      action: async () => {
-        const nextStatus = !isArchiving;
-        await mapService.updateMapStatus(mapId, nextStatus);
-        setMaps(prev => prev.map(m => m.id === mapId ? { ...m, isActive: nextStatus, is_active: nextStatus } : m));
-        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      isOpen:true,
+      title:'Remover da rotação',
+      message:`Remover "${map.name}" da rotação desta equipe? Se já houver partidas ou composições, o mapa será arquivado automaticamente, preservando todo o histórico. O catálogo global não será alterado.`,
+      processingText:'Conferindo histórico...',
+      successText:'Rotação atualizada com segurança.',
+      action:async () => {
+        const outcome = await mapService.removeMapFromRotation(map.id);
+        const latest = await mapService.getMaps();
+        setMaps(latest);
+        setConfirmConfig(prev=>({...prev,isOpen:false}));
+        if (outcome === 'archived') {
+          setViewActive(false);
+        }
       }
     });
   };
 
   const handleMapSelected = (external: ExternalGameMap) => {
-    const existing = maps.find(map => map.id === external.id);
-    if (existing) {
-      // Os nomes oficiais já cadastrados em português são reutilizados.
-      setEditingMap(existing);
-      setImportMapDraft(null);
-    } else {
-      setEditingMap(null);
-      setImportMapDraft({
-        id: external.id,
-        name: external.name, // não traduzir automaticamente nomes próprios
-        mode: external.mode,
-        terrain: 'Misto',
-        imageUrl: external.imageUrl || undefined,
-        isActive: true,
-      });
+    const current = maps.find(m => m.id === external.id);
+    if (current?.isActive) {
+      setEditingMap(current);setIsCatalogOpen(false);setIsAddModalOpen(true);
+      return;
     }
     setIsCatalogOpen(false);
-    setIsAddModalOpen(true);
+    setConfirmConfig({
+      isOpen:true,title:current?'Reativar mapa':'Adicionar mapa',
+      message:`Adicionar "${current?.name || external.name}" à rotação da sua equipe?`,
+      processingText:'Adicionando...',
+      successText:'Mapa adicionado à rotação.',
+      action:async()=>{
+        const result=await addMapFromApi(external.id,{
+          name:current?.name || external.name,
+          terrain:current?.terrain || 'Misto',
+        });
+        setMaps(await mapService.getMaps());
+        setActiveMode(result.mode);setViewActive(true);setSearchQuery('');
+        setConfirmConfig(prev=>({...prev,isOpen:false}));
+      }
+    });
   };
 
   const handleSaveMap = (mapData: Partial<GameMap>) => {
-    const name = mapData.name?.trim();
-    if (!name || !mapData.id || !mapData.terrain) return;
-    const isImport = !!importMapDraft && !editingMap;
-    const id = mapData.id;
+    const name=mapData.name?.trim();
+    if(!editingMap || !name || !mapData.id || !mapData.terrain)return;
     setConfirmConfig({
-      isOpen: true,
-      title: isImport ? 'Adicionar mapa' : 'Salvar alterações do mapa',
-      message: isImport
-        ? `Adicionar "${name}" à rotação desta equipe?`
-        : `Salvar nome e terreno de "${name}" para esta equipe?`,
-      action: async () => {
-        let mode = mapData.mode || 'Pique-Gema';
-        if (isImport) {
-          const added = await addMapFromApi(id, { name, terrain: mapData.terrain! });
-          mode = added.mode;
-        } else {
-          await mapService.updateMapPreferences({
-            id, name, terrain: mapData.terrain!,
-          });
-        }
-        const updated = await mapService.getMaps();
-        setMaps(updated);
-        setActiveMode(mode);
-        setViewActive(true);
-        setSearchQuery('');
-        setIsAddModalOpen(false);
-        setEditingMap(null);
-        setImportMapDraft(null);
-        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      isOpen:true,title:'Salvar alterações do mapa',
+      message:`Salvar nome e terreno de "${name}" apenas para esta equipe?`,
+      processingText:'Salvando...',successText:'Mapa atualizado.',
+      action:async()=>{
+        await mapService.updateMapPreferences({id:mapData.id!,name,terrain:mapData.terrain!});
+        setMaps(await mapService.getMaps());
+        setIsAddModalOpen(false);setEditingMap(null);
+        setConfirmConfig(prev=>({...prev,isOpen:false}));
       }
     });
   };
@@ -360,13 +343,12 @@ export function MapsHub() {
                           >
                             <Edit className="w-3.5 h-3.5" />
                           </button>
-                          <button 
-                            onClick={(e) => toggleMapStatus(map.id, e)}
-                            className="p-1.5 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-[#6366F1] hover:bg-[#6366F1]/10 dark:hover:bg-[#6366F1]/10 transition-colors"
-                            title={map.isActive ? "Arquivar Mapa" : "Desarquivar Mapa"}
-                          >
-                            {map.isActive ? <Archive className="w-3.5 h-3.5" /> : <ArchiveRestore className="w-3.5 h-3.5" />}
+                          <button type="button" onClick={(event) => removeMap(map,event)}
+                            className="p-1.5 rounded-md text-zinc-500 hover:text-red-500 hover:bg-red-500/10 dark:text-zinc-400"
+                            title="Remover da rotação (arquiva se houver histórico)" aria-label={`Remover ${map.name} da rotação`}>
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
+                          
                         </div>
                       )}
                     </div>
@@ -433,9 +415,8 @@ export function MapsHub() {
 
       <EditMapModal
         map={editingMap}
-        initialValues={importMapDraft}
         isOpen={isAddModalOpen}
-        onClose={() => { setIsAddModalOpen(false); setEditingMap(null); setImportMapDraft(null); }}
+        onClose={() => { setIsAddModalOpen(false); setEditingMap(null); }}
         onSave={handleSaveMap}
       />
       

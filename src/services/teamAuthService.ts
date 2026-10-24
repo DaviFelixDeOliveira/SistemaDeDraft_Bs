@@ -39,11 +39,19 @@ export const teamAuthService = {
   async login(teamName: string, password: string): Promise<TeamAccount> {
     const username = normalizeTeamUsername(teamName);
     if (!isValidTeamUsername(username)) throw new Error('Nome de equipe inválido.');
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: getInternalTeamEmail(username),
-      password,
-    });
-    if (error || !data.session) throw new Error('Nome da equipe ou senha incorretos.');
+    // Contas antigas guardam hífens no email técnico; as renomeadas usam
+    // forma canônica sem separadores. Aceitamos ambos sem criar novas identidades.
+    const canonical = username.replace(/-/g, '');
+    const variants = [...new Set([username,canonical])].filter(isValidTeamUsername);
+    let signedIn: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['data'] | null = null;
+    for (const candidate of variants) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: getInternalTeamEmail(candidate),password,
+      });
+      if (!error && data.session) { signedIn=data; break; }
+    }
+    if (!signedIn?.session) throw new Error('Nome da equipe ou senha incorretos.');
+    const data = signedIn;
     const team = userToTeam(data.user);
     if (!team) {
       await supabase.auth.signOut();
@@ -85,6 +93,38 @@ export const teamAuthService = {
     const team = userToTeam(data.user);
     if (!team) throw new Error('Não foi possível validar a equipe cadastrada.');
     return team;
+  },
+
+  async changeUsername(newName:string,currentPassword:string): Promise<TeamAccount> {
+    const {data,error}=await supabase.functions.invoke('team-account',{
+      body:{action:'rename-team',newName,currentPassword}
+    });
+    if(error||!data?.ok) {
+      let message=data?.error || 'Não foi possível alterar o identificador.';
+      const response=(error as {context?:Response}|null)?.context;
+      if(response && typeof response.json==='function'){
+        try{const details=await response.json();if(details?.error)message=details.error;}catch{}
+      }
+      throw new Error(message);
+    }
+    const refreshed=await supabase.auth.refreshSession();
+    const team=userToTeam(refreshed.data.user);
+    if(!team)throw new Error('Nome salvo, mas não foi possível atualizar a sessão. Entre novamente com o novo login.');
+    return team;
+  },
+
+  async changePassword(currentPassword:string,newPassword:string): Promise<void> {
+    const {data,error}=await supabase.functions.invoke('team-account',{
+      body:{action:'change-password',currentPassword,newPassword}
+    });
+    if(error||!data?.ok){
+      let message=data?.error||'Não foi possível atualizar a senha.';
+      const response=(error as {context?:Response}|null)?.context;
+      if(response && typeof response.json==='function'){
+        try{const details=await response.json();if(details?.error)message=details.error;}catch{}
+      }
+      throw new Error(message);
+    }
   },
 
   async logout(): Promise<void> {

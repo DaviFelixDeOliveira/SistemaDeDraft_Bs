@@ -336,15 +336,6 @@ export function EditMapModal({ isOpen, onClose, onSave, map, initialValues }: Ed
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Código do Mapa *</label>
-            <input
-              type="text"
-              value={formData.id || ''}
-              readOnly
-              aria-label="Código do mapa"
-              className="w-full cursor-not-allowed rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:border-white/10 dark:bg-[#0A0A0A] dark:text-zinc-300"
-            />
-            <p className="mt-1 text-xs text-zinc-500">Código original preservado para vincular imagens e estatísticas.</p>
             {formData.imageUrl && (
               <div className="mt-3 flex min-h-[145px] items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-white/10 dark:bg-[#0A0A0A]">
                 {!imageError ? <img src={formData.imageUrl} alt={`Mapa ${formData.name || ''}`}

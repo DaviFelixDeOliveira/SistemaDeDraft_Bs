@@ -10,6 +10,7 @@ import { MapsHub } from './components/maps/MapsHub';
 import { BrawlersHub } from './components/brawlers/BrawlersHub';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { TeamAuthScreen } from './components/TeamAuthScreen';
+import { TeamAccountSettings } from './components/auth/TeamAccountSettings';
 import { teamAuthService, type TeamAccount } from './services/teamAuthService';
 import { supabase } from './lib/supabase';
 
@@ -235,6 +236,7 @@ export default function App() {
                     <BrawlersHub />
                   </div>
                 )}
+                {currentView === 'settings' && <TeamAccountSettings team={team} onChanged={setTeam} />}
                 {currentView === 'history' && (
                   <div className="w-full max-w-full">
                     <TrainingHistory />

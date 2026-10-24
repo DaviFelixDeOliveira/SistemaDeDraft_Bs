@@ -92,12 +92,31 @@ Deno.serve(async (request: Request) => {
       if (!Array.isArray(list) || list.length < 90 || list.length > 250) {
         return json({ error: 'Dados de brawlers inesperados; o catálogo antigo foi preservado.' }, 502);
       }
+      // A API de catálogo não possui HP direto. O CSV espelhado do jogo
+      // fornece Hitpoints na base do poder 1; nível 11 = 2 x base.
+      // Se o schema variar ou a fonte falhar, mantemos os dados anteriores.
+      const healthByGameId = new Map<number,number>();
+      try {
+        const raw = await fetch('https://api.brawlapi.com/game/csv_logic/characters',{
+          headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)
+        });
+        if(raw.ok) {
+          const characters = await raw.json() as Record<string,{id?:unknown;Hitpoints?:unknown;Type?:unknown}>;
+          for(const value of Object.values(characters)) {
+            if (typeof value.id!=='number' || value.Type!=='Hero' ||
+                typeof value.Hitpoints!=='number' ||
+                !Number.isFinite(value.Hitpoints) || value.Hitpoints < 800 || value.Hitpoints > 20000) continue;
+            healthByGameId.set(value.id,value.Hitpoints*2);
+          }
+        }
+      } catch { /* Sem classificação nova caso falhe a origem: não inventar HP. */ }
+      const healthClass = (hp:number) => hp < 5000 ? 'Baixa' : hp <= 6500 ? 'Média' : 'Alta';
       const { data: existing, error: selectError } = await database.from('brawlers')
-        .select('id,name,image_url,icon_url,rarity,type');
+        .select('id,name,image_url,icon_url,rarity,type,health,health_value');
       if (selectError) throw selectError;
       const rows = existing || [];
       const storedById = new Map(rows.map(row => [row.id,row]));
-      const metadataUpdates: {id:string;rarity:string;type:string[]}[] = [];
+      const metadataUpdates: {id:string;patch:Record<string,unknown>}[] = [];
       const byGameId = new Map<string, string>();
       const byName = new Map<string, string>();
       const usedIds = new Set<string>();
@@ -118,9 +137,16 @@ Deno.serve(async (request: Request) => {
         const registeredId = byGameId.get(String(record.id)) || byName.get(key);
         if (registeredId) {
           const stored = storedById.get(registeredId);
-          if (stored && officialRarity && officialClass &&
-              (stored.rarity !== officialRarity || stored.type?.[0] !== officialClass)) {
-            metadataUpdates.push({id:registeredId,rarity:officialRarity,type:[officialClass]});
+          if (stored) {
+            const patch: Record<string,unknown> = {};
+            if(officialRarity && stored.rarity!==officialRarity) patch.rarity=officialRarity;
+            if(officialClass && stored.type?.[0]!==officialClass) patch.type=[officialClass];
+            const hp=healthByGameId.get(record.id);
+            if(hp) {
+              if(stored.health!==healthClass(hp)) patch.health=healthClass(hp);
+              if(stored.health_value!==String(hp)) patch.health_value=String(hp);
+            }
+            if(Object.keys(patch).length) metadataUpdates.push({id:registeredId,patch});
           }
           continue;
         }
@@ -135,7 +161,9 @@ Deno.serve(async (request: Request) => {
         candidates.push({
           id, name, rarity: rarityPt[rarity] || 'Raro',
           tier: 'B', // apenas valor inicial neutro, NÃO meta oficial
-          health: 'Não definido', type: [classPt[klass] || 'Dano'],
+          health: healthByGameId.has(record.id) ? healthClass(healthByGameId.get(record.id)!) : 'Não definido',
+          health_value: healthByGameId.has(record.id) ? String(healthByGameId.get(record.id)) : null,
+          type: [classPt[klass] || 'Dano'],
           walks_on_water: false, breaks_walls: false,
           image_url: portrait, icon_url: border, is_active: true,
         });
@@ -151,7 +179,7 @@ Deno.serve(async (request: Request) => {
       // Sincroniza exclusivamente metadados oficiais existentes; tier e estatísticas intactos.
       for(let offset=0;offset<metadataUpdates.length;offset+=5) {
         const results = await Promise.all(metadataUpdates.slice(offset,offset+5).map(patch =>
-          database.from('brawlers').update({rarity:patch.rarity,type:patch.type}).eq('id',patch.id)));
+          database.from('brawlers').update(patch.patch).eq('id',patch.id)));
         const failed = results.find(x=>x.error);
         if(failed?.error) throw failed.error;
       }

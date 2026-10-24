@@ -12,10 +12,10 @@ interface BrawlerModalProps {
 }
 
 const AVAILABLE_CLASSES = [
-  'Destruidores',
+  'Dano',
   'Algoz',
   'Tiro preciso',
-  'Lançadores',
+  'Artilharia',
   'Tanque',
   'Controle',
   'Suporte'
@@ -128,32 +128,14 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
             <input 
               type="text" 
               value={formData.name || ''}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              readOnly title="Nome oficial definido pelo catálogo"
               className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               placeholder="Ex: Shelly"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Código do Brawler (Ícone)</label>
-             <input 
-                 type="text" 
-                 value={formData.iconUrl ? (formData.iconUrl.match(/\d+/) ? formData.iconUrl.match(/\d+/)[0] : '') : ''}
-                 onChange={e => {
-                   const val = e.target.value.replace(/\D/g, '');
-                   if (val) {
-                     setFormData({ ...formData, iconUrl: `https://cdn.brawlify.com/brawlers/emoji/${val}.png` });
-                   } else {
-                     setFormData({ ...formData, iconUrl: '' });
-                   }
-                 }}
-                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
-                 placeholder="Ex: 16000000"
-             />
-             {formData.iconUrl && <p className="text-xs text-zinc-500 mt-1 text-right">URL gerada com sucesso.</p>}
-          </div>
+          <div>
             <div>
               <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Tier Meta *</label>
               <select 
@@ -168,25 +150,6 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                 <option value="D">D - Fraco</option>
               </select>
             </div>
-          </div>
-
-          <div>
-             <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-1">Código do Brawler (Imagem Corpo)</label>
-             <input 
-                 type="text" 
-                 value={formData.imageUrl ? (formData.imageUrl.match(/\d+/) ? formData.imageUrl.match(/\d+/)[0] : '') : ''}
-                 onChange={e => {
-                   const val = e.target.value.replace(/\D/g, '');
-                   if (val) {
-                     setFormData({ ...formData, imageUrl: `https://cdn.brawlify.com/brawlers/borders/${val}.png` });
-                   } else {
-                     setFormData({ ...formData, imageUrl: '' });
-                   }
-                 }}
-                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
-                 placeholder="Ex: 16000000"
-             />
-             {formData.imageUrl && <p className="text-xs text-zinc-500 mt-1 text-right">URL gerada com sucesso.</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -216,7 +179,8 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                 onChange={e => setFormData({ ...formData, health: e.target.value })}
                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               >
-                <option value="Baixa">Baixa (Menos de 5000)</option>
+                <option value="Não definido">Não definido (preenchimento manual)</option>
+                 <option value="Baixa">Baixa (Menos de 5000)</option>
                 <option value="Média">Média (5000 - 6500)</option>
                 <option value="Alta">Alta (+6500)</option>
               </select>

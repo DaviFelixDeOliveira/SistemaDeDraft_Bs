@@ -11,6 +11,7 @@ import {
   Download,
   Upload,
   History,
+  Settings,
   Save,
   Clock,
   FileJson,
@@ -85,6 +86,7 @@ export function Sidebar({ currentView, onChangeView, onLogout, isOpen, onClose, 
     { id: 'maps', label: 'Mapas & Modos', icon: MapIcon },
     { id: 'brawlers', label: 'Brawlers & Estatísticas', icon: Target },
     { id: 'history', label: 'Histórico de Treinos', icon: History },
+    { id: 'settings', label: 'Conta e Segurança', icon: Settings },
   ];
 
   // ── 1. Salvar Backup (sem baixar arquivo) ─────────────────────────────────

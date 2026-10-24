@@ -19,7 +19,7 @@ export function TeamAuthScreen({ onAuthenticated }: TeamAuthScreenProps) {
 
   const slug = normalizeTeamUsername(name);
   const isRegister = mode === 'register';
-  const registrationReady = import.meta.env.VITE_ENABLE_TEAM_SIGNUP === 'true';
+  const registrationReady = false; // Cadastro fechado no banco até implementação de convites.
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,7 +73,7 @@ export function TeamAuthScreen({ onAuthenticated }: TeamAuthScreenProps) {
               className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${!isRegister ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
               Entrar
             </button>
-            <button type="button" role="tab" aria-selected={isRegister} onClick={() => changeMode('register')}
+            <button type="button" disabled={!registrationReady} role="tab" aria-selected={isRegister} onClick={() => changeMode('register')}
               className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors ${isRegister ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'}`}>
               Criar equipe
             </button>
@@ -85,7 +85,7 @@ export function TeamAuthScreen({ onAuthenticated }: TeamAuthScreenProps) {
 
           {isRegister && !registrationReady && (
             <p role="status" className="mb-4 text-xs text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3">
-              Cadastro ainda em preparação: estamos configurando o isolamento seguro dos dados por equipe.
+              Cadastro de novas equipes fechado. Solicite uma conta ao responsável pelo sistema.
             </p>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
