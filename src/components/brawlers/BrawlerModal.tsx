@@ -12,10 +12,10 @@ interface BrawlerModalProps {
 }
 
 const AVAILABLE_CLASSES = [
-  'Destruidores',
+  'Dano',
   'Algoz',
   'Tiro preciso',
-  'Lançadores',
+  'Artilharia',
   'Tanque',
   'Controle',
   'Suporte'
@@ -179,7 +179,8 @@ export function BrawlerModal({ isOpen, onClose, onSave, brawler, allBrawlers = [
                 onChange={e => setFormData({ ...formData, health: e.target.value })}
                 className="w-full bg-zinc-50 dark:bg-black border border-zinc-200 dark:border-[#2A2A2A] rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-[#6366F1]"
               >
-                <option value="Baixa">Baixa (Menos de 5000)</option>
+                <option value="Não definido">Não definido (preenchimento manual)</option>
+                 <option value="Baixa">Baixa (Menos de 5000)</option>
                 <option value="Média">Média (5000 - 6500)</option>
                 <option value="Alta">Alta (+6500)</option>
               </select>
