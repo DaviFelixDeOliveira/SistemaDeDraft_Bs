@@ -84,12 +84,16 @@ export async function syncBrawlersFromApi(): Promise<BrawlerSyncResult> {
   return data;
 }
 
-export async function addMapFromApi(mapId: string): Promise<{mapId: string; mode: GameMode; notice?: string}> {
+export async function addMapFromApi(
+  mapId: string,
+  details: { name: string; terrain: 'Aberto' | 'Semi-Aberto' | 'Fechado' | 'Misto' }
+): Promise<{mapId: string; mode: GameMode; notice?: string}> {
   const id = Number(mapId);
   if (!Number.isInteger(id) || id < 15000000 || id > 17000000) throw new Error('Mapa inválido.');
+  if (!details.name.trim() || details.name.trim().length > 100) throw new Error('Informe um nome válido para o mapa.');
   const { data, error } = await supabase.functions.invoke<{
     ok: boolean; mapId: string; mode: GameMode; notice?: string; error?: string
-  }>('catalog-sync', { body: { action: 'add-map', mapId: id } });
+  }>('catalog-sync', { body: { action: 'add-map', mapId: id, displayName: details.name.trim(), terrain: details.terrain } });
   if (error || !data?.ok) throw new Error(data?.error || 'Não foi possível adicionar o mapa. Tente novamente.');
   return { mapId: data.mapId, mode: data.mode, notice: data.notice };
 }
