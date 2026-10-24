@@ -42,15 +42,21 @@ export const mapService = {
   getMaps: async (): Promise<GameMap[]> => {
     const [{ data, error }, { data: settings, error: preferencesError }] = await Promise.all([
       supabase.from('maps').select('*').order('name'),
-      supabase.from('team_map_settings').select('map_id,is_active'),
+      supabase.from('team_map_settings').select('map_id,is_active,display_name,terrain_override'),
     ]);
     if (error) throw error;
     if (preferencesError) throw preferencesError;
-    const perTeam = new Map((settings || []).map(s => [s.map_id, s.is_active]));
+    const perTeam = new Map((settings || []).map(s => [s.map_id, s]));
     return (data || []).map(row => {
       const map = mapFromSupabase(row);
-      const active = perTeam.get(map.id);
-      return active === undefined ? map : { ...map, isActive: active, is_active: active };
+      const preference = perTeam.get(map.id);
+      return !preference ? map : {
+        ...map,
+        name: preference.display_name || map.name,
+        terrain: (preference.terrain_override || map.terrain) as GameMap['terrain'],
+        isActive: preference.is_active,
+        is_active: preference.is_active,
+      };
     });
   },
 
@@ -61,6 +67,23 @@ export const mapService = {
 
   createMap: async (_map: Omit<GameMap, 'id'>): Promise<GameMap> => {
     throw new Error('O catálogo global de mapas é gerenciado pela sincronização. Cada equipe pode ativar ou desativar mapas existentes.');
+  },
+
+  // A edição de nome e terreno pertence à equipe: nunca modifica maps.
+  updateMapPreferences: async (map: Pick<GameMap, 'id' | 'name' | 'terrain'>): Promise<void> => {
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) throw new Error('Faça login para editar mapas.');
+    const name = map.name.trim();
+    if (name.length < 1 || name.length > 100) throw new Error('Informe um nome de mapa válido.');
+    const { data: existing, error: lookupError } = await supabase.from('team_map_settings')
+      .select('is_active').eq('map_id', map.id).maybeSingle();
+    if (lookupError) throw lookupError;
+    const { error } = await supabase.from('team_map_settings').upsert({
+      team_id: auth.user.id, map_id: map.id,
+      is_active: existing?.is_active ?? true,
+      display_name: name, terrain_override: map.terrain,
+    }, { onConflict: 'team_id,map_id' });
+    if (error) throw error;
   },
 
   updateMapStatus: async (id: string, isActive: boolean): Promise<void> => {
