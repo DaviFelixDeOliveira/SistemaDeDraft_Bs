@@ -239,6 +239,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
       // Identifica quais picks do time inimigo este brawler countera ou sofre para
       const activeEnemyCountersList: string[] = []; // Inimigos que ele countera
       const activeEnemySufferingList: string[] = []; // Inimigos para os quais ele sofre
+      const interactionNotes: string[] = [];
 
       enemyBrawlers.forEach(enemy => {
         // Verifica se o nosso brawler tem esse inimigo na lista 'counters' (ou se o inimigo tem o nosso na lista 'counteredBy')
@@ -266,26 +267,38 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         score -= 500;
       }
 
-      // 5. Ponderação Histórica Progressiva (Picks e Winrate no Mapa — 1.5)
-      if (mapDetailStats?.topTbkPicks) {
-        const brawlerMapPick = mapDetailStats.topTbkPicks.find((tp: any) =>
-          tp.brawler?.id === brawler.id || tp.brawler?.name === brawler.name
-        );
-        if (brawlerMapPick) {
-          mapPicksCount = brawlerMapPick.picks || 0;
-          mapWinrate = brawlerMapPick.winrate || 50;
-          score += computeHistoricalBonus(mapWinrate, mapPicksCount);
-
-          // Super bônus: comfort pick E alto winrate no mapa
-          if (isComfort && mapWinrate >= 70 && mapPicksCount >= 2) {
-            isStrongMapComfort = true;
-            score += 500;
+      // Todos os brawlers são analisados por histórico geral, modo e mapa.
+      let contextSummary: string | undefined;
+      if (evidence && map) {
+        const perf = evidence.performance(brawler.id,map.mode,map.id);
+        mapPicksCount = perf.map.matches;
+        mapWinrate = perf.map.winrate ?? 50;
+        score += evidenceBonus(perf);
+        const fmt = (sample: typeof perf.global) => sample.matches
+          ? `${sample.winrate}% (${sample.wins}/${sample.matches})` : 'sem dados';
+        contextSummary = `Geral: ${fmt(perf.global)} · Modo: ${fmt(perf.mode)} · Mapa: ${fmt(perf.map)}`;
+        if (isComfort && perf.map.matches >= 5 && perf.map.adjustedWinrate >= 60) {
+          isStrongMapComfort = true;
+          score += 140;
+        }
+        for (const ally of allyBrawlers) {
+          const together = evidence.withAlly(brawler.id,ally.id);
+          if (together.matches >= 5) score += Math.round((together.adjustedWinrate-50)*2*Math.min(together.matches/10,1));
+        }
+        for (const enemy of enemyBrawlers) {
+          const vs = evidence.against(brawler.id,enemy.id,map.mode,map.id);
+          score += confrontationBonus(vs);
+          if (vs.global.matches >= 5 && vs.global.winrate !== null) {
+            if (vs.global.winrate >= 60 && !activeEnemyCountersList.includes(enemy.name)) activeEnemyCountersList.push(enemy.name);
+            if (vs.global.winrate <= 40 && !activeEnemySufferingList.includes(enemy.name)) activeEnemySufferingList.push(enemy.name);
+            const modeNote = vs.mode.matches >= 3 && vs.mode.winrate !== null
+              ? ` · modo ${vs.mode.winrate}%/${vs.mode.matches}j` : '';
+            const mapNote = vs.map.matches >= 3 && vs.map.winrate !== null
+              ? ` · mapa ${vs.map.winrate}%/${vs.map.matches}j` : '';
+            interactionNotes.push(`Contra equipe com ${enemy.name}: ${vs.global.winrate}%/${vs.global.matches}j${modeNote}${mapNote}. Resultado do trio, não duelo isolado.`);
           }
         }
       }
-
-      // 6. Penalidade de Matchup Específico Histórico (1.3)
-      score += computeMatchupPenalty(brawler.id, enemyTeamIds, threatsCache);
 
       // 7. Aviso Preditivo de Counter-Threat (1.4 — não afeta score)
       let counterThreatWarning: string | undefined;
@@ -299,7 +312,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         if (threatNames.length > 0) {
           const namesStr = threatNames.join(', ');
           counterThreatWarning =
-            `Atenção: historicamente perde para ${namesStr}, que o inimigo ainda pode pegar.`;
+            `Atenção: desempenho desfavorável contra equipes com ${namesStr}; não é prova de duelo.`;
         }
       }
 
@@ -311,6 +324,8 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
         isStrongMapComfort,
         mapWinrate,
         mapPicksCount,
+        contextSummary,
+        interactionNotes,
         modeFit,
         counterThreatWarning,
         activeEnemyCountersList,
