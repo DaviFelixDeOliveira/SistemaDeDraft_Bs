@@ -311,63 +311,8 @@ export const analyticsService = {
 
     const winrate = allyPicks.length > 0 ? Math.round((allyWins / allyPicks.length) * 100) : 0;
 
-    // Comfort picks (atletas que usaram este brawler)
-    const playerPicksCount: Record<string, { total: number; wins: number }> = {};
-    allyPicks.forEach(p => {
-      if (p.player_id) {
-        if (!playerPicksCount[p.player_id]) playerPicksCount[p.player_id] = { total: 0, wins: 0 };
-        playerPicksCount[p.player_id].total++;
-        const match = matchesMap.get(p.match_id);
-        if (match && match.result === 'victory') {
-          playerPicksCount[p.player_id].wins++;
-        }
-      }
-    });
-
-    // Players who marked as comfort pick
-    const comfortStats = players
-      .filter(p => p.comfortBrawlers && p.comfortBrawlers.includes(brawlerId))
-      .map(p => {
-        const data = playerPicksCount[p.id] || { total: 0, wins: 0 };
-        const wr = data.total > 0 ? Math.round((data.wins / data.total) * 100) : 0;
-        return {
-          playerName: p.nickname || p.name || 'Atleta',
-          matches: data.total,
-          winrate: wr,
-          isComfort: true
-        };
-      }).sort((a, b) => b.matches - a.matches);
-
-    // Sinergias (Melhores Parceiros Nossa equipe baseados em Winrate real da dupla)
-    const partnerGames: Record<string, { total: number; wins: number }> = {};
-    const enemyCounterCounts: Record<string, number> = {}; // Brawlers inimigos derrotados por este
-    const threatCounts: Record<string, number> = {}; // Brawlers inimigos que venceram contra este
-
-    allyPicks.forEach(p => {
-      const match = matchesMap.get(p.match_id);
-      if (!match) return;
-
-      const sameMatchPicks = picks.filter(pk => pk.match_id === p.match_id);
-      const allyPartners = sameMatchPicks.filter(pk => pk.team === 'ally' && pk.brawler_id !== brawlerId);
-      const enemyEnemies = sameMatchPicks.filter(pk => pk.team === 'enemy');
-
-      allyPartners.forEach(partner => {
-        if (!partnerGames[partner.brawler_id]) partnerGames[partner.brawler_id] = { total: 0, wins: 0 };
-        partnerGames[partner.brawler_id].total++;
-        if (match.result === 'victory') partnerGames[partner.brawler_id].wins++;
-      });
-
-      if (match.result === 'victory') {
-        enemyEnemies.forEach(e => {
-          enemyCounterCounts[e.brawler_id] = (enemyCounterCounts[e.brawler_id] || 0) + 1;
-        });
-      } else {
-        enemyEnemies.forEach(e => {
-          threatCounts[e.brawler_id] = (threatCounts[e.brawler_id] || 0) + 1;
-        });
-      }
-    });
-
+    // As relações são calculadas no índice de partidas, sem confundir derrota
+    // conjunta com causalidade de um counter e sem fazer filtros O(n²).
     const targetBrawler = brawlersMap.get(brawlerId);
     const history = buildEvidence(matches,picks,maps);
     // Comparação sempre por partidas completas, com amostra mínima para achados automáticos.
