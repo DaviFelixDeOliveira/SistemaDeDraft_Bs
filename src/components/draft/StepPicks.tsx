@@ -39,7 +39,6 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
   const [brawlers, setBrawlers] = useState<Brawler[]>([]);
   const [maps, setMaps] = useState<GameMap[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [mapDetailStats, setMapDetailStats] = useState<any>(null);
   const [threatsCache, setThreatsCache] = useState<ThreatsCacheMap>(new Map());
   const [evidence, setEvidence] = useState<ReturnType<typeof buildEvidence> | null>(null);
 
@@ -68,11 +67,7 @@ export function StepPicks({ onUndo, draftState, setDraftState, onNext, onPrev }:
     loadRealData();
   }, []);
 
-  useEffect(() => {
-    if (draftState.mapId) {
-      analyticsService.getMapDetailStats(draftState.mapId).then(setMapDetailStats);
-    }
-  }, [draftState.mapId]);
+
 
   
   const pickOrder = getPickOrder(draftState.allyStarts);
