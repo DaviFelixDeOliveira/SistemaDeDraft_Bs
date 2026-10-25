@@ -6,6 +6,7 @@ import {
   type DraftGameViewport,type DraftScreenPhase,
 } from '../../lib/draftAutoScene';
 import { inspectSlotMarker,type SlotMarkerEvidence } from '../../lib/draftAutoVisualEvidence';
+import { DraftAutoSlotChangeLab } from './DraftAutoSlotChangeLab';
 import {
   detectDraftTeamDivider,alignDraftRegionsToTeamDivider,type DraftTeamDivider,
 } from '../../lib/draftAutoTeamDivider';
@@ -205,6 +206,9 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
         </p>
       </div>
     </div>}
+    {regions.length===8||regions.length===6
+      ? <DraftAutoSlotChangeLab imageUrl={imageUrl} regions={regions}/>
+      : null}
     {error&&<p role="alert" className="text-xs text-red-400">{error}</p>}
     <p className="text-[11px] text-zinc-500">
       Sem envio de imagens/eventos. Bordas e proporções variam entre dispositivos;
