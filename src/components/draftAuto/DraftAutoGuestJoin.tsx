@@ -4,28 +4,29 @@ import { draftAutoGuestService, type GuestJoinSession } from '../../services/dra
 import { isDraftAutoRoomCode } from '../../lib/draftAutoRoomCode';
 import { DraftAutoGuestEventTester } from './DraftAutoGuestEventTester';
 import { DraftAutoCaptureLab } from './DraftAutoCaptureLab';
+import { restoreDraftGuestSession } from '../../lib/draftAutoSession';
 
 const STORAGE = 'draft_auto_guest_session';
 function restored(code: string): GuestJoinSession | null {
-  try {
-    const data: GuestJoinSession = JSON.parse(sessionStorage.getItem(STORAGE) || 'null');
-    return data?.code === code && data?.requestId && data?.token ? data : null;
-  } catch { return null; }
+  return restoreDraftGuestSession(sessionStorage.getItem(STORAGE), code);
 }
 export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
   const [code, setCode] = useState(initialCode.trim().toUpperCase());
   const [name, setName] = useState('');
   const [session, setSession] = useState<GuestJoinSession | null>(() => restored(initialCode.trim().toUpperCase()));
   const [busy, setBusy] = useState(false);
+  // An approved session restored from storage must be rechecked before enabling sends.
+  const [verifying, setVerifying] = useState(() => restored(initialCode.trim().toUpperCase())?.status === 'approved');
   const [error, setError] = useState('');
   useEffect(() => {
-    if (!session || session.status !== 'pending') return;
+    if (!session || (session.status !== 'pending' && session.status !== 'approved')) return;
     let active = true;
     const check = async () => {
       try {
         const status = await draftAutoGuestService.status(session);
         if (!active) return;
         setError('');
+        setVerifying(false);
         setSession(current => {
           if (!current || current.requestId !== session.requestId) return current;
           const next = { ...current, status };
@@ -33,7 +34,7 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
           return next;
         });
       } catch {
-        if (active) setError('Não foi possível atualizar o estado da solicitação. Tentaremos novamente.');
+        if (active) setError('Não foi possível verificar a sessão. Verifique sua conexão; tentaremos novamente.');
       }
     };
     void check();
@@ -49,12 +50,23 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
     try {
       const joined = await draftAutoGuestService.request(code, name.trim());
       sessionStorage.setItem(STORAGE, JSON.stringify(joined));
+      setVerifying(false);
       setSession(joined);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível solicitar entrada.');
     } finally { setBusy(false); }
   };
-  const leave = () => { sessionStorage.removeItem(STORAGE); setSession(null); setError(''); };
+  const markExpired = () => {
+    setVerifying(false);
+    setSession(current => {
+      if (!current) return current;
+      const next: GuestJoinSession = { ...current, status: 'expired' };
+      sessionStorage.setItem(STORAGE, JSON.stringify(next));
+      return next;
+    });
+    setError('');
+  };
+  const leave = () => { sessionStorage.removeItem(STORAGE); setSession(null); setError(''); setVerifying(false); };
   return (
     <div className="min-h-screen flex items-center justify-center p-5 bg-zinc-950 text-white">
       <main className="w-full max-w-md rounded-2xl p-6 sm:p-8 border border-zinc-800 bg-[#121212] space-y-5">
@@ -71,17 +83,19 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
             <button disabled={busy} type="submit" className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 p-3 font-bold disabled:opacity-50">{busy ? 'Enviando...' : 'Solicitar entrada'}</button>
           </form> :
           <div className="space-y-4 text-center">
-            {session.status==='pending'?<Clock3 className="w-12 h-12 text-amber-400 mx-auto"/>:
+            {session.status==='pending' || (session.status==='approved' && verifying) ? <Clock3 className="w-12 h-12 text-amber-400 mx-auto"/>:
               session.status==='approved'?<CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto"/>:
               <XCircle className="w-12 h-12 text-red-400 mx-auto"/>}
             <h2 className="font-bold text-lg">{session.status==='pending'?'Aguardando aprovação do coach':
+              session.status==='approved' && verifying ? 'Verificando sua conexão...':
               session.status==='approved'?'Entrada aprovada!':
               session.status==='expired'?'Solicitação expirada':'Entrada recusada'}</h2>
             <p className="text-zinc-400 text-sm">{session.status==='pending'?'Seu pedido já foi enviado. Esta página verifica automaticamente a resposta.':
+              session.status==='approved' && verifying ? 'Confirmando com o servidor se a sala continua aberta e sua autorização ainda é válida.':
               session.status==='approved'?'Conexão validada! Envie eventos de teste ou experimente a nova área de capturas locais. O reconhecimento automático ainda não está disponível.':
-              'Peça ao coach uma nova sessão se necessário.'}</p>
-            {session.status==='approved' && <><DraftAutoGuestEventTester session={session} /><DraftAutoCaptureLab session={session} /></>}
-            <button type="button" onClick={leave} className="text-indigo-400 text-sm underline">Sair e voltar ao formulário</button>
+              session.status==='expired' ? 'Sua autorização terminou ou a sala foi encerrada. Solicite nova entrada; caso a sala tenha expirado, peça um novo código ao coach.' : 'Peça ao coach uma nova sessão se necessário.'}</p>
+            {session.status==='approved' && !verifying && <><DraftAutoGuestEventTester session={session} onSessionExpired={markExpired} /><DraftAutoCaptureLab session={session} onSessionExpired={markExpired} /></>}
+            <button type="button" onClick={leave} className="text-indigo-400 text-sm underline">{session.status==='expired' || session.status==='rejected' ? 'Solicitar nova entrada' : 'Sair e voltar ao formulário'}</button>
           </div>}
         {error && <p role="alert" className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg text-xs">{error}</p>}
         <p className="text-zinc-500 text-xs">Não compartilhe a senha da equipe. Capturas locais só começam após sua permissão explícita e, nesta etapa, não são enviadas ao coach.</p>
