@@ -10,7 +10,7 @@ function description(event: DraftAutoRoomEvent) {
     case 'pick': return `Pick ${(event.slot??0)+1} (${event.team === 'ally' ? 'nosso' : 'inimigo'}): ${event.brawler?.name ?? event.brawler_id ?? '—'}`;
   }
 }
-export function DraftAutoRoomEvents({ roomId }: {roomId: string}) {
+export function DraftAutoRoomEvents({ roomId, onImport }: {roomId: string; onImport: (event: DraftAutoRoomEvent) => void}) {
   const [items, setItems] = useState<DraftAutoRoomEvent[]>([]);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -36,6 +36,7 @@ export function DraftAutoRoomEvents({ roomId }: {roomId: string}) {
       {items.map(item=><div key={item.id} className="rounded-lg p-2 bg-indigo-500/5 border border-indigo-500/10">
         <div className="text-xs font-semibold">{description(item)}</div>
         <div className="text-[11px] text-zinc-500">{item.guest?.display_name ?? 'Jogador'} · {new Date(item.created_at).toLocaleTimeString('pt-BR')}</div>
+        <button type="button" onClick={() => onImport(item)} className="mt-2 text-xs font-semibold text-indigo-500 hover:text-indigo-400 underline">Revisar no Draft</button>
       </div>)}
     </div>}
   </div>;
