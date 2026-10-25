@@ -55,3 +55,14 @@ Não aplicar migrations no banco de produção nem registrar fotos antes de insp
 - **A aprovação não dá acesso ao Draft, imagens, estatísticas nem Supabase Realtime ainda.** Ela comprova apenas que o coach aceita aquele pedido. Na fase de sincronização, usaremos a credencial temporária validada na Edge Function para autorizar eventos da própria sala no servidor.
 - Encerre a sala ou aguarde a expiração para invalidar o pedido. Não usar este token como JWT nem credencial de outras tabelas.
 - Testar `http://localhost:3000/?draftJoin=CODIGO` em janela anônima. Para celular na mesma rede, substitua localhost pelo IP de rede mostrado pelo Vite.
+
+## Fase 3A — Transmissão de eventos de teste (implementada)
+
+- `supabase/migrations/20261025024951_draft_auto_events.sql`: eventos estruturados vinculados à sala e ao pedido aprovado, FK para mapa/brawler, idempotência por `request_id + client_event_id`, RLS de leitura exclusiva do coach e nenhum INSERT/UPDATE para clientes autenticados ou anônimos.
+- `draft-auto-join` atualizado: endpoints `catalog` e `send-event` exigem token de jogador, estado `approved`, sala aberta e prazos válidos. Eventos **sempre manuais**: a tela não pode alegar origem de captura nem confiança reconhecida.
+- O catálogo retornado ao jogador contém somente os nomes/IDs **globais** de mapas e brawlers; não inclui meta, dados de partidas, jogadores ou preferências de equipes.
+- Limite inicial de 40 eventos por solicitação; consultar a seção anterior sobre limitações de rate limiting antes de lançar publicamente.
+- Jogador aprovado consegue enviar mapa, lado do primeiro pick, ban e pick manualmente para testar transporte.
+- Coach recebe uma lista de eventos da própria sala com atualização periódica a cada três segundos. **Não são aplicados automaticamente ao Draft Wizard ou ao Lab**, para prevenir contaminação de dados e incompatibilidades até termos confirmação e reconciliação.
+- Para testar: conectar um jogador por código, aprovar, no jogador escolher `Mapa` e enviá-lo. O coach deverá vê-lo em `Eventos recebidos`. Testar também ban e pick. Encerre a sala e verifique que tentativas de envio são recusadas.
+- Não existe captura real de tela nem API externa integrada. Próximas etapas: reconciliar observações com o reducer e Draft Wizard, capturar/identificar imagens com consentimento, proteger trânsito de imagens e produzir clientes móveis Android/iOS.
