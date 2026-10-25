@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Send, Loader2, Info } from 'lucide-react';
 import {
-  draftAutoGuestService, type GuestJoinSession, type DraftAutoCatalog, type DraftAutoManualEvent,
+  draftAutoGuestService, DraftAutoGuestAccessError, type GuestJoinSession, type DraftAutoCatalog, type DraftAutoManualEvent,
 } from '../../services/draftAutoGuestService';
 
 const control = 'w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2.5 text-sm';
-export function DraftAutoGuestEventTester({ session }: { session: GuestJoinSession }) {
+export function DraftAutoGuestEventTester({ session, onSessionExpired }: { session: GuestJoinSession; onSessionExpired: () => void }) {
   const [catalog, setCatalog] = useState<DraftAutoCatalog | null>(null);
   const [loading, setLoading] = useState(true);
   const [kind, setKind] = useState<DraftAutoManualEvent['kind']>('map');
@@ -22,7 +22,11 @@ export function DraftAutoGuestEventTester({ session }: { session: GuestJoinSessi
     let alive = true;
     draftAutoGuestService.catalog(session)
       .then(data => { if (alive) setCatalog(data); })
-      .catch(err => { if (alive) setError(err instanceof Error ? err.message : 'Falha ao carregar catálogo.'); })
+      .catch(err => {
+        if (!alive) return;
+        if (err instanceof DraftAutoGuestAccessError) onSessionExpired();
+        else setError(err instanceof Error ? err.message : 'Falha ao carregar catálogo.');
+      })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [session.requestId, session.token]);
@@ -45,7 +49,8 @@ export function DraftAutoGuestEventTester({ session }: { session: GuestJoinSessi
       await draftAutoGuestService.sendEvent(session,event);
       setInfo('Evento enviado ao coach. Confira a tela de sala no computador.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível enviar o evento.');
+      if (err instanceof DraftAutoGuestAccessError) onSessionExpired();
+      else setError(err instanceof Error ? err.message : 'Não foi possível enviar o evento.');
     } finally { setBusy(false); }
   };
 
