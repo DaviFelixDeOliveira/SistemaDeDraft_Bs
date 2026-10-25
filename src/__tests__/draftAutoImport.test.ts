@@ -9,7 +9,7 @@ const base: DraftState = {
 const event = (options: Partial<DraftAutoRoomEvent>): DraftAutoRoomEvent => ({
   id: 'e1',room_id:'room',request_id:'request',client_event_id:'uuid',
   kind:'map',map_id:'map-1',ally_starts:null,team:null,slot:null,brawler_id:null,
-  created_at:'2026-10-25T00:00:00Z',...options
+  created_at:'2026-10-25T00:00:00Z',review_status:'pending',...options
 });
 describe('Importação explícita de eventos do jogador pelo coach',()=>{
  it('importa mapa sem afetar a fonte',()=>{
