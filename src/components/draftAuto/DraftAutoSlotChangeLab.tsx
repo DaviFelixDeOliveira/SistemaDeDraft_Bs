@@ -3,8 +3,13 @@ import { ArrowLeftRight,ImagePlus } from 'lucide-react';
 import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout';
 import { compareDraftSlotCrops,type DraftSlotDifference } from '../../lib/draftAutoSlotChange';
 import { validateDraftFrame } from '../../lib/draftAutoFrame';
+import { inspectSlotMarker } from '../../lib/draftAutoVisualEvidence';
+import {
+  describeDraftSlotTemporalEvidence, draftTemporalHintLabel,
+  type DraftSlotTemporalEvidence,
+} from '../../lib/draftAutoSlotTemporal';
 
-type SlotResult={region:DraftHudRegion;diff:DraftSlotDifference};
+type SlotResult={region:DraftHudRegion;diff:DraftSlotDifference;temporal:DraftSlotTemporalEvidence};
 type ComparisonSummary={
   results:SlotResult[];
   changed:number;
@@ -79,17 +84,25 @@ export function DraftAutoSlotChangeLab({
       const results:SlotResult[]=[];
       for(const region of regions){
         if(region.kind!=='pick-slot')continue;
-        const crop=(image:HTMLImageElement)=>{
+        const crop=(image:HTMLImageElement,targetWidth:number,targetHeight:number)=>{
           const {x,y,width,height}=draftHudPixelRect(region,image.naturalWidth,image.naturalHeight);
           const canvas=document.createElement('canvas');
-          canvas.width=64;canvas.height=80;
+          canvas.width=targetWidth;canvas.height=targetHeight;
           const ctx=canvas.getContext('2d',{willReadFrequently:true});
           if(!ctx)throw new Error('Este navegador não conseguiu ler os pixels.');
           ctx.drawImage(image,x,y,width,height,0,0,canvas.width,canvas.height);
           return ctx.getImageData(0,0,canvas.width,canvas.height);
         };
-        const result=compareDraftSlotCrops(crop(first),crop(second));
-        if(result)results.push({region,diff:result});
+        const initial=crop(first,64,80);
+        const subsequent=crop(second,64,80);
+        const result=compareDraftSlotCrops(initial,subsequent);
+        if(!result)continue;
+        // The marker heuristic needs a larger crop to resolve a check or
+        // no-entry shape. The portrait comparison intentionally excludes it.
+        const beforeMarker=inspectSlotMarker(crop(first,160,200));
+        const afterMarker=inspectSlotMarker(crop(second,160,200));
+        const temporal=describeDraftSlotTemporalEvidence(result,beforeMarker,afterMarker);
+        results.push({region,diff:result,temporal});
       }
       const changed=results.filter(r=>r.diff.visualChangeCandidate).length;
       if(live)setSummary({
@@ -111,8 +124,8 @@ export function DraftAutoSlotChangeLab({
     <p className="text-xs text-zinc-400">
       A captura já aberta será o <strong>antes</strong>. Selecione um segundo print da
       <strong> mesma partida, fase e orientação</strong> para ver quais retratos mudaram.
-      Este teste não reconhece personagens, não distingue pick confirmado de pré-seleção
-      e não transmite imagens ou eventos.
+      Comparamos separadamente o <strong>retrato</strong> e os possíveis <strong>ícones de confirmação</strong>.
+      A análise é experimental, não reconhece o personagem nem confirma um pick ou ban. Nada é transmitido.
     </p>
     <label className="block cursor-pointer rounded-lg border border-dashed border-indigo-500/50 p-3 text-center text-xs text-indigo-300 hover:bg-indigo-500/10">
       <span className="flex items-center justify-center gap-2"><ImagePlus className="h-4 w-4"/>Selecionar segunda captura</span>
@@ -128,20 +141,24 @@ export function DraftAutoSlotChangeLab({
         {summary.changed} de 6 slots com alteração visual relevante
       </p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {summary.results.map(({region,diff})=><div key={region.id}
+        {summary.results.map(({region,diff,temporal})=><div key={region.id}
           className={`rounded-lg border p-2 text-xs ${diff.visualChangeCandidate?
             'border-amber-500/50 bg-amber-500/10 text-amber-200':
             'border-zinc-700 bg-zinc-900/60 text-zinc-300'}`}>
           <strong>{region.label}</strong>
           <p className="mt-1">{diff.visualChangeCandidate?'Mudança possível':'Sem mudança relevante'}</p>
           <p className="mt-1 opacity-70">{Math.round(diff.changedFraction*100)}% de pixels diferentes</p>
+          {temporal.hint!=='no-visual-change'&&temporal.hint!=='portrait-change-only'&&
+            <p className="mt-2 border-t border-current/20 pt-1">{draftTemporalHintLabel(temporal)}</p>}
         </div>)}
       </div>
       {summary.warning&&<p className="text-xs text-amber-300">{summary.warning}</p>}
       <p className="text-[11px] text-zinc-400">
         Resultado experimental baseado em diferenças de cor dentro de cada retrato. Uma animação,
         tela desalinhada ou outro jogador mudando a pré-seleção pode gerar alerta;
-        ausência de alerta também não garante ausência de pick. Nada será aplicado ao Draft.
+        ausência de alerta também não garante ausência de pick. O detector de ícones ainda depende
+        de recortes exatos e pode errar. <strong>Nenhuma transição é uma escolha confirmada</strong>
+        e nada será aplicado ao Draft.
       </p>
     </div>}
   </section>;
