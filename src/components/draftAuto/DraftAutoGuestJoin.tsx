@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { CheckCircle2, Clock3, ShieldCheck, XCircle } from 'lucide-react';
 import { draftAutoGuestService, type GuestJoinSession } from '../../services/draftAutoGuestService';
 import { isDraftAutoRoomCode } from '../../lib/draftAutoRoomCode';
+import { DraftAutoGuestEventTester } from './DraftAutoGuestEventTester';
 
 const STORAGE = 'draft_auto_guest_session';
 function restored(code: string): GuestJoinSession | null {
@@ -76,8 +77,9 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
               session.status==='approved'?'Entrada aprovada!':
               session.status==='expired'?'Solicitação expirada':'Entrada recusada'}</h2>
             <p className="text-zinc-400 text-sm">{session.status==='pending'?'Seu pedido já foi enviado. Esta página verifica automaticamente a resposta.':
-              session.status==='approved'?'Conexão de entrada validada. Captura de tela e envio de dados serão disponibilizados em outra etapa.':
+              session.status==='approved'?'Conexão validada! Você pode enviar eventos de teste manualmente abaixo. Captura automática de tela ainda não está disponível.':
               'Peça ao coach uma nova sessão se necessário.'}</p>
+            {session.status==='approved' && <DraftAutoGuestEventTester session={session} />}
             <button type="button" onClick={leave} className="text-indigo-400 text-sm underline">Sair e voltar ao formulário</button>
           </div>}
         {error && <p role="alert" className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg text-xs">{error}</p>}
