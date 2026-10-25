@@ -6,6 +6,9 @@ import {
   type DraftGameViewport,type DraftScreenPhase,
 } from '../../lib/draftAutoScene';
 import { inspectSlotMarker,type SlotMarkerEvidence } from '../../lib/draftAutoVisualEvidence';
+import {
+  detectDraftTeamDivider,alignDraftRegionsToTeamDivider,type DraftTeamDivider,
+} from '../../lib/draftAutoTeamDivider';
 
 type Extracted = {
   region: DraftHudRegion;
@@ -26,6 +29,7 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
   const [manualShift,setManualShift]=useState(0);
   const [verticalShift,setVerticalShift]=useState(0);
   const [autoViewport,setAutoViewport]=useState<DraftGameViewport|null>(null);
+  const [divider,setDivider]=useState<DraftTeamDivider|null>(null);
   const [regions,setRegions]=useState<DraftHudRegion[]>([]);
   const [samples,setSamples]=useState<Extracted[]>([]);
   const [active,setActive]=useState('blue-1');
@@ -68,10 +72,23 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
     image.onload=()=>{
       if(!live)return;
       try{
-        const calculated=draftRegionsForScene(
+        const proposed=draftRegionsForScene(
           image.naturalWidth,image.naturalHeight,phase,viewport,verticalShift/100,
         );
-        if(!calculated.length)throw new Error('Ajustes incompatíveis com esta imagem.');
+        if(!proposed.length)throw new Error('Ajustes incompatíveis com esta imagem.');
+        // Locate the actual blue/red background divider independently of
+        // hard-coded screen width. This does NOT find individual cards.
+        const sampled=document.createElement('canvas');
+        const sampleScale=Math.min(1,640/image.naturalWidth);
+        sampled.width=Math.round(image.naturalWidth*sampleScale);
+        sampled.height=Math.round(image.naturalHeight*sampleScale);
+        const sampleCtx=sampled.getContext('2d',{willReadFrequently:true});
+        if(!sampleCtx)throw new Error('Não foi possível localizar a divisão das equipes.');
+        sampleCtx.drawImage(image,0,0,sampled.width,sampled.height);
+        const detectedDivider=detectDraftTeamDivider(
+          sampleCtx.getImageData(0,0,sampled.width,sampled.height),viewport,
+        );
+        const calculated=alignDraftRegionsToTeamDivider(proposed,viewport,detectedDivider);
         const next:Extracted[]=calculated.map(region=>{
           const rect=draftHudPixelRect(region,image.naturalWidth,image.naturalHeight);
           const canvas=document.createElement('canvas');
@@ -88,12 +105,12 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
               :null,
           };
         });
-        if(live){setRegions(calculated);setSamples(next);setError('');}
+        if(live){setRegions(calculated);setSamples(next);setDivider(detectedDivider);setError('');}
       }catch(reason){
-        if(live){setRegions([]);setSamples([]);setError(reason instanceof Error?reason.message:'Falha no recorte.');}
+        if(live){setRegions([]);setSamples([]);setDivider(null);setError(reason instanceof Error?reason.message:'Falha no recorte.');}
       }
     };
-    image.onerror=()=>{if(live){setRegions([]);setSamples([]);setError('Não foi possível carregar a captura.');}};
+    image.onerror=()=>{if(live){setRegions([]);setSamples([]);setDivider(null);setError('Não foi possível carregar a captura.');}};
     image.src=imageUrl;
     return()=>{live=false;image.onload=null;image.onerror=null;};
   },[imageUrl,phase,viewport.x,viewport.y,viewport.width,viewport.height,verticalShift]);
@@ -151,6 +168,11 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
     <button type="button" onClick={()=>{
       setPhase('final-preparation');setViewportChoice('auto');setVerticalShift(0);setManualWidth(100);setManualShift(0);
     }} className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300">Restaurar posições</button>
+    <p className="text-xs text-zinc-400">
+      {divider
+        ? `Divisão azul/vermelha sugerida pelos pixels da imagem: ${Math.round(divider.split*100)}% da área do jogo. Apenas referência de alinhamento.`
+        : 'Não foi possível reconhecer uma divisão azul/vermelha confiável. As caixas continuam aproximadas.'}
+    </p>
     <div className="relative overflow-hidden rounded-lg border border-zinc-700 bg-black">
       <img src={imageUrl} alt="Captura com regiões aproximadas das cartas" className="block h-auto w-full"/>
       {regions.map(region=><button key={region.id} type="button"
