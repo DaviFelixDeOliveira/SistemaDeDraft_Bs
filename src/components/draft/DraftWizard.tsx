@@ -7,6 +7,8 @@ import { RotateCcw, Trash2, Check } from 'lucide-react';
 import { TrainingSessionManager } from './TrainingSessionManager';
 import { DraftTacticsBanner } from './DraftTacticsBanner';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import type { DraftAutoRoomEvent } from '../../services/draftAutoGuestService';
+import { importDraftAutoEvent } from '../../lib/draftAutoImport';
 
 export interface DraftState {
   mapId: string;
@@ -31,7 +33,7 @@ const DRAFT_STATE_KEY = 'sistema_draft_draft_state';
 const DRAFT_STEP_KEY = 'sistema_draft_draft_step';
 const DRAFT_HISTORY_KEY = 'sistema_draft_draft_history';
 
-export function DraftWizard() {
+export function DraftWizard({ incomingEvent = null, onDismissIncoming }: { incomingEvent?: DraftAutoRoomEvent | null; onDismissIncoming?: () => void } = {}) {
   // Item 2: Restaura o rascunho do draft e etapa do localStorage ao carregar a página
   const [step, setStep] = useState<1 | 2 | 3>(() => {
     try {
@@ -224,11 +226,46 @@ export function DraftWizard() {
     }, 800);
   };
 
+  const importPreview = incomingEvent ? importDraftAutoEvent(draftState, incomingEvent) : null;
+  const confirmImport = () => {
+    if (!incomingEvent) return;
+    const result = importDraftAutoEvent(latestDraftState.current, incomingEvent);
+    if (result.status !== 'applied') return;
+    setDraftStateWithHistory(result.draft);
+    if (incomingEvent.kind === 'pick' && latestStep.current === 1) setStep(2);
+    onDismissIncoming?.();
+  };
+
   const totalSteps = 3;
   const progressPercentage = ((step - 1) / (totalSteps - 1)) * 100;
 
   return (
     <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 md:px-0">
+      {incomingEvent && importPreview && (
+        <section className="mb-6 p-4 rounded-xl border border-indigo-500/40 bg-indigo-500/5 space-y-3" aria-label="Revisar evento recebido do jogador">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h3 className="font-bold text-indigo-500">Evento recebido — confirmar no Draft</h3>
+            <span className="text-xs text-zinc-500">{incomingEvent.guest?.display_name ?? 'Jogador'} · Evento manual</span>
+          </div>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+            {incomingEvent.kind === 'map' ? `Mapa: ${incomingEvent.map?.name ?? incomingEvent.map_id}`
+              : incomingEvent.kind === 'first-pick' ? `Quem começa: ${incomingEvent.ally_starts ? 'Nossa equipe' : 'Inimigo'}`
+              : `${incomingEvent.kind === 'ban' ? 'Ban' : 'Pick'} ${(incomingEvent.slot ?? 0) + 1} (${incomingEvent.team === 'ally' ? 'Nossa equipe' : 'Inimigo'}): ${incomingEvent.brawler?.name ?? incomingEvent.brawler_id}`}
+          </p>
+          <p className={`text-xs ${importPreview.status === 'review' ? 'text-amber-500' : 'text-zinc-500'}`}>{importPreview.message}</p>
+          <p className="text-xs text-zinc-500">Nada será alterado até sua confirmação. As alterações entram no histórico de desfazer; nenhum treino ou resultado será salvo.</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={importPreview.status !== 'applied'} onClick={confirmImport}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed">
+              Confirmar no Draft
+            </button>
+            <button type="button" onClick={() => onDismissIncoming?.()}
+              className="rounded-lg px-4 py-2 text-sm font-semibold border border-zinc-300 dark:border-zinc-700">
+              Descartar evento
+            </button>
+          </div>
+        </section>
+      )}
       
       {confirmResetOpen && (
         <ConfirmModal
