@@ -3,6 +3,7 @@ import { CheckCircle2, Clock3, ShieldCheck, XCircle } from 'lucide-react';
 import { draftAutoGuestService, type GuestJoinSession } from '../../services/draftAutoGuestService';
 import { isDraftAutoRoomCode } from '../../lib/draftAutoRoomCode';
 import { DraftAutoGuestEventTester } from './DraftAutoGuestEventTester';
+import { DraftAutoCaptureLab } from './DraftAutoCaptureLab';
 
 const STORAGE = 'draft_auto_guest_session';
 function restored(code: string): GuestJoinSession | null {
@@ -77,13 +78,13 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
               session.status==='approved'?'Entrada aprovada!':
               session.status==='expired'?'Solicitação expirada':'Entrada recusada'}</h2>
             <p className="text-zinc-400 text-sm">{session.status==='pending'?'Seu pedido já foi enviado. Esta página verifica automaticamente a resposta.':
-              session.status==='approved'?'Conexão validada! Você pode enviar eventos de teste manualmente abaixo. Captura automática de tela ainda não está disponível.':
+              session.status==='approved'?'Conexão validada! Envie eventos de teste ou experimente a nova área de capturas locais. O reconhecimento automático ainda não está disponível.':
               'Peça ao coach uma nova sessão se necessário.'}</p>
-            {session.status==='approved' && <DraftAutoGuestEventTester session={session} />}
+            {session.status==='approved' && <><DraftAutoGuestEventTester session={session} /><DraftAutoCaptureLab /></>}
             <button type="button" onClick={leave} className="text-indigo-400 text-sm underline">Sair e voltar ao formulário</button>
           </div>}
         {error && <p role="alert" className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg text-xs">{error}</p>}
-        <p className="text-zinc-500 text-xs">Este acesso permite somente solicitar participação e consultar a aprovação. Não compartilhe sua senha, nem autorize captura de tela nesta etapa.</p>
+        <p className="text-zinc-500 text-xs">Não compartilhe a senha da equipe. Capturas locais só começam após sua permissão explícita e, nesta etapa, não são enviadas ao coach.</p>
       </main>
     </div>
   );
