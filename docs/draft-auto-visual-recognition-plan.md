@@ -146,3 +146,15 @@ Usuário enviou screenshot do laboratório com:
 3. Usar o novo bloco `Comparar duas capturas — alteração de slots`; confirmar destaque no slot modificado. Capturas idênticas devem marcar 0 alterações.
 4. Comparar uma pré-seleção que virou confirmação sem mudança de personagem: o comparador **pode não sinalizar**, comportamento esperado até integrarmos a análise do check verde.
 5. Relatar falsos positivos especialmente quando a câmera/stream mudou o tamanho, as bordas ou houve animação; não usar diferenças visuais isoladas como confirmação.
+
+
+## Validação de duas capturas e indícios de mudança de marcador — 25/10/2026
+
+O usuário comparou duas imagens reais da mesma fase de draft. O laboratório identificou **1/6 slots alterados**, especificamente **Azul 3 = 59%** de pixels internos diferentes. Azul 1 = 3%, Azul 2 = 1% e três vermelhos = 0%. Conforme as imagens do usuário, essa saída é coerente; **não comprova pick confirmado**, apenas mudança do conteúdo visual desse slot.
+
+Neste incremento:
+- `src/lib/draftAutoSlotTemporal.ts`: interpretação conservadora de **duas fontes independentes** (mudança do retrato e possível marcador de confirmação), classificando diferenças no retrato, aparecimento/sumiço de indícios de ícones, conflitos e imagens indisponíveis. Cada caso mantém `requiresReview: true`.
+- `src/__tests__/draftAutoSlotTemporal.test.ts`: teste de casos positivo/negativo, incluindo imagem modificada sem marcador, check surgindo sem troca de retrato, marcador desaparecendo e tipos conflitantes.
+- `DraftAutoSlotChangeLab.tsx`: na comparação das imagens, lê também recortes em resolução mais alta para indicar possíveis transições dos marcadores **separadamente** da diferença de retratos; sem enviar eventos ao coach.
+
+**Validação necessária no dispositivo:** escolher duas capturas da mesma partida, fase, enquadramento e orientação. Testar um retrato que mudou, o mesmo retrato que ganhou ✓ verde (sem mudar brawler), o desaparecimento de um retrato e duas capturas idênticas. A heurística de ícones ainda pode errar quando a caixa do slot não está precisamente ajustada. O sistema não classifica como escolha confirmada nem envia nada automaticamente. Próxima fase requer identificação de brawler, detecção de carta/captura corretamente alinhada, fase e reconciliação de eventos sem duplicação.
