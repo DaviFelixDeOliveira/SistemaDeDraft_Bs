@@ -96,3 +96,13 @@ Ao rodar o primeiro filtro de cor sobre quatro screenshots individuais fornecido
 Foi adicionada a heurística `hasCompactRedBanShape` que busca uma componente vermelha **compacta e aproximadamente circular**, na região inferior direita do slot, em vez de confiar só na área ocupada pela cor. Um teste sintético extra garante que manchas vermelhas grandes e não circulares não gerem ban. O pipeline de TypeScript, Vitest e build passou. **Os quatro screenshots reais ainda precisam ser revalidados no browser contra esta alteração**, porque a heurística não é modelo treinado nem validação estatística.
 
 Até validar isso em diferentes skins, regiões, resoluções e overlays, não usar esta classificação para criar ou enviar bans/picks automaticamente. Diferenciar identificação visual de marcador, identidade do brawler, time e posição do turno.
+
+
+## Incremento implementado: localizador de slots em screenshot completo (25/10/2026)
+
+- Novo `src/lib/draftAutoLayout.ts`: propõe geometria normalizada para **6 cartas grandes inferiores de picks** (3 azuis, 3 vermelhas) e **2 áreas de bans laterais**. O índice do slot é físico dentro da cor da equipe, **não** a ordem global snake.
+- Novo `src/components/draftAuto/DraftAutoSlotLocatorLab.tsx`: sobrepõe regiões na screenshot integral enviada no laboratório do jogador e mostra miniatura/diagnóstico da região selecionada. Permite **calibrar manualmente** largura central do jogo, deslocamento horizontal (barras de vídeo) e altura das cartas; essas posições são heurísticas geométricas, não detecção automática de carta.
+- Novo `src/__tests__/draftAutoLayout.test.ts`: valida oito regiões, limites da imagem, separação de lados, calibração e entrada inválida.
+- A etapa é **somente diagnóstica**, não grava frames, não envia eventos ao coach, não detecta personagem, não reconhece individualmente cada ban lateral e não sabe quem é aliado.
+- Critério para a validação manual: carregar uma screenshot completa de pick com ambos os times visíveis; ajustar até as seis caixas cobrirem exatamente as cartas; clicar em cada caixa e verificar se a miniatura corresponde à posição. Alterar calibração para vídeo com tarjas pretas laterais e repetir. Se a posição não puder ser ajustada, relatar o exemplo para modelar outro layout.
+- **Próxima etapa** após conferir caixas em telas de jogadores e streams: calibração dinâmica/identificação geométrica automática sem sliders, classificação de slots físicos e detector de identidade dos brawlers com abstinência em baixa confiança.
