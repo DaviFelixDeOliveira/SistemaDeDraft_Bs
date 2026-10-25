@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { CheckCircle2, Clock3, ShieldCheck, XCircle } from 'lucide-react';
 import { draftAutoGuestService, type GuestJoinSession } from '../../services/draftAutoGuestService';
 import { isDraftAutoRoomCode } from '../../lib/draftAutoRoomCode';
@@ -39,7 +39,7 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
     return () => { active = false; clearInterval(timer); };
   }, [session?.requestId, session?.status]);
 
-  const enter = async (event: React.FormEvent) => {
+  const enter = async (event: FormEvent) => {
     event.preventDefault(); setError('');
     if (!isDraftAutoRoomCode(code)) return setError('O código deve conter oito letras ou números válidos.');
     if (name.trim().length < 2 || name.trim().length > 40) return setError('Informe seu nome (2 a 40 caracteres).');
