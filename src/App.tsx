@@ -53,6 +53,7 @@ export default function App() {
       if (!mounted) return;
       if (!session) {
         setTeam(null);
+        setPendingDraftAutoEvent(null);
         return;
       }
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
@@ -126,6 +127,7 @@ export default function App() {
   };
 
   const handleAuthenticated = (account: TeamAccount) => {
+    setPendingDraftAutoEvent(null);
     isolateTeamCache(account.id);
     setTeam(account);
     setCurrentView('dashboard');
