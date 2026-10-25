@@ -66,3 +66,15 @@ Não aplicar migrations no banco de produção nem registrar fotos antes de insp
 - Coach recebe uma lista de eventos da própria sala com atualização periódica a cada três segundos. **Não são aplicados automaticamente ao Draft Wizard ou ao Lab**, para prevenir contaminação de dados e incompatibilidades até termos confirmação e reconciliação.
 - Para testar: conectar um jogador por código, aprovar, no jogador escolher `Mapa` e enviá-lo. O coach deverá vê-lo em `Eventos recebidos`. Testar também ban e pick. Encerre a sala e verifique que tentativas de envio são recusadas.
 - Não existe captura real de tela nem API externa integrada. Próximas etapas: reconciliar observações com o reducer e Draft Wizard, capturar/identificar imagens com consentimento, proteger trânsito de imagens e produzir clientes móveis Android/iOS.
+
+## Fase 3B — Aplicar eventos ao Draft com confirmação do coach
+
+- A sala exibe `Revisar no Draft` para cada evento manual recebido. Ao clicar, navega à tela Draft, abre prévia e **exige confirmação explícita do coach**.
+- `src/lib/draftAutoImport.ts` valida slots, ordem dos picks conforme first pick, duplicação, bans, mapa selecionado e conflitos com o rascunho existente. Não substitui informações divergentes silenciosamente.
+- Os imports aceitos usam `setDraftStateWithHistory` do DraftWizard, mantendo o desfazer (Ctrl+Z) e os cálculos de recomendações existentes. O primeiro pick importado muda para a etapa de picks. Nunca salva treino/resultado automaticamente.
+- Em caso de conflito, a prévia explica o motivo e exige correção manual ou limpeza do Draft; não aplica um evento inválido.
+- Ao sair da conta ou entrar numa equipe diferente, a pendência na interface é descartada.
+- **Este é um ponto de confirmação manual intermediário**, não o resultado final de atualização automática por reconhecimento visual. Falta reconciliar sessões e eventos simultâneos e autorização robusta para ingestão automática de fontes externas.
+- Testes: `src/__tests__/draftAutoImport.test.ts` incluem mapa, bans duplicados, pick fora de sequência, equipe incorreta e brawler banido.
+
+Teste prático: no coach, ver evento recebido e clicar **Revisar no Draft**; conferir mensagem/identidade e clicar **Confirmar no Draft**. O mapa deve atualizar e as recomendações da tela de mapa devem recalcular. Eventos contraditórios devem ser recusados. Se houver draft anterior salvo, use `Limpar Draft` somente após decidir que pode perder esse rascunho.
