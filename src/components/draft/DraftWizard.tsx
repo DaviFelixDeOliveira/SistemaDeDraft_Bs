@@ -33,7 +33,18 @@ const DRAFT_STATE_KEY = 'sistema_draft_draft_state';
 const DRAFT_STEP_KEY = 'sistema_draft_draft_step';
 const DRAFT_HISTORY_KEY = 'sistema_draft_draft_history';
 
-export function DraftWizard({ incomingEvent = null, onDismissIncoming }: { incomingEvent?: DraftAutoRoomEvent | null; onDismissIncoming?: () => void } = {}) {
+interface DraftWizardProps {
+  incomingEvent?: DraftAutoRoomEvent | null;
+  incomingCount?: number;
+  incomingIndex?: number;
+  onMoveIncoming?: (offset: -1 | 1) => void;
+  onDecideIncoming?: (event: DraftAutoRoomEvent, status: 'applied' | 'dismissed') => Promise<void>;
+}
+
+export function DraftWizard({
+  incomingEvent = null, incomingCount = 0, incomingIndex = -1,
+  onMoveIncoming, onDecideIncoming,
+}: DraftWizardProps = {}) {
   // Item 2: Restaura o rascunho do draft e etapa do localStorage ao carregar a página
   const [step, setStep] = useState<1 | 2 | 3>(() => {
     try {
@@ -55,6 +66,8 @@ export function DraftWizard({ incomingEvent = null, onDismissIncoming }: { incom
 
   const [isLoading, setIsLoading] = useState(false);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   
   const [draftHistory, setDraftHistory] = useState<{state: DraftState, step: 1|2|3}[]>(() => {
     try {
@@ -226,14 +239,37 @@ export function DraftWizard({ incomingEvent = null, onDismissIncoming }: { incom
     }, 800);
   };
 
+  useEffect(() => { setReviewError(''); }, [incomingEvent?.id]);
   const importPreview = incomingEvent ? importDraftAutoEvent(draftState, incomingEvent) : null;
-  const confirmImport = () => {
-    if (!incomingEvent) return;
-    const result = importDraftAutoEvent(latestDraftState.current, incomingEvent);
-    if (result.status !== 'applied') return;
-    setDraftStateWithHistory(result.draft);
-    if (incomingEvent.kind === 'pick' && latestStep.current === 1) setStep(2);
-    onDismissIncoming?.();
+
+  const confirmImport = async () => {
+    if (!incomingEvent || !onDecideIncoming || reviewBusy) return;
+    setReviewBusy(true); setReviewError('');
+    try {
+      // A second check uses the latest state in case the coach edited a field
+      // while this event was pending. 'ignored' means it is already there.
+      const result = importDraftAutoEvent(latestDraftState.current, incomingEvent);
+      if (result.status === 'review') {
+        setReviewError(result.message);
+        return;
+      }
+      await onDecideIncoming(incomingEvent, 'applied');
+      if (result.status === 'applied') {
+        setDraftStateWithHistory(result.draft);
+        if (incomingEvent.kind === 'pick' && latestStep.current === 1) setStep(2);
+      }
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Não foi possível confirmar o evento.');
+    } finally { setReviewBusy(false); }
+  };
+  const dismissImport = async () => {
+    if (!incomingEvent || !onDecideIncoming || reviewBusy) return;
+    setReviewBusy(true); setReviewError('');
+    try {
+      await onDecideIncoming(incomingEvent, 'dismissed');
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Não foi possível descartar o evento.');
+    } finally { setReviewBusy(false); }
   };
 
   const totalSteps = 3;
@@ -244,23 +280,42 @@ export function DraftWizard({ incomingEvent = null, onDismissIncoming }: { incom
       {incomingEvent && importPreview && (
         <section className="mb-6 p-4 rounded-xl border border-indigo-500/40 bg-indigo-500/5 space-y-3" aria-label="Revisar evento recebido do jogador">
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h3 className="font-bold text-indigo-500">Evento recebido — confirmar no Draft</h3>
-            <span className="text-xs text-zinc-500">{incomingEvent.guest?.display_name ?? 'Jogador'} · Evento manual</span>
+            <h3 className="font-bold text-indigo-500">Fila de eventos — {incomingCount} pendente{incomingCount === 1 ? '' : 's'}</h3>
+            <span className="text-xs text-zinc-500">
+              {incomingIndex + 1} de {incomingCount} · {incomingEvent.guest?.display_name ?? 'Jogador'} · Enviado manualmente
+            </span>
           </div>
+          {incomingCount > 1 && (
+            <div className="flex gap-2">
+              <button type="button" disabled={reviewBusy} onClick={() => onMoveIncoming?.(-1)}
+                className="text-xs rounded-lg px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 disabled:opacity-40">
+                Anterior
+              </button>
+              <button type="button" disabled={reviewBusy} onClick={() => onMoveIncoming?.(1)}
+                className="text-xs rounded-lg px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 disabled:opacity-40">
+                Próximo
+              </button>
+            </div>
+          )}
           <p className="text-sm font-semibold text-zinc-900 dark:text-white">
             {incomingEvent.kind === 'map' ? `Mapa: ${incomingEvent.map?.name ?? incomingEvent.map_id}`
               : incomingEvent.kind === 'first-pick' ? `Quem começa: ${incomingEvent.ally_starts ? 'Nossa equipe' : 'Inimigo'}`
               : `${incomingEvent.kind === 'ban' ? 'Ban' : 'Pick'} ${(incomingEvent.slot ?? 0) + 1} (${incomingEvent.team === 'ally' ? 'Nossa equipe' : 'Inimigo'}): ${incomingEvent.brawler?.name ?? incomingEvent.brawler_id}`}
           </p>
-          <p className={`text-xs ${importPreview.status === 'review' ? 'text-amber-500' : 'text-zinc-500'}`}>{importPreview.message}</p>
+          <p className={`text-xs ${importPreview.status === 'review' ? 'text-amber-500' : 'text-zinc-500'}`}>
+            {importPreview.status === 'applied' ? 'Pronto para aplicar após sua confirmação.'
+              : importPreview.status === 'ignored' ? 'Informação já presente no Draft. Marque-a como revisada para continuar.'
+              : importPreview.message}
+          </p>
+          {reviewError && <p role="alert" className="text-xs text-red-500">{reviewError}</p>
           <p className="text-xs text-zinc-500">Nada será alterado até sua confirmação. As alterações entram no histórico de desfazer; nenhum treino ou resultado será salvo.</p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={importPreview.status !== 'applied'} onClick={confirmImport}
+            <button type="button" disabled={reviewBusy || importPreview.status === 'review'} onClick={() => void confirmImport()}
               className="rounded-lg px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed">
-              Confirmar no Draft
+              {reviewBusy ? 'Salvando...' : importPreview.status === 'ignored' ? 'Marcar como revisado' : 'Confirmar no Draft'}
             </button>
-            <button type="button" onClick={() => onDismissIncoming?.()}
-              className="rounded-lg px-4 py-2 text-sm font-semibold border border-zinc-300 dark:border-zinc-700">
+            <button type="button" disabled={reviewBusy} onClick={() => void dismissImport()}
+              className="rounded-lg px-4 py-2 text-sm font-semibold border border-zinc-300 dark:border-zinc-700 disabled:opacity-40">
               Descartar evento
             </button>
           </div>
