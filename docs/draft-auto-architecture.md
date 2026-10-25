@@ -108,3 +108,33 @@ Teste prático: no coach, ver evento recebido e clicar **Revisar no Draft**; con
 - **Próxima decisão técnica:** depois de obter capturas reais de mapa, bans e picks em pelo menos algumas resoluções, projetar extrator local e medição de confiança com revisão; só depois habilitar envio protegido ao coach. A integração deve reutilizar a fila de eventos e não registrar dados fictícios.
 
 Teste: abrir página de jogador aprovado (em janela separada), procurar Captura de imagem, selecionar uma screenshot e verificar dimensões e recortes. No desktop também testar captura de janela com permissão. Verificar que nenhum evento de foto novo é gravado no Supabase.
+
+## Fase 4B — Primeira identificação visual experimental (implementada)
+
+### Amostras fornecidas pelo mantenedor (NÃO armazenadas no repositório)
+O usuário forneceu capturas rotuladas de:
+1. Tela de cara ou coroa (ainda sem resultado); 2. Vermelho começa;
+3. Azul começa; 4. Ban pré-selecionado; 5. Ban confirmado;
+6. Pick aliado pré-selecionado; 7. Pick aliado confirmado;
+8. Pick inimigo confirmado; 9 e 10. Pré-seleção aliada deixa de existir quando o inimigo escolhe o mesmo brawler;
+11. Preparação final após seis picks.
+Também foram compartilhados exemplos de seleções simultâneas e duplicadas (que NÃO equivalem a picks/bans confirmados). Capturas vieram de vídeos e algumas telas incluem bordas pretas, marca d'água e conteúdo sobreposto.
+Não publicar/copiar essas imagens para GitHub, nem tratá-las como dados de treino com direito de redistribuição.
+
+### Detector entregue
+- Módulo puro `src/lib/draftAutoVision.ts`: analisa apenas píxeis de duas regiões normalizadas da captura (`23%–68%` da largura; faixa central `34%–44%` da altura, referência `22%–28%` da altura). Usa limiares conservadores de vermelho e azul para identificar uma faixa grande e distinta da parte superior.
+- **Suporte restrito ao anúncio do primeiro pick**: retorno `first-pick-announcement` com cor `blue` ou `red` ou `unknown` se não houver evidência suficiente. Não lê texto, não usa API de IA nem reconhece mapa, bans/picks, classes ou jogadores.
+- Validação exploratória das capturas enviadas: exemplos `RED TEAM STARTS` e `BLUE TEAM STARTS` apresentaram faixa central forte com região superior neutra; imagens de `COIN FLIP` e de picks/preparação não satisfizeram os mesmos critérios. Não há medição de precisão estatística — amostras pequenas, formato específico.
+- UI `DraftAutoVisionPreview` abre automaticamente após upload/recorte original de screenshot no laboratório **local** do jogador aprovado, sem enviar foto ao Supabase.
+- Mesmo quando encontra uma faixa, exige que o jogador selecione manualmente `Sou azul` ou `Sou vermelho` antes de converter para `allyStarts`. O botão explícito `Confirmar e enviar ao coach` usa o canal já validado de evento manual `first-pick`, seguido da **revisão humana no Draft**. Não transmite evento apenas pelo fato de detectar pixels.
+- O resultado não usa palavra `confiança` em porcentagens como se houvesse avaliação de modelo; a interface mostra só estatísticas observáveis de cor na área.
+- Testes sintéticos cobrem faixa vermelha, azul, moeda neutra, tela com fundo todo vermelho/azul e input inválido.
+
+### Próximos marcos
+1. Capturar/rotular com autorização modelos de ícones de **ban confirmado** e **pick confirmado** (marcação de bloqueio / ✓) em diferentes proporções e idiomas. Pré-seleção jamais deve ser enviada.
+2. Identificar brawler somente após template/matching comprovado em screenshots independentes (não treinar nem inferir a partir de nomes ou taxas de vitória).
+3. Rastrear mudanças em sequência temporal e deduplicar decisões, separando `observado` de `confirmado`.
+4. Reutilizar fila existente do coach para apresentar sugestões visuais verificadas. Envio contínuo da tela do celular requer captura nativa com consentimento explícito e segurança adicional.
+
+### Teste inicial sugerido
+Depois de atualizar a branch, entrar como jogador aprovado e usar `Captura de imagem — teste local`. Carregar primeiro a screenshot rotulada `BLUE TEAM STARTS` ou `RED TEAM STARTS`, observar o anúncio de cor, selecionar manualmente sua equipe na tela e clicar para enviar. Confirmar no Draft do coach. Repetir com `COIN FLIP`: deverá retornar "padrão não identificado" e **não** oferecer envio automático.
