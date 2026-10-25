@@ -41,3 +41,17 @@ Usar um adaptador controlado, observação por observação, para atualizar `Dra
 ## Dependências/segurança
 Docs de referência: https://supabase.com/docs/guides/realtime/authorization e https://supabase.com/docs/guides/realtime/broadcast.
 Não aplicar migrations no banco de produção nem registrar fotos antes de inspeção das políticas. O primeiro teste de multi-dispositivo depende dessa camada de autenticação, ainda pendente.
+
+
+## Fase 2B: convite e aprovação de jogadores (implementado)
+
+- Migração aplicada: `supabase/migrations/20261025021635_draft_auto_join_requests.sql`.
+- `draft_auto_join_requests` armazena nome, estado e hash SHA-256 de um token aleatório (nunca o token).
+- O coach vê apenas pedidos de suas salas e pode alterar somente `status` de pendente para aprovado/recusado.
+- Endpoint público `draft-auto-join` oferece `request` e `status`; o token aleatório de 256 bits é mantido na guia do jogador via sessionStorage e necessário para consultar a resposta. A URL/código isolados não dão acesso às informações da equipe.
+- Rota web de jogador: `/?draftJoin=CODIGO`, que não depende de login da equipe. Pode ser aberta em outra janela ou no celular.
+- O coach recebe e responde solicitações, com atualização por polling de quatro segundos.
+- Limites por sala (20 totais, seis pendentes) reduzem spam, mas **ainda é preciso reforçar rate-limiting externo por IP/dispositivo, monitoramento e revisão de origem antes de abrir para grande público**.
+- **A aprovação não dá acesso ao Draft, imagens, estatísticas nem Supabase Realtime ainda.** Ela comprova apenas que o coach aceita aquele pedido. Na fase de sincronização, usaremos a credencial temporária validada na Edge Function para autorizar eventos da própria sala no servidor.
+- Encerre a sala ou aguarde a expiração para invalidar o pedido. Não usar este token como JWT nem credencial de outras tabelas.
+- Testar `http://localhost:3000/?draftJoin=CODIGO` em janela anônima. Para celular na mesma rede, substitua localhost pelo IP de rede mostrado pelo Vite.
