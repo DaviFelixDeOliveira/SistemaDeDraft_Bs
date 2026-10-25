@@ -74,9 +74,40 @@ function hasCompactRedBanShape(frame: SlotPixelFrame): boolean {
     const bw=maxX-minX+1,bh=maxY-minY+1;
     const aspect=bw/bh,density=area/(bw*bh);
     const cx=(minX+bw/2)/gw,cy=(minY+bh/2)/gh;
-    if(cx>=.72&&cx<=1&&cy>=.65&&cy<=.95 &&
-       bw>=.15*min&&bh>=.15*min&&bw<=.45*min&&bh<=.45*min &&
-       aspect>=.7&&aspect<=1.3&&density>=.25&&density<=.88)return true;
+    if(cx<.72||cx>1||cy<.65||cy>.95 ||
+       bw<.15*min||bh<.15*min||bw>.45*min||bh>.45*min ||
+       aspect<.78||aspect>1.22||density<.25||density>.82)continue;
+    // A true no-entry icon has a red perimeter covering most compass
+    // directions. A character's red face, clothes or diagonal art can
+    // produce a circular bounding box without a circular perimeter.
+    const centerX=minX+(bw-1)/2,centerY=minY+(bh-1)/2;
+    const radiusX=(bw-1)/2,radiusY=(bh-1)/2;
+    let perimeterVotes=0;
+    for(let k=0;k<16;k++){
+      const angle=k*Math.PI/8;
+      let segmentFound=false;
+      for(const radius of [.76,.87,.96]){
+        const px=Math.round(centerX+Math.cos(angle)*radiusX*radius);
+        const py=Math.round(centerY+Math.sin(angle)*radiusY*radius);
+        if(px>=0&&py>=0&&px<gw&&py<gh&&red[py*gw+px]){
+          segmentFound=true;
+          break;
+        }
+      }
+      if(segmentFound)perimeterVotes++;
+    }
+    if(perimeterVotes>=12){
+      // Filled blocks can also have a red perimeter. The inner area must
+      // contain negative space typical of the slashed no-entry icon.
+      let innerCount=0,innerRed=0;
+      for(let y=minY+Math.ceil(bh*.28);y<=maxY-Math.ceil(bh*.28);y++){
+        for(let x=minX+Math.ceil(bw*.28);x<=maxX-Math.ceil(bw*.28);x++){
+          innerCount++;
+          if(red[y*gw+x])innerRed++;
+        }
+      }
+      if(innerCount>0&&innerRed/innerCount<.75)return true;
+    }
   }
   return false;
 }
