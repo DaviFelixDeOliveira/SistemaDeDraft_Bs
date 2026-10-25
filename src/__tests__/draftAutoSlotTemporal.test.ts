@@ -8,7 +8,7 @@ const pick:SlotMarkerEvidence={status:'candidate',marker:'pick',redShare:0,green
 const ban:SlotMarkerEvidence={status:'candidate',marker:'ban',redShare:.1,greenShare:0};
 const diff=(changed:boolean):DraftSlotDifference=>({
   visualChangeCandidate:changed,
-  changedFraction:changed?.59:0,
+  changedFraction:changed ? 0.59 : 0,
   meanChannelDifference:changed?95:0,
 });
 
