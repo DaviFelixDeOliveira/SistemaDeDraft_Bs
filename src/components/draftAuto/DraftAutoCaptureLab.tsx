@@ -3,6 +3,7 @@ import { Camera, Crop, ImagePlus, MonitorUp, ShieldCheck, Square } from 'lucide-
 import { describeDraftFrame, draftFrameCrop, validateDraftFrame, type FrameArea, type FrameMetadata } from '../../lib/draftAutoFrame';
 import { DraftAutoVisionPreview } from './DraftAutoVisionPreview';
 import { DraftAutoVisualMarkerLab } from './DraftAutoVisualMarkerLab';
+import { DraftAutoSlotLocatorLab } from './DraftAutoSlotLocatorLab';
 import type { GuestJoinSession } from '../../services/draftAutoGuestService';
 
 const label = 'block text-xs font-semibold text-zinc-400 mb-1';
@@ -202,6 +203,7 @@ export function DraftAutoCaptureLab({session,onSessionExpired}: {session:GuestJo
         </div>
         <img src={preview} alt="Prévia local da imagem escolhida" className="rounded-lg w-full max-h-80 object-contain border border-zinc-800 bg-black"/>
         <DraftAutoVisionPreview imageUrl={preview} session={session} onSessionExpired={onSessionExpired}/>
+        <DraftAutoSlotLocatorLab imageUrl={preview}/>
         <label className={label}>Área para avaliar (recorte manual)</label>
         <select className="w-full bg-zinc-950 rounded-lg border border-zinc-700 p-2 text-sm"
           value={area} onChange={event => {setArea(event.target.value as FrameArea);replaceUrl('crop', null);}}>
