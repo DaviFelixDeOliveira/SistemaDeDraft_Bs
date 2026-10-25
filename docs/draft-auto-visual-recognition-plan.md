@@ -122,3 +122,27 @@ Até validar isso em diferentes skins, regiões, resoluções e overlays, não u
 **Lógica futura de sincronização:** capturar/observar banners, bans e picks **durante** a partida com intervalo suficientemente curto, pois a tela de transição dura menos de 1 s. A preparação final será uma boa fonte para **reconciliar os seis personagens confirmados** ao final, mas não permitirá reconstruir a hora exata nem a ordem das escolhas, nem ajudará no momento em que ainda precisamos sugerir um counter. O smartphone precisará de captura autorizada e um pipeline temporal, não somente screenshots manuais.
 
 **Como verificar:** carregar como jogador aprovado uma screenshot completa da **Preparação Final**, selecionar explicitamente essa fase e verificar seis caixas na parte central, nenhuma caixa de ban; repetir com captura durante picks e selecionar a fase correspondente. Em vídeo com barras laterais, conferir a proposta automática de viewport; caso errado, usar o fallback manual e reportar. Não associar ícone verde a personagem até reconhecer identidade validada.
+
+
+## Registro de validação da divisão de equipes e comparação temporal — 25/10/2026
+
+Usuário enviou screenshot do laboratório com:
+- viewport calculado automaticamente com **81% de largura**, início **9%** no quadro;
+- divisão azul/vermelha calculada em **52%**;
+- seis cartões A1/A2/A3/V1/V2/V3 visualmente próximos das respectivas cartas;
+- ajuste vertical manual residual de **+2%**, provando que a posição ainda é apenas aproximada.
+
+**Novo incremento** (diagnóstico de mudanças temporais, ainda sem reconhecimento de brawlers):
+- `src/lib/draftAutoSlotChange.ts`: compara pixels da região central de **um mesmo slot** em duas imagens, produz fração e intensidade da diferença e uma indicação heurística de alteração relevante. Ignora partes do topo/rodapé onde ficam ícones, nomes e equipamentos. **Não consegue sozinho detectar transição de pré-seleção para confirmação**; marcador visual e identidade necessitarão detectores próprios.
+- `src/__tests__/draftAutoSlotChange.test.ts`: casos de imagem idêntica, personagem diferente, mudança só no rodapé, ruído pontual e dados inválidos.
+- `src/components/draftAuto/DraftAutoSlotChangeLab.tsx`: o usuário seleciona uma **segunda screenshot** da mesma partida/fase, o sistema aplica exatamente a mesma geometria de slots às duas imagens de proporção compatível e indica quais retratos variaram. Se quatro ou mais diferirem, avisa que não dá para inferir a ordem. Os arquivos ficam somente no navegador.
+- `DraftAutoSlotLocatorLab.tsx`: inclui esse comparador depois do painel de localização.
+
+**Segurança e limitações:** mudanças em cartões não são necessariamente picks. Animações, overlays, pré-seleção, quadros de partidas diferentes e deslocamento podem gerar falsos positivos. Um pick confirmado pode alterar apenas o check verde, que é ignorado pelo comparador central. Portanto esta etapa não cria nem transmite eventos e não atualiza draft nem banco de dados. A conferência visual do usuário nos próximos testes é indispensável.
+
+**Verificação manual recomendada:**
+1. Enviar print A do draft (antes de um personagem ser escolhido).
+2. No mesmo tipo de tela e jogo, enviar print B do mesmo momento alguns segundos depois, com um slot de personagem diferente.
+3. Usar o novo bloco `Comparar duas capturas — alteração de slots`; confirmar destaque no slot modificado. Capturas idênticas devem marcar 0 alterações.
+4. Comparar uma pré-seleção que virou confirmação sem mudança de personagem: o comparador **pode não sinalizar**, comportamento esperado até integrarmos a análise do check verde.
+5. Relatar falsos positivos especialmente quando a câmera/stream mudou o tamanho, as bordas ou houve animação; não usar diferenças visuais isoladas como confirmação.
