@@ -78,3 +78,20 @@ Não aplicar migrations no banco de produção nem registrar fotos antes de insp
 - Testes: `src/__tests__/draftAutoImport.test.ts` incluem mapa, bans duplicados, pick fora de sequência, equipe incorreta e brawler banido.
 
 Teste prático: no coach, ver evento recebido e clicar **Revisar no Draft**; conferir mensagem/identidade e clicar **Confirmar no Draft**. O mapa deve atualizar e as recomendações da tela de mapa devem recalcular. Eventos contraditórios devem ser recusados. Se houver draft anterior salvo, use `Limpar Draft` somente após decidir que pode perder esse rascunho.
+
+## Fase 3C — Fila contínua de eventos no Draft (implementada)
+
+**Problema reproduzido pelo usuário:** dois bans enviados em sequência antes de confirmar o primeiro; o segundo era salvo no Supabase, mas só aparecia após voltar manualmente à sala e clicar em `Revisar no Draft`. A tela do Draft aguardava um único `incomingEvent`, sem buscar novos eventos.
+
+**Solução:**
+- Banco guarda `draft_auto_events.review_status`: `pending`, `applied`, `dismissed`, inicialmente `pending` para eventos existentes (migração `20261025033953_draft_auto_event_reviews.sql`).
+- RLS + GRANT restrito: somente coach da equipe atualiza a coluna `review_status`; nenhum cliente modifica payload original. Dados de outras equipes e acesso anônimo continuam inacessíveis.
+- `App` consulta periodicamente salas ativas e **todos os eventos pendentes** (inclusive os novos enquanto Draft aberto), deduplica e ordena cronologicamente. A fila mostra contagem e controles **Anterior**/**Próximo**.
+- Confirmar ou descartar salva a decisão no Supabase, retira o evento da fila e mostra automaticamente o próximo, sem sair da tela do Draft.
+- `ignored` (informação já registrada) pode ser marcado como revisado. Um conflito mantém o evento pendente e exige correção humana ou descarte.
+- `DraftAutoRoomEvents` mostra estados pendente/confirmado/descartado e impede clicar novamente em eventos finalizados.
+- Confirmação utiliza o importador puro e o histórico de desfazer existente; nenhum evento grava um treino/resultado ou substitui silenciosamente picks/bans conflitantes.
+- Testes regressivos de fila: dois bans em sequência, eventos processados, duplicações e navegação circular.
+- Permanece **polling** a cada três segundos, sujeito a atrasos e à conexão do coach; não é captura/identificação do jogo nem WebSocket de baixa latência.
+
+**Validação manual:** enviar mapa e depois dois bans da mesma equipe em slots 1 e 2 sem navegar para outra página. No Draft, confirmar o primeiro e verificar que o segundo surge imediatamente. Testar anterior/próximo, conflito, evento repetido e um ban que chega enquanto o Draft já está aberto. Verificar que a decisão persiste após atualizar a página. Usar sala nova, se a anterior expirou.
