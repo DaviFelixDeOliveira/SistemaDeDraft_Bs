@@ -84,3 +84,15 @@ O jogador joga Brawl Stars em seu aparelho e acompanha o Draft Automático; um c
 5. Reportar erros com a imagem usada; cor isolada sem formato ainda pode confundir o detector experimental. Testes automatizados não substituem validação no dispositivo.
 
 **Restrições**: não fazer merge em `main` até testes visuais; não armazenar/publicar prints de stream no repositório; nenhum recurso deve chamar o diagnóstico de ícone de “reconhecimento completo do brawler”.
+
+## Regressão encontrada com quatro screenshots reais (25/10/2026)
+
+Ao rodar o primeiro filtro de cor sobre quatro screenshots individuais fornecidos pelo usuário, os resultados foram:
+- Ban confirmado: marcador `ban` (esperado)
+- Ban não confirmado: `unknown` (esperado)
+- Pick confirmado: marcador `pick` (esperado)
+- Pick pré-selecionado: marcador `ban` (FALSO POSITIVO devido aos pixels vermelhos do retrato)
+
+Foi adicionada a heurística `hasCompactRedBanShape` que busca uma componente vermelha **compacta e aproximadamente circular**, na região inferior direita do slot, em vez de confiar só na área ocupada pela cor. Um teste sintético extra garante que manchas vermelhas grandes e não circulares não gerem ban. O pipeline de TypeScript, Vitest e build passou. **Os quatro screenshots reais ainda precisam ser revalidados no browser contra esta alteração**, porque a heurística não é modelo treinado nem validação estatística.
+
+Até validar isso em diferentes skins, regiões, resoluções e overlays, não usar esta classificação para criar ou enviar bans/picks automaticamente. Diferenciar identificação visual de marcador, identidade do brawler, time e posição do turno.
