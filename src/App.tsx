@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { DraftWizard } from './components/draft/DraftWizard';
 import { DraftAutoLab } from './components/draftAuto/DraftAutoLab';
 import { DraftAutoRooms } from './components/draftAuto/DraftAutoRooms';
+import type { DraftAutoRoomEvent } from './services/draftAutoGuestService';
 import { DraftAutoGuestJoin } from './components/draftAuto/DraftAutoGuestJoin';
 import { Menu, Loader2, Swords } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -22,6 +23,7 @@ const ACTIVE_TAB_KEY = 'sistema_draft_active_tab';
 export default function App() {
 
   const [team, setTeam] = useState<TeamAccount | null>(null);
+  const [pendingDraftAutoEvent, setPendingDraftAutoEvent] = useState<DraftAutoRoomEvent | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isViewLoading, setIsViewLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -130,11 +132,16 @@ export default function App() {
   };
 
   const requestLogout = () => setShowLogoutConfirm(true);
+  const reviewDraftAutoEvent = (event: DraftAutoRoomEvent) => {
+    setPendingDraftAutoEvent(event);
+    handleViewChange('draft');
+  };
 
   const confirmLogout = async () => {
     try {
       await teamAuthService.logout();
       setTeam(null);
+      setPendingDraftAutoEvent(null);
       setCurrentView('dashboard');
       setShowLogoutConfirm(false);
     } catch (err) {
@@ -226,10 +233,10 @@ export default function App() {
                 {currentView === 'draft' && (
                   <div className="w-full max-w-full">
                     <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Assistente de Draft</h2>
-                    <DraftWizard />
+                    <DraftWizard incomingEvent={pendingDraftAutoEvent} onDismissIncoming={() => setPendingDraftAutoEvent(null)} />
                   </div>
                 )}
-                {currentView === 'draft-auto' && <><DraftAutoRooms /><DraftAutoLab /></>}
+                {currentView === 'draft-auto' && <><DraftAutoRooms onImport={reviewDraftAutoEvent} /><DraftAutoLab /></>}
                 {currentView === 'players' && (
                   <div className="w-full max-w-full">
                     <PlayersHub />
