@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Eye, Send, ShieldAlert } from 'lucide-react';
 import { detectFirstPickAnnouncement, allyStartsFromBanner, type DraftVisionBannerColour, type DraftVisionResult } from '../../lib/draftAutoVision';
-import { draftAutoGuestService, type GuestJoinSession } from '../../services/draftAutoGuestService';
+import { draftAutoGuestService, DraftAutoGuestAccessError, type GuestJoinSession } from '../../services/draftAutoGuestService';
 
-type Props = { imageUrl: string; session: GuestJoinSession };
+type Props = { imageUrl: string; session: GuestJoinSession; onSessionExpired: () => void };
 
-export function DraftAutoVisionPreview({imageUrl,session}: Props) {
+export function DraftAutoVisionPreview({imageUrl,session,onSessionExpired}: Props) {
   const [result,setResult] = useState<DraftVisionResult | null>(null);
   const [myColour,setMyColour] = useState<DraftVisionBannerColour | null>(null);
   const [busy,setBusy] = useState(false);
@@ -47,7 +47,8 @@ export function DraftAutoVisionPreview({imageUrl,session}: Props) {
       setSent(true);
       setMessage('Ordem do primeiro pick enviada para revisão do coach. Nada foi aplicado sem a confirmação dele.');
     } catch(cause) {
-      setError(cause instanceof Error?cause.message:'Não foi possível enviar. Confira sua conexão.');
+      if (cause instanceof DraftAutoGuestAccessError) onSessionExpired();
+      else setError(cause instanceof Error?cause.message:'Não foi possível enviar. Confira sua conexão.');
     } finally {setBusy(false);}
   };
 
