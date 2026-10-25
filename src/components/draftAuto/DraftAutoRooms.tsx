@@ -3,8 +3,9 @@ import { Copy, Link2, Loader2, Plus, RefreshCw, ShieldCheck, XCircle } from 'luc
 import { draftAutoRoomService, type DraftAutoRoom } from '../../services/draftAutoRoomService';
 import { DraftAutoJoinRequests } from './DraftAutoJoinRequests';
 import { DraftAutoRoomEvents } from './DraftAutoRoomEvents';
+import type { DraftAutoRoomEvent } from '../../services/draftAutoGuestService';
 
-export function DraftAutoRooms() {
+export function DraftAutoRooms({ onImport }: { onImport: (event: DraftAutoRoomEvent) => void }) {
   const [rooms, setRooms] = useState<DraftAutoRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -99,7 +100,7 @@ export function DraftAutoRooms() {
                   <button type="button" onClick={() => void copy(`${window.location.origin}/?draftJoin=${room.join_code}`)} className="ml-3 text-xs text-indigo-500 underline">Copiar link</button>
                   <p className="text-[11px] text-zinc-500">Se estiver acessando por localhost, troque o endereço pelo IP do computador na rede para abrir no celular.</p>
                   <DraftAutoJoinRequests roomId={room.id}/>
-                  <DraftAutoRoomEvents roomId={room.id}/>
+                  <DraftAutoRoomEvents roomId={room.id} onImport={onImport}/>
                 </div>}
                 {room.status === 'active' && <button type="button" disabled={busy} onClick={() => void close(room)} className="flex items-center gap-1 text-xs text-red-500 disabled:opacity-50"><XCircle className="w-3.5 h-3.5"/> Encerrar sala</button>}
               </div>;
