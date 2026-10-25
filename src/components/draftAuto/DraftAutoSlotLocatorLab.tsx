@@ -181,12 +181,15 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
         className={`absolute border-2 ${region.id===active?'border-yellow-300 bg-yellow-300/15':'border-cyan-300/75 bg-cyan-300/10'}`}
         style={{left:`${region.x*100}%`,top:`${region.y*100}%`,
           width:`${region.width*100}%`,height:`${region.height*100}%`}}>
-        <span className="absolute -top-4 left-0 whitespace-nowrap bg-zinc-950/90 px-1 text-[9px] font-semibold text-white">{region.label}</span>
+        <span className={`absolute left-0 top-0 max-w-full truncate px-1 text-[9px] font-bold text-white ${region.side==='blue'?'bg-blue-800/90':'bg-rose-800/90'}`}>
+          {region.kind==='ban-area' ? (region.side==='blue'?'Bans A':'Bans V') : `${region.side==='blue'?'A':'V'}${(region.physicalSlot??0)+1}`}
+        </span>
       </button>)}
     </div>
     <p className="text-[11px] text-amber-300">
-      Uma imagem da preparação final permite verificar seis personagens juntos, mas não recupera
-      automaticamente o <strong>momento</strong> de cada pick nem substitui as sugestões ao vivo.
+      {phase==='final-preparation'
+        ? 'A preparação final mostra os seis personagens juntos, mas não revela o momento exato de cada pick.'
+        : 'Durante as escolhas, o sistema precisará acompanhar várias capturas para atualizar os counters antes do próximo turno. Este teste ainda não faz isso.'}
     </p>
     {selected&&<div className="flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-950/60 p-2">
       <img src={selected.thumbnail} alt={`Prévia do recorte de ${selected.region.label}`}
