@@ -1,5 +1,13 @@
 import { supabase } from '../lib/supabase';
 
+/** Reported by the server when a guest cannot publish with this authorization. */
+export class DraftAutoGuestAccessError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DraftAutoGuestAccessError';
+  }
+}
+
 export type GuestJoinSession = {
   code: string;
   requestId: string;
@@ -26,7 +34,13 @@ async function guestFunction(body: Record<string, unknown>): Promise<Record<stri
     const context = (error as {context?: Response}).context;
     if (context && typeof context.json === 'function') {
       const json = await context.json().catch(() => null);
-      if (json?.error && typeof json.error === 'string') throw new Error(json.error);
+      if (json?.error && typeof json.error === 'string') {
+        if ((context.status === 401 || context.status === 403) &&
+            (body.action === 'catalog' || body.action === 'send-event')) {
+          throw new DraftAutoGuestAccessError(json.error);
+        }
+        throw new Error(json.error);
+      }
     }
     throw serviceError(error);
   }
