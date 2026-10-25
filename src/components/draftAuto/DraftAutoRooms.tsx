@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Copy, Link2, Loader2, Plus, RefreshCw, ShieldCheck, XCircle } from 'lucide-react';
 import { draftAutoRoomService, type DraftAutoRoom } from '../../services/draftAutoRoomService';
 import { DraftAutoJoinRequests } from './DraftAutoJoinRequests';
+import { DraftAutoRoomEvents } from './DraftAutoRoomEvents';
 
 export function DraftAutoRooms() {
   const [rooms, setRooms] = useState<DraftAutoRoom[]>([]);
@@ -75,7 +76,7 @@ export function DraftAutoRooms() {
 
       <div className="p-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 text-sm text-zinc-600 dark:text-zinc-300">
         <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0"/>
-        <p><strong>Fase experimental.</strong> O código é um identificador público, não uma senha. Ainda não é possível ingressar com o celular nem transmitir capturas. Os jogadores podem solicitar entrada pelo link. Você deverá aprovar cada pedido. A captura de tela ainda não foi implementada; nunca compartilhe sua senha da equipe.</p>
+        <p><strong>Fase experimental.</strong> O código é um identificador público, não uma senha. Ainda não é possível ingressar com o celular nem transmitir capturas. Os jogadores podem solicitar entrada pelo link. Você deverá aprovar cada pedido. O jogador aprovado agora pode enviar eventos de teste manualmente, que aparecem abaixo. A captura automática de tela ainda não foi implementada; nunca compartilhe sua senha da equipe.</p>
       </div>
       {error && <p role="alert" className="p-3 bg-red-500/10 text-red-500 text-sm rounded-lg">{error}</p>}
       {message && <p role="status" className="p-3 bg-emerald-500/10 text-emerald-500 text-sm rounded-lg">{message}</p>}
@@ -98,6 +99,7 @@ export function DraftAutoRooms() {
                   <button type="button" onClick={() => void copy(`${window.location.origin}/?draftJoin=${room.join_code}`)} className="ml-3 text-xs text-indigo-500 underline">Copiar link</button>
                   <p className="text-[11px] text-zinc-500">Se estiver acessando por localhost, troque o endereço pelo IP do computador na rede para abrir no celular.</p>
                   <DraftAutoJoinRequests roomId={room.id}/>
+                  <DraftAutoRoomEvents roomId={room.id}/>
                 </div>}
                 {room.status === 'active' && <button type="button" disabled={busy} onClick={() => void close(room)} className="flex items-center gap-1 text-xs text-red-500 disabled:opacity-50"><XCircle className="w-3.5 h-3.5"/> Encerrar sala</button>}
               </div>;
