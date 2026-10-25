@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera, Crop, ImagePlus, MonitorUp, ShieldCheck, Square } from 'lucide-react';
 import { describeDraftFrame, draftFrameCrop, validateDraftFrame, type FrameArea, type FrameMetadata } from '../../lib/draftAutoFrame';
 import { DraftAutoVisionPreview } from './DraftAutoVisionPreview';
+import { DraftAutoVisualMarkerLab } from './DraftAutoVisualMarkerLab';
 import type { GuestJoinSession } from '../../services/draftAutoGuestService';
 
 const label = 'block text-xs font-semibold text-zinc-400 mb-1';
@@ -214,6 +215,7 @@ export function DraftAutoCaptureLab({session,onSessionExpired}: {session:GuestJo
         </button>
         {cropPreview && <img src={cropPreview} alt="Recorte local para testes futuros" className="rounded-lg w-full max-h-64 object-contain border border-zinc-700 bg-black"/>}
       </div>}
+      <DraftAutoVisualMarkerLab />
     </section>
   );
 }
