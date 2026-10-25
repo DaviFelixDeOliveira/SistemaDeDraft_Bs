@@ -103,6 +103,78 @@ Deno.serve(async (req: Request) => {
       }
       return reply({ status: item.status });
     }
+
+    if (body.action === "catalog" || body.action === "send-event") {
+      if (!validId(body.requestId) || !validSecret(body.token)) {
+        return reply({ error: "Credencial inválida." }, 401);
+      }
+      const hash = await sha256(body.token);
+      const { data: participant, error: authErr } = await db.from("draft_auto_join_requests")
+        .select("room_id,status,expires_at,room:draft_auto_rooms!inner(status,expires_at)")
+        .eq("id", body.requestId).eq("token_hash", hash).maybeSingle();
+      if (authErr) throw authErr;
+      const room = participant?.room as unknown as {status:string;expires_at:string} | undefined;
+      if (!participant || participant.status !== "approved" ||
+          Date.parse(participant.expires_at) <= Date.now() ||
+          !room || room.status !== "active" || Date.parse(room.expires_at) <= Date.now()) {
+        return reply({ error: "Participação não aprovada, sala encerrada ou credencial expirada." }, 403);
+      }
+
+      if (body.action === "catalog") {
+        // Only the approved guest can read the global names/IDs needed for a manual test event.
+        // Do not include team tiers, comfort picks, player tags or private statistics.
+        const [maps, brawlers] = await Promise.all([
+          db.from("maps").select("id,name,mode").order("name").limit(300),
+          db.from("brawlers").select("id,name").order("name").limit(300),
+        ]);
+        if (maps.error || brawlers.error) throw maps.error || brawlers.error;
+        return reply({ maps: maps.data || [], brawlers: brawlers.data || [] });
+      }
+
+      if (!validId(body.eventId) || !["map", "first-pick", "ban", "pick"].includes(String(body.kind))) {
+        return reply({ error: "Evento inválido." }, 400);
+      }
+      const kind = body.kind as string;
+      const record: Record<string, unknown> = {
+        room_id: participant.room_id,
+        request_id: body.requestId,
+        client_event_id: body.eventId,
+        kind,
+      };
+      if (kind === "map") {
+        if (typeof body.mapId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(body.mapId))
+          return reply({error:"Mapa inválido."},400);
+        record.map_id = body.mapId;
+      } else if (kind === "first-pick") {
+        if (typeof body.allyStarts !== "boolean") return reply({error:"Ordem inválida."},400);
+        record.ally_starts = body.allyStarts;
+      } else {
+        const maxSlot = kind === "ban" ? 2 : 5;
+        if ((body.team !== "ally" && body.team !== "enemy") ||
+            !Number.isInteger(body.slot) || Number(body.slot) < 0 || Number(body.slot) > maxSlot ||
+            typeof body.brawlerId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(body.brawlerId)) {
+          return reply({error:"Pick ou ban inválido."},400);
+        }
+        record.team = body.team;
+        record.slot = body.slot;
+        record.brawler_id = body.brawlerId;
+      }
+
+      // An approved guest may send manual observations, never "screen" or "provider"
+      // confidence. No automated recommendation is changed without coach review.
+      const { count, error: countError } = await db.from("draft_auto_events")
+        .select("id", {count:"exact",head:true}).eq("request_id",body.requestId);
+      if (countError) throw countError;
+      if ((count ?? 0) >= 40) return reply({error:"Limite de eventos desta conexão atingido."},429);
+      const { data, error } = await db.from("draft_auto_events")
+        .insert(record).select("id").single();
+      if (error?.code === "23505") return reply({accepted:true,duplicate:true});
+      if (error?.code === "23503" || error?.code === "23514")
+        return reply({error:"Mapa ou brawler inexistente, ou combinação inválida."},400);
+      if (error) throw error;
+      return reply({accepted:true,id:data.id},201);
+    }
+
     return reply({ error: "Operação inválida." }, 400);
   } catch (error) {
     console.error("draft-auto-join:", error instanceof Error ? error.message : "unknown error");
