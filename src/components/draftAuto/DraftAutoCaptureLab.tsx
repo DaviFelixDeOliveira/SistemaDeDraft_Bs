@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Crop, ImagePlus, MonitorUp, ShieldCheck, Square } from 'lucide-react';
 import { describeDraftFrame, draftFrameCrop, validateDraftFrame, type FrameArea, type FrameMetadata } from '../../lib/draftAutoFrame';
+import { DraftAutoVisionPreview } from './DraftAutoVisionPreview';
+import type { GuestJoinSession } from '../../services/draftAutoGuestService';
 
 const label = 'block text-xs font-semibold text-zinc-400 mb-1';
 const MAX_SCREEN_PIXELS = 24_000_000;
@@ -17,7 +19,7 @@ const MAX_SCREEN_PIXELS = 24_000_000;
  * Recognizing map, bans, picks or players is NOT implemented here yet:
  * representative real Brawl Stars frames are required for calibration.
  */
-export function DraftAutoCaptureLab() {
+export function DraftAutoCaptureLab({session}: {session:GuestJoinSession}) {
   const [preview, setPreview] = useState<string | null>(null);
   const [cropPreview, setCropPreview] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<FrameMetadata | null>(null);
@@ -157,8 +159,8 @@ export function DraftAutoCaptureLab() {
     <section className="space-y-4 border-t border-zinc-800 pt-5 text-left">
       <h3 className="font-bold text-sm flex gap-2 items-center"><Camera className="w-4 h-4 text-indigo-400" /> Captura de imagem — teste local</h3>
       <p className="text-xs text-zinc-400">
-        Prepare uma captura real do Brawl Stars para os próximos testes de reconhecimento.
-        <strong> Por enquanto, o sistema não identifica automaticamente mapa, picks ou bans e não envia a imagem ao coach.</strong>
+        Prepare uma captura real do Brawl Stars para os próximos testes. A versão experimental já consegue sugerir <strong>quem começa</strong> em algumas telas de anúncio.
+        <strong> Ainda não identifica mapa, picks ou bans, e não envia o arquivo da imagem ao coach.</strong>
       </p>
       <div className="p-3 rounded-lg border border-emerald-600/30 bg-emerald-500/5 text-xs text-zinc-300 flex gap-2">
         <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0"/>
@@ -198,6 +200,7 @@ export function DraftAutoCaptureLab() {
           <span>{metadata.orientation} · {metadata.megapixels} MP</span>
         </div>
         <img src={preview} alt="Prévia local da imagem escolhida" className="rounded-lg w-full max-h-80 object-contain border border-zinc-800 bg-black"/>
+        <DraftAutoVisionPreview imageUrl={preview} session={session}/>
         <label className={label}>Área para avaliar (recorte manual)</label>
         <select className="w-full bg-zinc-950 rounded-lg border border-zinc-700 p-2 text-sm"
           value={area} onChange={event => {setArea(event.target.value as FrameArea);replaceUrl('crop', null);}}>
