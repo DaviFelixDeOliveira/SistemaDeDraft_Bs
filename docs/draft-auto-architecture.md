@@ -95,3 +95,16 @@ Teste prático: no coach, ver evento recebido e clicar **Revisar no Draft**; con
 - Permanece **polling** a cada três segundos, sujeito a atrasos e à conexão do coach; não é captura/identificação do jogo nem WebSocket de baixa latência.
 
 **Validação manual:** enviar mapa e depois dois bans da mesma equipe em slots 1 e 2 sem navegar para outra página. No Draft, confirmar o primeiro e verificar que o segundo surge imediatamente. Testar anterior/próximo, conflito, evento repetido e um ban que chega enquanto o Draft já está aberto. Verificar que a decisão persiste após atualizar a página. Usar sala nova, se a anterior expirou.
+
+## Fase 4A — Capturas de imagem locais com consentimento (implementada)
+
+- Jogador aprovado vê **Captura de imagem — teste local**, abaixo do envio manual.
+- Pode selecionar um screenshot PNG/JPEG/WebP existente no celular ou computador (até 10 MB).
+- No computador, se `navigator.mediaDevices.getDisplayMedia` estiver disponível, pode solicitar explicitamente ao navegador para compartilhar uma janela/tela, capturar **um quadro** e interromper as trilhas imediatamente. A permissão não é persistente, e o browser decide a origem compartilhada.
+- A imagem é validada localmente por tipo de arquivo, tamanho, largura/altura e megapixels. Pode visualizar imagem completa e preparar recortes superior/central/inferior.
+- URLs são locais (`blob:`) e revogadas na troca ou saída da tela; nada é salvo em Supabase, localStorage ou histórico de treinos. Nenhum arquivo chega ao coach nesta fase.
+- Reconhecimento automático de personagens/mapas **não existe**: o sistema não tem capturas reais de draft rotuladas nem modelo calibrado. Os recortes da interface são manuais e **não representam detecção**.
+- Em navegador móvel não é confiável capturar a tela de outro aplicativo usando `getDisplayMedia`; o usuário escolhe uma captura já salva. Para captura contínua enquanto o Brawl Stars está em primeiro plano, construir aplicativo nativo com permissões do sistema operacional (Android MediaProjection / frameworks nativos do iOS), com botão de parar, indicador e consentimento.
+- **Próxima decisão técnica:** depois de obter capturas reais de mapa, bans e picks em pelo menos algumas resoluções, projetar extrator local e medição de confiança com revisão; só depois habilitar envio protegido ao coach. A integração deve reutilizar a fila de eventos e não registrar dados fictícios.
+
+Teste: abrir página de jogador aprovado (em janela separada), procurar Captura de imagem, selecionar uma screenshot e verificar dimensões e recortes. No desktop também testar captura de janela com permissão. Verificar que nenhum evento de foto novo é gravado no Supabase.
