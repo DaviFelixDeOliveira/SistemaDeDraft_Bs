@@ -19,7 +19,7 @@ const MAX_SCREEN_PIXELS = 24_000_000;
  * Recognizing map, bans, picks or players is NOT implemented here yet:
  * representative real Brawl Stars frames are required for calibration.
  */
-export function DraftAutoCaptureLab({session}: {session:GuestJoinSession}) {
+export function DraftAutoCaptureLab({session,onSessionExpired}: {session:GuestJoinSession;onSessionExpired:()=>void}) {
   const [preview, setPreview] = useState<string | null>(null);
   const [cropPreview, setCropPreview] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<FrameMetadata | null>(null);
@@ -200,7 +200,7 @@ export function DraftAutoCaptureLab({session}: {session:GuestJoinSession}) {
           <span>{metadata.orientation} · {metadata.megapixels} MP</span>
         </div>
         <img src={preview} alt="Prévia local da imagem escolhida" className="rounded-lg w-full max-h-80 object-contain border border-zinc-800 bg-black"/>
-        <DraftAutoVisionPreview imageUrl={preview} session={session}/>
+        <DraftAutoVisionPreview imageUrl={preview} session={session} onSessionExpired={onSessionExpired}/>
         <label className={label}>Área para avaliar (recorte manual)</label>
         <select className="w-full bg-zinc-950 rounded-lg border border-zinc-700 p-2 text-sm"
           value={area} onChange={event => {setArea(event.target.value as FrameArea);replaceUrl('crop', null);}}>
