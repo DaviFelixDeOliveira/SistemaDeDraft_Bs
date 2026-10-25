@@ -138,3 +138,20 @@ Não publicar/copiar essas imagens para GitHub, nem tratá-las como dados de tre
 
 ### Teste inicial sugerido
 Depois de atualizar a branch, entrar como jogador aprovado e usar `Captura de imagem — teste local`. Carregar primeiro a screenshot rotulada `BLUE TEAM STARTS` ou `RED TEAM STARTS`, observar o anúncio de cor, selecionar manualmente sua equipe na tela e clicar para enviar. Confirmar no Draft do coach. Repetir com `COIN FLIP`: deverá retornar "padrão não identificado" e **não** oferecer envio automático.
+
+
+## Correção da autorização expirada no envio visual (25/10/2026)
+
+**Teste real:** a análise local identificou corretamente `RED TEAM STARTS` e calculou `Inimigo começa` para o jogador do lado azul, mas ao enviar retornou HTTP 403: `Participação não aprovada, sala encerrada ou credencial expirada`.
+
+**Causa no código:** as salas são criadas por até 2 horas, mas a autorização do jogador expira após no máximo 30 minutos (ou antes, se a sala acabar). A interface anterior verificava o estado apenas enquanto `pending`, deixando `Entrada aprovada!` visível indefinidamente após expiração.
+
+**Correção:** `DraftAutoGuestJoin` agora:
+- marca como `expired` uma autorização restaurada do `sessionStorage` cujo `expiresAt` já passou, sem aceitar o token antigo como válido;
+- verifica periodicamente o servidor tanto em `pending` quanto `approved`, detectando inclusive o encerramento da sala;
+- impede envio até revalidar uma autorização restaurada;
+- diante de HTTP 401/403 nos endpoints de evento/catálogo, marca o estado local como expirado e exibe `Solicitar nova entrada` para pedir nova aprovação;
+- diferencia erros de rede transitórios de rejeição real de autorização.
+- usa apenas serviços e componentes do frontend existentes; os controles do Supabase continuam obrigatórios e nenhum token é renovado automaticamente.
+
+**Teste manual:** sala nova + jogador recém-aprovado, selecionar o print com `RED TEAM STARTS`, `Sou azul`, enviar e conferir `first-pick` na fila do coach. Repetir numa sessão encerrada e após prazo expirado: a interface deve oferecer nova entrada em vez de continuar exibindo `Entrada aprovada`. Não é necessário alterar nenhuma credencial do coach nem reiniciar o banco.
