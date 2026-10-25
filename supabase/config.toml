@@ -1,0 +1,4 @@
+# draft-auto-join accepts unauthenticated player requests.
+# The Edge Function validates the request itself and uses an admin key ONLY server-side.
+[functions.draft-auto-join]
+verify_jwt = false
