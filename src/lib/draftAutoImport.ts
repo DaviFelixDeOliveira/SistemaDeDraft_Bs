@@ -28,8 +28,7 @@ export function importDraftAutoEvent(draft: DraftState, event: DraftAutoRoomEven
   }
   if (event.kind !== 'pick' && event.kind !== 'ban') return result('review', 'Tipo de evento desconhecido.');
   const { team, slot, brawler_id: id } = event;
-  if (!id || (team !== 'ally' && team !== 'enemy') || !Number.isInteger(slot) ||
-    slot === null || slot < 0 || slot >= (event.kind === 'ban' ? 3 : 6)) {
+  if (!id || (team !== 'ally' && team !== 'enemy') || slot === null || !Number.isInteger(slot) || slot < 0 || slot >= (event.kind === 'ban' ? 3 : 6)) {
     return result('review', 'Equipe, personagem ou posição inválidos.');
   }
   if (!draft.mapId) return result('review', 'Selecione o mapa antes de importar bans ou picks.');
