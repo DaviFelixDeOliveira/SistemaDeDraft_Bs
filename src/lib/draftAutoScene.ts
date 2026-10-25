@@ -83,7 +83,7 @@ export function draftRegionsForScene(
   const cardHeight=final?.245:.20;
   if(y<0||y+cardHeight>.99)return [];
   const blue=final?[.025,.18,.335]:[.125,.245,.365];
-  const red=final?[.585,.74,.895]:[.565,.685,.805];
+  const red=final?[.575,.725,.865]:[.565,.685,.805];
   const rect=(x:number,yy:number,w:number,h:number)=>({
     x:viewport.x+viewport.width*x,y:viewport.y+viewport.height*yy,
     width:viewport.width*w,height:viewport.height*h,
