@@ -158,3 +158,18 @@ Neste incremento:
 - `DraftAutoSlotChangeLab.tsx`: na comparação das imagens, lê também recortes em resolução mais alta para indicar possíveis transições dos marcadores **separadamente** da diferença de retratos; sem enviar eventos ao coach.
 
 **Validação necessária no dispositivo:** escolher duas capturas da mesma partida, fase, enquadramento e orientação. Testar um retrato que mudou, o mesmo retrato que ganhou ✓ verde (sem mudar brawler), o desaparecimento de um retrato e duas capturas idênticas. A heurística de ícones ainda pode errar quando a caixa do slot não está precisamente ajustada. O sistema não classifica como escolha confirmada nem envia nada automaticamente. Próxima fase requer identificação de brawler, detecção de carta/captura corretamente alinhada, fase e reconciliação de eventos sem duplicação.
+
+
+## Correção de falso negativo de check em foto completa (25/10/2026)
+
+**Defeito reproduzido**: duas capturas completas de uma mesma partida mostram o slot **Azul 1** ganhar ✓ verde, o **Azul 3** perder uma pré-seleção e ficar vazio, e os demais slots sem alteração importante. O comparador antigo informou apenas **Azul 3 = 71% do retrato alterado**; ignorou a confirmação em Azul 1 porque o check está parcialmente **fora do limite direito da carta** e a heurística anterior verificava uma janela interna do recorte.
+
+**Novo detector conservador**:
+- `src/lib/draftAutoGreenCheck.ts`: define uma região adjacente direita/inferior de **cada slot de pick** (x = 78% até 140% da largura do retângulo estimado do cartão, y = 52% até 86% da altura), adaptada às coordenadas normalizadas do quadro.
+- Compara máscaras de pixels verde intenso entre as imagens **antes e depois**, procura um novo componente conexo compacto (tamanho, razão de lados, densidade e proporção de novidade) e emite somente `possible-check-appeared`, `no-new-check` ou `unavailable`.
+- `src/components/draftAuto/DraftAutoSlotChangeLab.tsx`: exibe separadamente a contagem de possíveis checks verdes surgidos e a contagem de retratos alterados. Não transforma automaticamente ícone detectado em pick.
+- `src/__tests__/draftAutoGreenCheck.test.ts`: testes de check novo, check antigo persistente, bloco verde não parecido com check, ruído, desaparecimento e recorte inválido.
+
+**Verificação local das capturas reais** (fora do repositório, sem upload de imagens à API): aplicando a geometria de teste usada no browser (viewport aproximada 82% começando em 9%, deslocamento vertical +2%) à dupla de imagens fornecidas, a nova região de Azul 1 apresentou **6,84% de pixels verdes novos**, com componente compatível com check; as demais cinco regiões **0%** de pixels verdes novos nessa amostra. Esta verificação foi realizada em uma comparação independente de pixels das imagens fornecidas, não substitui teste de integração do algoritmo TypeScript no navegador. Não incluir exemplos externos/frames de vídeo como fixtures sem autorização.
+
+**Revalidação necessária**: atualizar branch, abrir a mesma dupla de capturas e verificar **1 indício de check verde novo em Azul 1**, em paralelo com **1 retrato alterado no Azul 3**, sem outras confirmações. Capturas iguais devem retornar zero checks novos; check que já estava presente antes também deve retornar zero novos. Regiões deslocadas, skins e UI animada podem gerar resultados falsos e exigirão futura detecção geométrica das cartas.
