@@ -106,3 +106,19 @@ Até validar isso em diferentes skins, regiões, resoluções e overlays, não u
 - A etapa é **somente diagnóstica**, não grava frames, não envia eventos ao coach, não detecta personagem, não reconhece individualmente cada ban lateral e não sabe quem é aliado.
 - Critério para a validação manual: carregar uma screenshot completa de pick com ambos os times visíveis; ajustar até as seis caixas cobrirem exatamente as cartas; clicar em cada caixa e verificar se a miniatura corresponde à posição. Alterar calibração para vídeo com tarjas pretas laterais e repetir. Se a posição não puder ser ajustada, relatar o exemplo para modelar outro layout.
 - **Próxima etapa** após conferir caixas em telas de jogadores e streams: calibração dinâmica/identificação geométrica automática sem sliders, classificação de slots físicos e detector de identidade dos brawlers com abstinência em baixa confiança.
+
+
+## Ajuste após novos testes reais — telas de duração diferente e dispositivos (25/10/2026)
+
+**Observação do usuário:** depois do último pick, a tela de seleção completa aparece por menos de um segundo e passa à **Preparação Final**. Na preparação final, os seis cartões ficam **maiores e mais acima**, com as equipes lado a lado; os bans laterais desaparecem. A calibração antiga de faixa inferior exigiu largura ~91%, deslocamento lateral no máximo e altura ~77%, e não cobriu bem os personagens, especialmente em vídeo com margens pretas.
+
+**Implementação nesta etapa**
+- `src/lib/draftAutoScene.ts`: separa `selection` e `final-preparation`; propostas de retângulos diferentes em cada fase. Na preparação final **não exibe áreas de bans**; mostra somente seis cartões.
+- `estimateDraftGameViewport`: varredura conservadora de cor/saturação para estimar **margens laterais escuras** do jogo dentro da captura. Recorre à imagem completa se não houver evidência; não é detector infalível de bordas, cartas, fase ou personagem. Dados processados localmente.
+- `DraftAutoSlotLocatorLab`: permite selecionar manualmente a fase, usar a proposta de viewport automático ou calibrar a área visível e ajustar verticalmente as regiões. Continua apenas diagnóstico e não envia eventos.
+- `draftAutoScene.test.ts`: testes de letterbox, quadro preenchido, imagem escura/inválida, layouts de seleção/preparação e regiões dentro da viewport.
+- **Limitação expressa:** mesmo relativos à área estimada do jogo, os cartões continuam usando aproximações geométricas. Para dispositivos diferentes, o produto **precisará localizar as cartas visualmente** (bordas/contraste/landmarks ou detector comprovado), sem depender de posições absolutas/presets; confiança baixa deve resultar em ausência de evento, não em pick inventado.
+
+**Lógica futura de sincronização:** capturar/observar banners, bans e picks **durante** a partida com intervalo suficientemente curto, pois a tela de transição dura menos de 1 s. A preparação final será uma boa fonte para **reconciliar os seis personagens confirmados** ao final, mas não permitirá reconstruir a hora exata nem a ordem das escolhas, nem ajudará no momento em que ainda precisamos sugerir um counter. O smartphone precisará de captura autorizada e um pipeline temporal, não somente screenshots manuais.
+
+**Como verificar:** carregar como jogador aprovado uma screenshot completa da **Preparação Final**, selecionar explicitamente essa fase e verificar seis caixas na parte central, nenhuma caixa de ban; repetir com captura durante picks e selecionar a fase correspondente. Em vídeo com barras laterais, conferir a proposta automática de viewport; caso errado, usar o fallback manual e reportar. Não associar ícone verde a personagem até reconhecer identidade validada.
