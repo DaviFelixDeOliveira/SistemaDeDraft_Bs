@@ -3,16 +3,25 @@ import { ArrowLeftRight,ImagePlus } from 'lucide-react';
 import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout';
 import { compareDraftSlotCrops,type DraftSlotDifference } from '../../lib/draftAutoSlotChange';
 import { validateDraftFrame } from '../../lib/draftAutoFrame';
+import {
+  greenCheckSearchRect,inspectGreenCheckTransition,type GreenCheckTransition,
+} from '../../lib/draftAutoGreenCheck';
 import { inspectSlotMarker } from '../../lib/draftAutoVisualEvidence';
 import {
   describeDraftSlotTemporalEvidence, draftTemporalHintLabel,
   type DraftSlotTemporalEvidence,
 } from '../../lib/draftAutoSlotTemporal';
 
-type SlotResult={region:DraftHudRegion;diff:DraftSlotDifference;temporal:DraftSlotTemporalEvidence};
+type SlotResult={
+  region:DraftHudRegion;
+  diff:DraftSlotDifference;
+  temporal:DraftSlotTemporalEvidence;
+  externalCheck:GreenCheckTransition;
+};
 type ComparisonSummary={
   results:SlotResult[];
   changed:number;
+  newChecks:number;
   warning:string|null;
 };
 
@@ -101,12 +110,33 @@ export function DraftAutoSlotChangeLab({
         // no-entry shape. The portrait comparison intentionally excludes it.
         const beforeMarker=inspectSlotMarker(crop(first,160,200));
         const afterMarker=inspectSlotMarker(crop(second,160,200));
+
         const temporal=describeDraftSlotTemporalEvidence(result,beforeMarker,afterMarker);
-        results.push({region,diff:result,temporal});
+        // The green check often protrudes outside the card. Read its own
+        // rectangle from full screenshots, separate from the portrait.
+        const externalRect=greenCheckSearchRect(region,first.naturalWidth,first.naturalHeight);
+        const cropCheck=(image:HTMLImageElement)=>{
+          const box=greenCheckSearchRect(region,image.naturalWidth,image.naturalHeight);
+          if(!box)return null;
+          const canvas=document.createElement('canvas');
+          canvas.width=120;canvas.height=96;
+          const context=canvas.getContext('2d',{willReadFrequently:true});
+          if(!context)return null;
+          context.drawImage(image,box.x,box.y,box.width,box.height,0,0,120,96);
+          return context.getImageData(0,0,120,96);
+        };
+        const fromCheck=externalRect?cropCheck(first):null;
+        const toCheck=externalRect?cropCheck(second):null;
+        const externalCheck=fromCheck&&toCheck
+          ?inspectGreenCheckTransition(fromCheck,toCheck)
+          :{status:'unavailable' as const,newGreenShare:0};
+        results.push({region,diff:result,temporal,externalCheck});
       }
+
       const changed=results.filter(r=>r.diff.visualChangeCandidate).length;
+      const newChecks=results.filter(r=>r.externalCheck.status==='possible-check-appeared').length;
       if(live)setSummary({
-        results,changed,
+        results,changed,newChecks,
         warning:changed>=4
           ?'Muitos slots mudaram. Pode ser outra partida, animação, mudança de layout ou várias escolhas. Não é possível determinar a ordem.'
           :null,
@@ -140,14 +170,21 @@ export function DraftAutoSlotChangeLab({
       <p className="text-sm font-semibold text-zinc-200">
         {summary.changed} de 6 slots com alteração visual relevante
       </p>
+      <p className="text-xs font-semibold text-emerald-300">
+        {summary.newChecks} indício(s) de check verde novo, analisando a área externa das cartas
+      </p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {summary.results.map(({region,diff,temporal})=><div key={region.id}
+        {summary.results.map(({region,diff,temporal,externalCheck})=><div key={region.id}
           className={`rounded-lg border p-2 text-xs ${diff.visualChangeCandidate?
             'border-amber-500/50 bg-amber-500/10 text-amber-200':
             'border-zinc-700 bg-zinc-900/60 text-zinc-300'}`}>
           <strong>{region.label}</strong>
           <p className="mt-1">{diff.visualChangeCandidate?'Mudança possível':'Sem mudança relevante'}</p>
           <p className="mt-1 opacity-70">{Math.round(diff.changedFraction*100)}% de pixels diferentes</p>
+          {externalCheck.status==='possible-check-appeared'&&
+            <p className="mt-2 font-semibold text-emerald-300">
+              Possível ✓ verde apareceu no canto da carta — revisar
+            </p>}
           {temporal.hint!=='no-visual-change'&&temporal.hint!=='portrait-change-only'&&
             <p className="mt-2 border-t border-current/20 pt-1">{draftTemporalHintLabel(temporal)}</p>}
         </div>)}
@@ -157,7 +194,8 @@ export function DraftAutoSlotChangeLab({
         Resultado experimental baseado em diferenças de cor dentro de cada retrato. Uma animação,
         tela desalinhada ou outro jogador mudando a pré-seleção pode gerar alerta;
         ausência de alerta também não garante ausência de pick. O detector de ícones ainda depende
-        de recortes exatos e pode errar. <strong>Nenhuma transição é uma escolha confirmada</strong>
+        de recortes exatos e pode errar. O novo diagnóstico procura o check verde também fora da carta.
+        <strong> Nenhuma transição é uma escolha confirmada</strong>
         e nada será aplicado ao Draft.
       </p>
     </div>}
