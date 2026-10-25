@@ -16,8 +16,11 @@ create index if not exists draft_auto_rooms_team_created_idx
 
 alter table public.draft_auto_rooms enable row level security;
 
-revoke all on public.draft_auto_rooms from anon;
-grant select, insert, update, delete on public.draft_auto_rooms to authenticated;
+-- Apenas o coach autenticado pode consultar/criar/encerrar a própria sala.
+-- Não permitir editar o código, a expiração, o dono nem as datas via Data API.
+revoke all on public.draft_auto_rooms from anon, authenticated;
+grant select, insert on public.draft_auto_rooms to authenticated;
+grant update (status) on public.draft_auto_rooms to authenticated;
 
 create policy "draft_auto_rooms_owner_select"
   on public.draft_auto_rooms for select to authenticated
@@ -28,6 +31,8 @@ create policy "draft_auto_rooms_owner_insert"
   with check (
     team_id = (select auth.uid())
     and status = 'active'
+    and created_at >= now() - interval '1 minute'
+    and created_at <= now() + interval '1 minute'
     and expires_at > now()
     and expires_at <= now() + interval '3 hours'
   );
@@ -36,10 +41,6 @@ create policy "draft_auto_rooms_owner_update"
   on public.draft_auto_rooms for update to authenticated
   using (team_id = (select auth.uid()))
   with check (team_id = (select auth.uid()));
-
-create policy "draft_auto_rooms_owner_delete"
-  on public.draft_auto_rooms for delete to authenticated
-  using (team_id = (select auth.uid()));
 
 comment on table public.draft_auto_rooms is
   'Sessões de draft gerenciadas pelo coach autenticado; código não autoriza ingresso de jogadores.';
