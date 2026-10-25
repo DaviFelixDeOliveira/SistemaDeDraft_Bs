@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Copy, Link2, Loader2, Plus, RefreshCw, ShieldCheck, XCircle } from 'lucide-react';
 import { draftAutoRoomService, type DraftAutoRoom } from '../../services/draftAutoRoomService';
+import { DraftAutoJoinRequests } from './DraftAutoJoinRequests';
 
 export function DraftAutoRooms() {
   const [rooms, setRooms] = useState<DraftAutoRoom[]>([]);
@@ -34,7 +35,7 @@ export function DraftAutoRooms() {
     try {
       const room = await draftAutoRoomService.create();
       setRooms(previous => [room, ...previous].slice(0, 20));
-      setMessage('Sala criada com sucesso. O ingresso de jogadores será liberado na próxima etapa.');
+      setMessage('Sala criada. Compartilhe o link de ingresso com os jogadores.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível criar a sala.');
     } finally { setBusy(false); }
@@ -53,7 +54,7 @@ export function DraftAutoRooms() {
   };
 
   const copy = async (code: string) => {
-    try { await navigator.clipboard.writeText(code); setMessage('Código copiado. Ele ainda não permite conexão de jogadores.'); }
+    try { await navigator.clipboard.writeText(code); setMessage('Código copiado. O coach ainda precisa aprovar cada jogador.'); }
     catch { setError('Não foi possível copiar automaticamente. Selecione o código e copie manualmente.'); }
   };
 
@@ -74,7 +75,7 @@ export function DraftAutoRooms() {
 
       <div className="p-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 text-sm text-zinc-600 dark:text-zinc-300">
         <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0"/>
-        <p><strong>Fase experimental.</strong> O código é um identificador público, não uma senha. Ainda não é possível ingressar com o celular nem transmitir capturas. O acesso futuro exigirá autorização do jogador e aprovação da sessão; nunca compartilhe sua senha da equipe.</p>
+        <p><strong>Fase experimental.</strong> O código é um identificador público, não uma senha. Ainda não é possível ingressar com o celular nem transmitir capturas. Os jogadores podem solicitar entrada pelo link. Você deverá aprovar cada pedido. A captura de tela ainda não foi implementada; nunca compartilhe sua senha da equipe.</p>
       </div>
       {error && <p role="alert" className="p-3 bg-red-500/10 text-red-500 text-sm rounded-lg">{error}</p>}
       {message && <p role="status" className="p-3 bg-emerald-500/10 text-emerald-500 text-sm rounded-lg">{message}</p>}
@@ -92,6 +93,12 @@ export function DraftAutoRooms() {
                   <code className="text-2xl tracking-widest font-black text-zinc-900 dark:text-white select-text">{room.join_code}</code>
                   <button type="button" onClick={() => void copy(room.join_code)} className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800" title="Copiar código"><Copy className="w-4 h-4"/></button>
                 </div>
+                {active && <div className="space-y-2">
+                  <a href={`/?draftJoin=${room.join_code}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 underline">Abrir página de entrada do jogador</a>
+                  <button type="button" onClick={() => void copy(`${window.location.origin}/?draftJoin=${room.join_code}`)} className="ml-3 text-xs text-indigo-500 underline">Copiar link</button>
+                  <p className="text-[11px] text-zinc-500">Se estiver acessando por localhost, troque o endereço pelo IP do computador na rede para abrir no celular.</p>
+                  <DraftAutoJoinRequests roomId={room.id}/>
+                </div>}
                 {room.status === 'active' && <button type="button" disabled={busy} onClick={() => void close(room)} className="flex items-center gap-1 text-xs text-red-500 disabled:opacity-50"><XCircle className="w-3.5 h-3.5"/> Encerrar sala</button>}
               </div>;
             })}
