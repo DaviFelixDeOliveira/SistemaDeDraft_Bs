@@ -54,6 +54,7 @@ export type DraftAutoRoomEvent = {
   slot: number | null;
   brawler_id: string | null;
   created_at: string;
+  review_status: 'pending' | 'applied' | 'dismissed';
   map?: { name: string } | null;
   brawler?: { name: string } | null;
   guest?: { display_name: string } | null;
@@ -112,9 +113,26 @@ export const draftAutoCoachRequests = {
 };
 
 export const draftAutoCoachEvents = {
+  listPending: async (roomIds: string[]): Promise<DraftAutoRoomEvent[]> => {
+    if (roomIds.length === 0) return [];
+    const { data, error } = await supabase.from('draft_auto_events')
+      .select('id,room_id,request_id,client_event_id,kind,map_id,ally_starts,team,slot,brawler_id,created_at,review_status,map:maps!draft_auto_events_map_id_fkey(name),brawler:brawlers!draft_auto_events_brawler_id_fkey(name),guest:draft_auto_join_requests!draft_auto_events_request_id_fkey(display_name)')
+      .in('room_id', roomIds).eq('review_status', 'pending')
+      .order('created_at', { ascending: true }).limit(100);
+    if (error) throw error;
+    return (data || []) as unknown as DraftAutoRoomEvent[];
+  },
+  markReviewed: async (event: Pick<DraftAutoRoomEvent, 'id' | 'room_id'>, status: 'applied' | 'dismissed'): Promise<void> => {
+    const { data, error } = await supabase.from('draft_auto_events')
+      .update({ review_status: status }).eq('id', event.id).eq('room_id', event.room_id)
+      .eq('review_status', 'pending')
+      .select('id').maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error('O evento já foi analisado ou não está disponível para esta equipe. Atualize a página.');
+  },
   list: async (roomId: string): Promise<DraftAutoRoomEvent[]> => {
     const { data, error } = await supabase.from('draft_auto_events')
-      .select('id,room_id,request_id,client_event_id,kind,map_id,ally_starts,team,slot,brawler_id,created_at,map:maps!draft_auto_events_map_id_fkey(name),brawler:brawlers!draft_auto_events_brawler_id_fkey(name),guest:draft_auto_join_requests!draft_auto_events_request_id_fkey(display_name)')
+      .select('id,room_id,request_id,client_event_id,kind,map_id,ally_starts,team,slot,brawler_id,created_at,review_status,map:maps!draft_auto_events_map_id_fkey(name),brawler:brawlers!draft_auto_events_brawler_id_fkey(name),guest:draft_auto_join_requests!draft_auto_events_request_id_fkey(display_name)')
       .eq('room_id', roomId).order('created_at', { ascending: false }).limit(50);
     if (error) throw error;
     return (data || []) as unknown as DraftAutoRoomEvent[];
