@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { hasVerifiedVisualDecision, inspectSlotMarker, type SlotPixelFrame } from '../lib/draftAutoVisualEvidence';
-const frame = (mark: 'none'|'ban'|'pick'|'mixed'|'top-only'): SlotPixelFrame => {
+const frame = (mark: 'none'|'ban'|'pick'|'mixed'|'top-only'|'red-portrait'): SlotPixelFrame => {
   const width=150,height=180,data=new Uint8ClampedArray(width*height*4);
   for(let y=0;y<height;y++)for(let x=0;x<width;x++) {
     const idx=(y*width+x)*4;
     const inMarker=x>=width*.76&&x<width*.96&&y>=height*.47&&y<height*.69;
     const inTop=x>=width*.76&&y>=height*.06&&y<height*.22;
-    const red = mark==='ban' || mark==='mixed' && y < height*.58;
-    const green= mark==='pick' || mark==='mixed' && y >= height*.58;
-    const isRed=inMarker && red || inTop && mark==='top-only';
-    const isGreen=inMarker && green;
-    const rgb=isRed?[240,33,29]:isGreen?[38,220,37]:[45,49,62];
+    const radius=Math.hypot(x-width*.84,y-height*.78);
+    const ring=radius>=12&&radius<=18;
+    const slash=radius<=18&&Math.abs((x-width*.84)+(y-height*.78))<=2.6;
+    const redCircle=(mark==='ban'||mark==='mixed')&&(ring||slash);
+    const redPortrait=mark==='red-portrait'&&
+      x>=width*.18&&x<=width*.85&&y>=height*.39&&y<=height*.84;
+    const redTop=inTop&&mark==='top-only';
+    const greenRectangle=inMarker&&(mark==='pick'||mark==='mixed');
+    const rgb=redCircle||redTop||redPortrait?[240,33,29]:greenRectangle?[38,220,37]:[45,49,62];
     data[idx]=rgb[0];data[idx+1]=rgb[1];data[idx+2]=rgb[2];data[idx+3]=255;
   }
   return {width,height,data};
@@ -22,6 +26,9 @@ describe('Marcadores visuais de slots individuais (sem alegar brawler reconhecid
   });
   it('separa indício de pick confirmado por ícone verde',()=>{
     expect(inspectSlotMarker(frame('pick'))).toMatchObject({status:'candidate',marker:'pick'});
+  });
+  it('não confunde manchas vermelhas do retrato com símbolo de ban',()=>{
+    expect(inspectSlotMarker(frame('red-portrait')).status).toBe('unknown');
   });
   it('não confirma pré-seleção sem ícone de confirmação',()=>{
     expect(inspectSlotMarker(frame('none')).status).toBe('unknown');
