@@ -307,7 +307,7 @@ export function DraftWizard({
               : importPreview.status === 'ignored' ? 'Informação já presente no Draft. Marque-a como revisada para continuar.'
               : importPreview.message}
           </p>
-          {reviewError && <p role="alert" className="text-xs text-red-500">{reviewError}</p>
+          {reviewError && <p role="alert" className="text-xs text-red-500">{reviewError}</p>}
           <p className="text-xs text-zinc-500">Nada será alterado até sua confirmação. As alterações entram no histórico de desfazer; nenhum treino ou resultado será salvo.</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" disabled={reviewBusy || importPreview.status === 'review'} onClick={() => void confirmImport()}
