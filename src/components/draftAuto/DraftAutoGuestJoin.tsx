@@ -80,7 +80,7 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
             <p className="text-zinc-400 text-sm">{session.status==='pending'?'Seu pedido já foi enviado. Esta página verifica automaticamente a resposta.':
               session.status==='approved'?'Conexão validada! Envie eventos de teste ou experimente a nova área de capturas locais. O reconhecimento automático ainda não está disponível.':
               'Peça ao coach uma nova sessão se necessário.'}</p>
-            {session.status==='approved' && <><DraftAutoGuestEventTester session={session} /><DraftAutoCaptureLab /></>}
+            {session.status==='approved' && <><DraftAutoGuestEventTester session={session} /><DraftAutoCaptureLab session={session} /></>}
             <button type="button" onClick={leave} className="text-indigo-400 text-sm underline">Sair e voltar ao formulário</button>
           </div>}
         {error && <p role="alert" className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg text-xs">{error}</p>}
