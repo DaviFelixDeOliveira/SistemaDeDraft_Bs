@@ -177,21 +177,18 @@ export function DraftAutoCaptureLab() {
       </label>
       <div className="space-y-2">
         <p className="text-xs text-zinc-500">No computador, você também pode compartilhar uma janela espelhada do jogo e capturar apenas um quadro. O navegador pedirá sua permissão.</p>
+        <video ref={videoRef} muted playsInline autoPlay
+          className={streaming ? 'w-full rounded-lg border border-zinc-700 bg-black' : 'hidden'}/>
         {!streaming ? <button type="button" onClick={() => void beginScreenShare()}
           className="flex w-full justify-center items-center gap-2 text-sm rounded-lg border border-zinc-700 py-2">
           <MonitorUp className="w-4 h-4"/> Compartilhar janela (computador)
-        </button> : <div className="space-y-2">
-          <video ref={videoRef} muted playsInline autoPlay className="w-full rounded-lg border border-zinc-700 bg-black"/>
-          <div className="flex gap-2">
-            <button type="button" className="flex-1 rounded-lg bg-indigo-600 text-white p-2 text-sm" onClick={() => void captureOneFrame()}>
-              Capturar um quadro
-            </button>
-            <button type="button" className="rounded-lg border border-zinc-700 px-3 py-2 text-sm flex items-center gap-1"
-              onClick={stopSharing}><Square className="w-3 h-3"/> Parar</button>
-          </div>
+        </button> : <div className="flex gap-2">
+          <button type="button" className="flex-1 rounded-lg bg-indigo-600 text-white p-2 text-sm" onClick={() => void captureOneFrame()}>
+            Capturar um quadro
+          </button>
+          <button type="button" className="rounded-lg border border-zinc-700 px-3 py-2 text-sm flex items-center gap-1"
+            onClick={stopSharing}><Square className="w-3 h-3"/> Parar</button>
         </div>}
-        {/* Keep a mounted video element available before state.streaming becomes true. */}
-        {!streaming && <video ref={videoRef} muted playsInline className="hidden"/>}
       </div>
       {error && <p role="alert" className="rounded-lg p-3 text-xs bg-red-500/10 text-red-400">{error}</p>}
       {status && <p role="status" className="rounded-lg p-3 text-xs bg-emerald-500/10 text-emerald-400">{status}</p>}
