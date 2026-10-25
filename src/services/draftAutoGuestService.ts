@@ -34,7 +34,46 @@ async function guestFunction(body: Record<string, unknown>): Promise<Record<stri
   if (typeof data.error === 'string') throw new Error(data.error);
   return data as Record<string, unknown>;
 }
+export type DraftAutoCatalog = {
+  maps: { id: string; name: string; mode: string }[];
+  brawlers: { id: string; name: string }[];
+};
+export type DraftAutoManualEvent =
+  | { kind: 'map'; mapId: string }
+  | { kind: 'first-pick'; allyStarts: boolean }
+  | { kind: 'ban' | 'pick'; team: 'ally' | 'enemy'; slot: number; brawlerId: string };
+export type DraftAutoRoomEvent = {
+  id: string;
+  room_id: string;
+  request_id: string;
+  client_event_id: string;
+  kind: 'map' | 'first-pick' | 'ban' | 'pick';
+  map_id: string | null;
+  ally_starts: boolean | null;
+  team: 'ally' | 'enemy' | null;
+  slot: number | null;
+  brawler_id: string | null;
+  created_at: string;
+  map?: { name: string } | null;
+  brawler?: { name: string } | null;
+  guest?: { display_name: string } | null;
+};
+
 export const draftAutoGuestService = {
+  catalog: async (session: GuestJoinSession): Promise<DraftAutoCatalog> => {
+    const data = await guestFunction({ action: 'catalog', requestId: session.requestId, token: session.token });
+    if (!Array.isArray(data.maps) || !Array.isArray(data.brawlers)) {
+      throw new Error('Catálogo de draft indisponível.');
+    }
+    return { maps: data.maps as DraftAutoCatalog['maps'], brawlers: data.brawlers as DraftAutoCatalog['brawlers'] };
+  },
+  sendEvent: async (session: GuestJoinSession, event: DraftAutoManualEvent): Promise<void> => {
+    const data = await guestFunction({
+      action: 'send-event', requestId: session.requestId, token: session.token,
+      eventId: crypto.randomUUID(), ...event,
+    });
+    if (data.accepted !== true) throw new Error('Servidor não confirmou o envio.');
+  },
   request: async (code: string, name: string): Promise<GuestJoinSession> => {
     const data = await guestFunction({ action: 'request', code, name });
     if (typeof data.requestId !== 'string' || typeof data.token !== 'string' ||
@@ -69,5 +108,15 @@ export const draftAutoCoachRequests = {
       .eq('status', 'pending').select('id').maybeSingle();
     if (error) throw error;
     if (!data) throw new Error('Solicitação indisponível ou já analisada.');
+  },
+};
+
+export const draftAutoCoachEvents = {
+  list: async (roomId: string): Promise<DraftAutoRoomEvent[]> => {
+    const { data, error } = await supabase.from('draft_auto_events')
+      .select('id,room_id,request_id,client_event_id,kind,map_id,ally_starts,team,slot,brawler_id,created_at,map:maps!draft_auto_events_map_id_fkey(name),brawler:brawlers!draft_auto_events_brawler_id_fkey(name),guest:draft_auto_join_requests!draft_auto_events_request_id_fkey(display_name)')
+      .eq('room_id', roomId).order('created_at', { ascending: false }).limit(50);
+    if (error) throw error;
+    return (data || []) as unknown as DraftAutoRoomEvent[];
   },
 };
