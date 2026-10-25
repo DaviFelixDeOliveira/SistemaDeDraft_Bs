@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { DraftWizard } from './components/draft/DraftWizard';
 import { DraftAutoLab } from './components/draftAuto/DraftAutoLab';
 import { DraftAutoRooms } from './components/draftAuto/DraftAutoRooms';
+import { DraftAutoGuestJoin } from './components/draftAuto/DraftAutoGuestJoin';
 import { Menu, Loader2, Swords } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Dashboard } from './components/dashboard/Dashboard';
@@ -141,6 +142,11 @@ export default function App() {
       setShowLogoutConfirm(false);
     }
   };
+
+  // Convite de jogador não exige login da equipe e não exibe informações privadas.
+  // Permite abrir a tela em navegador separado ou celular sem reutilizar o usuário coach.
+  const guestCode = new URLSearchParams(window.location.search).get('draftJoin');
+  if (guestCode !== null) return <DraftAutoGuestJoin initialCode={guestCode}/>;
 
   if (showSplash || isAuthChecking) {
     return (
