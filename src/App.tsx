@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { DraftWizard } from './components/draft/DraftWizard';
+import { DraftAutoLab } from './components/draftAuto/DraftAutoLab';
+import { DraftAutoRooms } from './components/draftAuto/DraftAutoRooms';
+import { draftAutoCoachEvents, type DraftAutoRoomEvent } from './services/draftAutoGuestService';
+import { draftAutoRoomService } from './services/draftAutoRoomService';
+import { moveDraftAutoSelection, orderedPendingDraftEvents } from './lib/draftAutoInbox';
+import { DraftAutoGuestJoin } from './components/draftAuto/DraftAutoGuestJoin';
 import { Menu, Loader2, Swords } from 'lucide-react';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Dashboard } from './components/dashboard/Dashboard';
@@ -19,6 +25,9 @@ const ACTIVE_TAB_KEY = 'sistema_draft_active_tab';
 export default function App() {
 
   const [team, setTeam] = useState<TeamAccount | null>(null);
+  const [draftAutoQueue, setDraftAutoQueue] = useState<DraftAutoRoomEvent[]>([]);
+  const [focusedDraftAutoId, setFocusedDraftAutoId] = useState<string | null>(null);
+  const [draftAutoInboxError, setDraftAutoInboxError] = useState('');
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isViewLoading, setIsViewLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -48,6 +57,8 @@ export default function App() {
       if (!mounted) return;
       if (!session) {
         setTeam(null);
+        setDraftAutoQueue([]);
+        setFocusedDraftAutoId(null);
         return;
       }
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
@@ -72,6 +83,29 @@ export default function App() {
       return 'dashboard';
     }
   });
+
+  // Polling continues while the coach is on the Draft page, including while a
+  // prior event is being reviewed. No need to revisit the Lab for new bans.
+  useEffect(() => {
+    if (!team || (currentView !== 'draft' && currentView !== 'draft-auto')) return;
+    let alive = true;
+    let busy = false;
+    const refresh = async () => {
+      if (busy) return;
+      busy = true;
+      try {
+        const rooms = await draftAutoRoomService.list();
+        const activeIds = rooms.filter(room => room.status === 'active' && Date.parse(room.expires_at) > Date.now()).map(room => room.id);
+        const events = await draftAutoCoachEvents.listPending(activeIds);
+        if (alive) { setDraftAutoQueue(orderedPendingDraftEvents(events)); setDraftAutoInboxError(''); }
+      } catch {
+        if (alive) setDraftAutoInboxError('Não foi possível atualizar a fila de eventos. Verifique sua conexão.');
+      } finally { busy = false; }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 3000);
+    return () => { alive = false; clearInterval(timer); };
+  }, [team?.id, currentView]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
@@ -121,17 +155,36 @@ export default function App() {
   };
 
   const handleAuthenticated = (account: TeamAccount) => {
+    setDraftAutoQueue([]);
+    setFocusedDraftAutoId(null);
     isolateTeamCache(account.id);
     setTeam(account);
     setCurrentView('dashboard');
   };
 
   const requestLogout = () => setShowLogoutConfirm(true);
+  const reviewDraftAutoEvent = (event: DraftAutoRoomEvent) => {
+    if (event.review_status !== 'pending') return;
+    setDraftAutoQueue(queue => orderedPendingDraftEvents([...queue, event]));
+    setFocusedDraftAutoId(event.id);
+    handleViewChange('draft');
+  };
+  const decideDraftAutoEvent = async (event: DraftAutoRoomEvent, status: 'applied' | 'dismissed') => {
+    await draftAutoCoachEvents.markReviewed(event, status);
+    setDraftAutoQueue(queue => queue.filter(item => item.id !== event.id));
+    setFocusedDraftAutoId(id => id === event.id ? null : id);
+  };
+  const changeDraftAutoSelection = (offset: -1 | 1) => {
+    const selected = draftAutoQueue.find(item => item.id === focusedDraftAutoId) ?? draftAutoQueue[0];
+    setFocusedDraftAutoId(moveDraftAutoSelection(draftAutoQueue, selected?.id ?? null, offset));
+  };
 
   const confirmLogout = async () => {
     try {
       await teamAuthService.logout();
       setTeam(null);
+      setDraftAutoQueue([]);
+      setFocusedDraftAutoId(null);
       setCurrentView('dashboard');
       setShowLogoutConfirm(false);
     } catch (err) {
@@ -139,6 +192,11 @@ export default function App() {
       setShowLogoutConfirm(false);
     }
   };
+
+  // Convite de jogador não exige login da equipe e não exibe informações privadas.
+  // Permite abrir a tela em navegador separado ou celular sem reutilizar o usuário coach.
+  const guestCode = new URLSearchParams(window.location.search).get('draftJoin');
+  if (guestCode !== null) return <DraftAutoGuestJoin initialCode={guestCode}/>;
 
   if (showSplash || isAuthChecking) {
     return (
@@ -171,6 +229,9 @@ export default function App() {
   if (!team) {
     return <TeamAuthScreen onAuthenticated={handleAuthenticated} />;
   }
+
+  const selectedDraftAutoEvent = draftAutoQueue.find(item => item.id === focusedDraftAutoId) ?? draftAutoQueue[0] ?? null;
+  const draftAutoEventIndex = selectedDraftAutoEvent ? draftAutoQueue.findIndex(item => item.id === selectedDraftAutoEvent.id) : -1;
 
   return (
     <div className="flex h-screen bg-zinc-50 dark:bg-[#0A0A0A] text-zinc-900 dark:text-zinc-100 overflow-hidden relative">
@@ -218,9 +279,13 @@ export default function App() {
                 {currentView === 'draft' && (
                   <div className="w-full max-w-full">
                     <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Assistente de Draft</h2>
-                    <DraftWizard />
+                    {draftAutoInboxError && <p role="alert" className="text-sm text-amber-500 mb-3">{draftAutoInboxError}</p>}
+                    <DraftWizard incomingEvent={selectedDraftAutoEvent} incomingCount={draftAutoQueue.length}
+                      incomingIndex={draftAutoEventIndex} onMoveIncoming={changeDraftAutoSelection}
+                      onDecideIncoming={decideDraftAutoEvent} />
                   </div>
                 )}
+                {currentView === 'draft-auto' && <><DraftAutoRooms onImport={reviewDraftAutoEvent} /><DraftAutoLab /></>}
                 {currentView === 'players' && (
                   <div className="w-full max-w-full">
                     <PlayersHub />
