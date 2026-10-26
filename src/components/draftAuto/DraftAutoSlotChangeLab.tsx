@@ -4,6 +4,7 @@ import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout
 import { compareDraftSlotCrops,type DraftSlotDifference } from '../../lib/draftAutoSlotChange';
 import { validateDraftFrame } from '../../lib/draftAutoFrame';
 import { DraftAutoPortraitReferenceLab } from './DraftAutoPortraitReferenceLab';
+import { interpretDraftSlotSignals } from '../../lib/draftAutoSlotInterpretation';
 import {
   greenCheckSearchRect,inspectGreenCheckTransition,type GreenCheckTransition,
 } from '../../lib/draftAutoGreenCheck';
@@ -167,38 +168,49 @@ export function DraftAutoSlotChangeLab({
       className="mx-auto max-h-40 max-w-full rounded-lg border border-zinc-700 object-contain"/>}
     {busy&&<p role="status" className="text-xs text-zinc-400">Comparando as áreas dos seis jogadores…</p>}
     {error&&<p role="alert" className="text-xs text-red-400">{error}</p>}
-    {summary&&<div className="space-y-2">
-      <p className="text-sm font-semibold text-zinc-200">
-        {summary.changed} de 6 slots com alteração visual relevante
-      </p>
-      <p className="text-xs font-semibold text-emerald-300">
-        {summary.newChecks} indício(s) de check verde novo, analisando a área externa das cartas
-      </p>
+    {summary&&<div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-zinc-100">Resultado por jogador</p>
+        <p className="mt-1 text-xs text-zinc-400">
+          Possível confirmação não é confirmação real. Confira a imagem antes de registrar qualquer escolha.
+        </p>
+      </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {summary.results.map(({region,diff,temporal,externalCheck})=><div key={region.id}
-          className={`rounded-lg border p-2 text-xs ${diff.visualChangeCandidate?
-            'border-amber-500/50 bg-amber-500/10 text-amber-200':
-            'border-zinc-700 bg-zinc-900/60 text-zinc-300'}`}>
-          <strong>{region.label}</strong>
-          <p className="mt-1">{diff.visualChangeCandidate?'Mudança possível':'Sem mudança relevante'}</p>
-          <p className="mt-1 opacity-70">{Math.round(diff.changedFraction*100)}% de pixels diferentes</p>
-          {externalCheck.status==='possible-check-appeared'&&
-            <p className="mt-2 font-semibold text-emerald-300">
-              Possível ✓ verde apareceu no canto da carta — revisar
-            </p>}
-          {temporal.hint!=='no-visual-change'&&temporal.hint!=='portrait-change-only'&&
-            <p className="mt-2 border-t border-current/20 pt-1">{draftTemporalHintLabel(temporal)}</p>}
-        </div>)}
+        {summary.results.map(({region,diff,temporal,externalCheck})=>{
+          const interpretation=interpretDraftSlotSignals(diff,temporal,externalCheck);
+          const highlighted=interpretation.state==="possible-pick" || interpretation.state==="possible-ban";
+          const warning=interpretation.state==="portrait-changed" || interpretation.state==="review";
+          return <div key={region.id} className={`rounded-lg border p-2 text-xs ${highlighted?
+            "border-emerald-500/50 bg-emerald-500/10":warning?
+            "border-amber-500/50 bg-amber-500/10":"border-zinc-700 bg-zinc-900/60"}`}>
+            <strong className="text-zinc-100">{region.label}</strong>
+            <p className={`mt-1 font-semibold ${highlighted?
+              "text-emerald-300":warning?"text-amber-300":"text-zinc-300"}`}>{interpretation.label}</p>
+            {interpretation.state!=="no-new-signal"&&
+              <p className="mt-1 text-zinc-400">{interpretation.detail}</p>}
+          </div>;
+        })}
       </div>
       {summary.warning&&<p className="text-xs text-amber-300">{summary.warning}</p>}
-      <p className="text-[11px] text-zinc-400">
-        Resultado experimental baseado em diferenças de cor dentro de cada retrato. Uma animação,
-        tela desalinhada ou outro jogador mudando a pré-seleção pode gerar alerta;
-        ausência de alerta também não garante ausência de pick. O detector de ícones ainda depende
-        de recortes exatos e pode errar. O novo diagnóstico procura o check verde também fora da carta.
-        <strong> Nenhuma transição é uma escolha confirmada</strong>
-        e nada será aplicado ao Draft.
+      <p className="text-xs text-zinc-400">
+        Uma pré-seleção pode mudar sem confirmação. Um check verde pode aparecer sem trocar o retrato.
+        Os sinais podem falhar com animações ou recortes diferentes.
+        <strong> Nenhum pick ou ban é aplicado automaticamente.</strong>
       </p>
+      <details className="rounded-lg border border-zinc-700 p-2">
+        <summary className="cursor-pointer text-xs text-zinc-400">Ver detalhes técnicos (opcional)</summary>
+        <p className="mt-2 text-xs text-zinc-400">
+          {summary.changed} de {summary.results.length} retratos alterados; {summary.newChecks} possíveis checks verdes novos.
+        </p>
+        <ul className="mt-2 space-y-2 text-xs text-zinc-400">
+          {summary.results.map(({region,diff,temporal,externalCheck})=><li key={region.id}>
+            <strong>{region.label}:</strong> {Math.round(diff.changedFraction*100)}% dos pixels do retrato mudaram;
+            check externo: {externalCheck.status==="possible-check-appeared"?"possível novo":
+              externalCheck.status==="no-new-check"?"nenhum novo":"indisponível"};
+            marcador: {draftTemporalHintLabel(temporal)}.
+          </li>)}
+        </ul>
+      </details>
     </div>}
     {secondUrl&&regions.length>=6&&<details className="rounded-lg border border-zinc-700 p-2">
       <summary className="cursor-pointer text-xs text-zinc-400">
