@@ -94,7 +94,15 @@ export function DraftAutoGuestJoin({ initialCode }: { initialCode: string }) {
               session.status==='approved' && verifying ? 'Confirmando com o servidor se a sala continua aberta e sua autorização ainda é válida.':
               session.status==='approved'?'Conexão validada! Envie eventos de teste ou experimente a nova área de capturas locais. O reconhecimento automático ainda não está disponível.':
               session.status==='expired' ? 'Sua autorização terminou ou a sala foi encerrada. Solicite nova entrada; caso a sala tenha expirado, peça um novo código ao coach.' : 'Peça ao coach uma nova sessão se necessário.'}</p>
-            {session.status==='approved' && !verifying && <><DraftAutoGuestEventTester session={session} onSessionExpired={markExpired} /><DraftAutoCaptureLab session={session} onSessionExpired={markExpired} /></>}
+            {session.status==='approved' && !verifying && <>
+              <DraftAutoCaptureLab session={session} onSessionExpired={markExpired} />
+              <details className="rounded-xl border border-zinc-800 p-3 text-left">
+                <summary className="cursor-pointer text-sm font-semibold text-zinc-300">
+                  Teste manual: enviar mapa, pick ou ban ao coach
+                </summary>
+                <DraftAutoGuestEventTester session={session} onSessionExpired={markExpired} />
+              </details>
+            </>}
             <button type="button" onClick={leave} className="text-indigo-400 text-sm underline">{session.status==='expired' || session.status==='rejected' ? 'Solicitar nova entrada' : 'Sair e voltar ao formulário'}</button>
           </div>}
         {error && <p role="alert" className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg text-xs">{error}</p>}
