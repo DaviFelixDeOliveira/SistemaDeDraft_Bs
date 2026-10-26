@@ -225,3 +225,15 @@ Observação reportada pelo usuário após importar duas capturas do mesmo draft
 **Critério de validação real (pendente):** atualizar a branch e recarregar as duas mesmas capturas na página de jogador. Verificar as seis cartas e, sobretudo, se Azul 3 passa a ser `Provavelmente vazio`. Se não passar, abrir **Conferir os seis recortes** e anotar as métricas/miniatura de Azul 3 e dos Vermelhos 1–2. Não afrouxar globalmente limiares com base em um único caso. Sem imagens novas, continuar com os frames de usuário e screenshots públicos de outras partidas obtidos legalmente, não commitando material protegido sem licença.
 
 **Reconhecimento de identidade continua incompleto:** imagens públicas de catálogo não equivalem a retratos de skins ou cartão de jogo. 'Mais próximo' pode estar errado (Moe no slot Vermelho 3). Necessária base de retratos dentro do draft, avaliação independente por skins/idiomas/resoluções e melhor localização de cartas. Nenhum evento é transmitido ao coach nessa etapa.
+
+## Diagnóstico de divergência do ranking de catálogo — 26/10/2026
+
+Após o slot Azul 2 (brawler visto pelo usuário: **Meg**) apresentar inicialmente `Meg` e depois `Charlie` como vizinho RGB mais próximo (≈82%), sem mudança de personagem no jogo, ficou evidente que o ranking 8×8 RGB da BrawlAPI **não é reconhecedor confiável de identidade**. O nome estava corretamente atrás do rótulo `Sem identificação segura` e o valor de semelhança não deve ser anunciado como precisão.
+
+Nesta etapa:
+- `diagnoseDraftCatalogLabel` permite classificar a posição de um personagem **manualmente informado pelo usuário** entre todas as artes efetivamente carregadas, sem inferir identidade, treinar modelo, atualizar draft nem persistir informação.
+- A seção opcional `Investigar um nome errado no catálogo` permite escolher slot e personagem visualmente observado, e mostra sua posição no ranking, semelhança de pixels e três primeiras artes de referência. Assim podemos distinguir Meg fora dos três primeiros de um erro na localização das cartas, com screenshots autorizados e sem forçar o algoritmo a responder Meg.
+- Os testes cobrem caso em que a verdade humana ficou no quarto lugar e ausência de referência.
+- O teste dos slots vazios e de check verde continua separado desse ranking; sem envio automático de qualquer dado.
+
+**Próxima validação manual:** na mesma tela do jogador e nas mesmas duas capturas, expandir o diagnóstico, selecionar `Azul 2` e o brawler `Meg`, e reportar sua posição e os três nomes mais próximos. Isso mede somente esta captura, não um indicador geral de qualidade. Se o modelo de referência público seguir falhando em personagens presentes, é preciso coletar uma galeria lícita e rotulada de **retratos de cartas dentro do draft e skins reais**, com conjunto independente de validação. Evitar prometer reconhecimento universal de brawlers.
