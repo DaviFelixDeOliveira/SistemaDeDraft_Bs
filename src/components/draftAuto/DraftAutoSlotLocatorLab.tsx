@@ -7,6 +7,7 @@ import {
 } from '../../lib/draftAutoScene';
 import { inspectSlotMarker,type SlotMarkerEvidence } from '../../lib/draftAutoVisualEvidence';
 import { DraftAutoSlotChangeLab } from './DraftAutoSlotChangeLab';
+import { DraftAutoCatalogRecognitionLab } from './DraftAutoCatalogRecognitionLab';
 import {
   detectDraftTeamDivider,alignDraftRegionsToTeamDivider,type DraftTeamDivider,
 } from '../../lib/draftAutoTeamDivider';
@@ -208,9 +209,15 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
         </p>
       </div>
     </div>}
-    {regions.length===8||regions.length===6
-      ? <DraftAutoSlotChangeLab imageUrl={imageUrl} regions={regions}/>
-      : null}
+    {(regions.length===8||regions.length===6)&&<>
+      <DraftAutoCatalogRecognitionLab screenshotUrl={imageUrl} regions={regions}/>
+      <details className="rounded-lg border border-zinc-700 p-2">
+        <summary className="cursor-pointer text-sm font-semibold">
+          Comparar com uma segunda imagem — detectar mudanças e possíveis confirmações
+        </summary>
+        <DraftAutoSlotChangeLab imageUrl={imageUrl} regions={regions}/>
+      </details>
+    </>}
     {error&&<p role="alert" className="text-xs text-red-400">{error}</p>}
     <p className="text-[11px] text-zinc-500">
       Sem envio de imagens/eventos. Bordas e proporções variam entre dispositivos;
