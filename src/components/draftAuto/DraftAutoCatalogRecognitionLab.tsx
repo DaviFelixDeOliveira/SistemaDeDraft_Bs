@@ -3,6 +3,7 @@ import { BookImage,RefreshCw } from 'lucide-react';
 import { inspectDraftEmptySlot, type DraftEmptySlotEvidence } from '../../lib/draftAutoEmptySlot';
 import { corroborateDraftEmptyCards } from '../../lib/draftAutoEmptyReference';
 import { diagnoseDraftStructureLabel } from '../../lib/draftAutoCatalogStructure';
+import { diagnoseDraftCombinedLabel } from '../../lib/draftAutoCatalogCombined';
 import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout';
 import {
   parseDraftCatalog,matchDraftCatalogPortrait,diagnoseDraftCatalogLabel,
@@ -194,29 +195,26 @@ export function DraftAutoCatalogRecognitionLab({
   const structuralDiagnostic=useMemo(()=>diagnosticKnownId&&diagnosedTarget
     ?diagnoseDraftStructureLabel(diagnosedTarget.portrait,references,Number(diagnosticKnownId))
     :null,[diagnosticKnownId,diagnosedTarget,references]);
+  const combinedDiagnostic=useMemo(()=>diagnosticKnownId&&diagnosedTarget
+    ?diagnoseDraftCombinedLabel(diagnosedTarget.portrait,references,Number(diagnosticKnownId))
+    :null,[diagnosticKnownId,diagnosedTarget,references]);
   const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
     a.name.localeCompare(b.name,'pt-BR')),[references]);
 
   return <section className="mt-4 space-y-3 rounded-xl border border-cyan-600/40 bg-cyan-500/5 p-3">
     <h4 className="flex items-center gap-2 text-sm font-bold text-white">
       <BookImage className="h-4 w-4 text-cyan-300"/>
-      Identificação pelo catálogo — sem cadastrar nomes
+      Possíveis brawlers desta imagem
     </h4>
     <p className="text-xs text-zinc-300">
-      Teste opcional: carrega automaticamente imagens dos brawlers publicados na BrawlAPI
-      e tenta comparar com os seis retratos desta captura. <strong>Você não precisa
-      digitar os nomes.</strong>
-    </p>
-    <p className="text-xs text-amber-300">
-      As imagens do catálogo podem ser diferentes das cartas do jogo, inclusive por skins.
-      Um resultado parecido NÃO é uma escolha confirmada. Quando não houver evidência forte,
-      o sistema deve dizer que não sabe. Os slots vazios agora podem ser comparados com
-      dois exemplos encontrados na mesma imagem. Isso continua sendo uma hipótese visual.
+      O sistema compara os seis slots com o catálogo de brawlers. Ele pode
+      encontrar um personagem parecido ou uma carta vazia.
+      <strong> Possível não significa confirmado.</strong>
     </p>
     <button type="button" disabled={phase==='loading'} onClick={()=>void loadCatalog()}
       className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-700 p-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-cyan-600">
       <RefreshCw className={`h-4 w-4 ${phase==='loading'?'animate-spin':''}`}/>
-      {phase==='loading'?'Lendo catálogo visual…':references.length?'Recarregar catálogo':'Carregar catálogo visual'}
+      {phase==='loading'?'Lendo brawlers…':references.length?'Analisar novamente':'Reconhecer brawlers da imagem'}
     </button>
     {phase==='loading'&&<p role="status" className="text-xs text-zinc-300">
       Imagens processadas: {processed} de {total||'…'}. Falhas de leitura: {failedImages}.
@@ -226,7 +224,7 @@ export function DraftAutoCatalogRecognitionLab({
     </p>}
     {error&&<p role="alert" className="text-xs text-red-300">{error}</p>}
     {phase==='ready'&&<div className="space-y-2">
-      <p className="text-xs font-bold text-zinc-200">Hipóteses visuais — segunda imagem</p>
+      <p className="text-xs font-bold text-zinc-200">Resultado dos seis slots (não confirmado)</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {results.map(({region,match,emptyState})=><div key={region.id}
           className="min-w-0 rounded-lg border border-zinc-700 bg-zinc-950/70 p-2 text-xs">
@@ -261,7 +259,7 @@ export function DraftAutoCatalogRecognitionLab({
       </div>
       <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
         <summary className="cursor-pointer font-medium">
-          Investigar um nome errado no catálogo (diagnóstico opcional)
+          Testes técnicos dos métodos de reconhecimento (opcional)
         </summary>
         <p className="mt-2 text-[11px] text-amber-300">
           O catálogo usa artes que podem não corresponder às skins do jogo. Uma
@@ -323,6 +321,14 @@ export function DraftAutoCatalogRecognitionLab({
             não aprende automaticamente e não envia dados.
           </p>
         </div>}
+        {combinedDiagnostic&&<p className="mt-2 rounded-md border border-zinc-700 p-2 text-[11px]">
+          <strong>Terceiro método (cores + formas):</strong>
+          {' '}brawler informado em <strong>{combinedDiagnostic.rank}º de {combinedDiagnostic.total}</strong>.
+          {' '}Primeiro colocado: {combinedDiagnostic.bestName}.
+          {' '}Três mais próximos: {combinedDiagnostic.topThree.map((r,index)=>
+            `${index+1}º ${r.name}`).join(' · ')}.
+          {' '}Pontuação experimental, não é probabilidade de acerto.
+        </p>}
         {diagnosticKnownId&&!humanDiagnostic&&<p className="mt-2 text-[11px] text-zinc-400">
           Não foi possível comparar essa referência com a imagem atual.
         </p>}
@@ -377,11 +383,8 @@ export function DraftAutoCatalogRecognitionLab({
       </details>
     </div>}
     <p className="text-[11px] text-zinc-500">
-      Os slots marcados como provavelmente vazios não passam pelo comparador de personagens.
-      Palpites fracos ficam ocultos por padrão. As capturas continuam no navegador.
-      São baixadas apenas imagens públicas de referência; nenhuma informação é enviada
-      ao coach ou salva no Supabase. A etapa ainda não reconhece automaticamente
-      todos os brawlers nem valida picks, bans ou jogadores.
+      Teste local: não envia imagens ou escolhas ao coach. Sem confirmação
+      automática de pick, ban ou pré-seleção. Imagens públicas são usadas só como referência.
     </p>
   </section>;
 }
