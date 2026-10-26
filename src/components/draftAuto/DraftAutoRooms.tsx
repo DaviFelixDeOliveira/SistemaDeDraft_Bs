@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Copy, Link2, Loader2, Plus, RefreshCw, ShieldCheck, XCircle } from 'lucide-react';
+import { Copy, Link2, Loader2, Plus, RefreshCw, ShieldCheck, Trash2, XCircle } from 'lucide-react';
 import { draftAutoRoomService, type DraftAutoRoom } from '../../services/draftAutoRoomService';
 import { DraftAutoJoinRequests } from './DraftAutoJoinRequests';
 import { DraftAutoRoomEvents } from './DraftAutoRoomEvents';
@@ -36,7 +36,7 @@ export function DraftAutoRooms({ onImport }: { onImport: (event: DraftAutoRoomEv
     setBusy(true); setError(null); setMessage(null);
     try {
       const room = await draftAutoRoomService.create();
-      setRooms(previous => [room, ...previous].slice(0, 20));
+      setRooms(previous => [room, ...previous].slice(0, 100));
       setMessage('Sala criada. Compartilhe o link de ingresso com os jogadores.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível criar a sala.');
@@ -55,6 +55,30 @@ export function DraftAutoRooms({ onImport }: { onImport: (event: DraftAutoRoomEv
     } finally { setBusy(false); }
   };
 
+  const removeInactive = async (room: DraftAutoRoom) => {
+    if (!window.confirm('Excluir este código encerrado/expirado? Os pedidos de entrada e eventos de teste desta sala também serão apagados. O histórico de treinos não será afetado.')) return;
+    setBusy(true); setError(null); setMessage(null);
+    try {
+      await draftAutoRoomService.removeInactive(room.id);
+      setRooms(await draftAutoRoomService.list());
+      setMessage('Código e dados experimentais da sala excluídos.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível excluir o código.');
+    } finally { setBusy(false); }
+  };
+
+  const clearInactive = async () => {
+    if (!window.confirm('Limpar TODAS as salas encerradas ou expiradas desta equipe? Seus códigos, pedidos de entrada e eventos experimentais serão apagados. Salas ainda ativas e histórico de treinos serão preservados.')) return;
+    setBusy(true); setError(null); setMessage(null);
+    try {
+      const removed = await draftAutoRoomService.clearInactive();
+      setRooms(await draftAutoRoomService.list());
+      setMessage(`${removed} sala(s) encerrada(s) ou expirada(s) removida(s).`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível limpar as salas.');
+    } finally { setBusy(false); }
+  };
+
   const copy = async (code: string) => {
     try { await navigator.clipboard.writeText(code); setMessage('Código copiado. O coach ainda precisa aprovar cada jogador.'); }
     catch { setError('Não foi possível copiar automaticamente. Selecione o código e copie manualmente.'); }
@@ -65,9 +89,10 @@ export function DraftAutoRooms({ onImport }: { onImport: (event: DraftAutoRoomEv
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2"><Link2 className="w-5 h-5 text-indigo-500"/> Salas de treino — coach</h2>
-          <p className="text-zinc-500 text-sm mt-1">Primeira etapa: criar, consultar e encerrar salas vinculadas à sua equipe.</p>
+          <p className="text-zinc-500 text-sm mt-1">Novos códigos valem até 12 horas. Salas antigas mantêm sua expiração original.</p>
         </div>
         <div className="flex gap-2">
+          <button type="button" disabled={busy || loading || !rooms.some(r => r.status === 'closed' || Date.parse(r.expires_at) <= Date.now())} onClick={() => void clearInactive()} className="flex items-center gap-2 rounded-lg border border-red-500/40 px-3 py-2 text-sm text-red-500 disabled:opacity-40"><Trash2 className="w-4 h-4"/> Limpar encerradas</button>
           <button type="button" disabled={busy || loading} onClick={refresh} className="flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-sm disabled:opacity-50"><RefreshCw className="w-4 h-4"/> Atualizar</button>
           <button type="button" disabled={busy || loading} onClick={create} className="flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-2 text-sm disabled:opacity-50">
             {busy ? <Loader2 className="w-4 h-4 animate-spin"/> : <Plus className="w-4 h-4"/>} Criar sala
@@ -102,7 +127,9 @@ export function DraftAutoRooms({ onImport }: { onImport: (event: DraftAutoRoomEv
                   <DraftAutoJoinRequests roomId={room.id}/>
                   <DraftAutoRoomEvents roomId={room.id} onImport={onImport}/>
                 </div>}
-                {room.status === 'active' && <button type="button" disabled={busy} onClick={() => void close(room)} className="flex items-center gap-1 text-xs text-red-500 disabled:opacity-50"><XCircle className="w-3.5 h-3.5"/> Encerrar sala</button>}
+                {active
+                  ? <button type="button" disabled={busy} onClick={() => void close(room)} className="flex items-center gap-1 text-xs text-red-500 disabled:opacity-50"><XCircle className="w-3.5 h-3.5"/> Encerrar sala</button>
+                  : <button type="button" disabled={busy} onClick={() => void removeInactive(room)} className="flex items-center gap-1 text-xs text-red-500 disabled:opacity-50"><Trash2 className="w-3.5 h-3.5"/> Excluir código</button>}
               </div>;
             })}
           </div>}
