@@ -210,12 +210,12 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
       </div>
     </div>}
     {(regions.length===8||regions.length===6)&&<>
-      <DraftAutoCatalogRecognitionLab screenshotUrl={imageUrl} regions={regions}/>
+      <DraftAutoSlotChangeLab imageUrl={imageUrl} regions={regions}/>
       <details className="rounded-lg border border-zinc-700 p-2">
-        <summary className="cursor-pointer text-sm font-semibold">
-          Comparar com uma segunda imagem — detectar mudanças e possíveis confirmações
+        <summary className="cursor-pointer text-xs text-zinc-400">
+          Teste opcional: reconhecer brawlers somente da primeira imagem
         </summary>
-        <DraftAutoSlotChangeLab imageUrl={imageUrl} regions={regions}/>
+        <DraftAutoCatalogRecognitionLab screenshotUrl={imageUrl} regions={regions}/>
       </details>
     </>}
     {error&&<p role="alert" className="text-xs text-red-400">{error}</p>}
