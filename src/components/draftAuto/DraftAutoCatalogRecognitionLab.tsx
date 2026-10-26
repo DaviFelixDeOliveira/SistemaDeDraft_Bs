@@ -1,5 +1,6 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
+import { inspectDraftEmptySlot, type DraftEmptySlotEvidence } from '../../lib/draftAutoEmptySlot';
 import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout';
 import {
   parseDraftCatalog,matchDraftCatalogPortrait,
@@ -9,7 +10,11 @@ import {
   portraitFingerprint,type DraftPortraitFingerprint,
 } from '../../lib/draftAutoPortraitIdentity';
 
-type SlotFingerprints=Record<string,DraftPortraitFingerprint>;
+type SlotFingerprint={
+  portrait:DraftPortraitFingerprint;
+  emptyEvidence:DraftEmptySlotEvidence;
+};
+type SlotFingerprints=Record<string,SlotFingerprint>;
 type LoadingState='idle'|'loading'|'ready'|'failed';
 
 function loadScreenshot(src:string):Promise<HTMLImageElement>{
@@ -31,8 +36,12 @@ function getSlotFingerprints(image:HTMLImageElement,regions:DraftHudRegion[]):Sl
     const ctx=canvas.getContext('2d',{willReadFrequently:true});
     if(!ctx)throw new Error('Leitura de pixels indisponível neste navegador.');
     ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,64,80);
-    const fp=portraitFingerprint(ctx.getImageData(0,0,64,80));
-    if(fp)found[region.id]=fp;
+    const pixels=ctx.getImageData(0,0,64,80);
+    const fp=portraitFingerprint(pixels);
+    if(fp)found[region.id]={
+      portrait:fp,
+      emptyEvidence:inspectDraftEmptySlot(pixels),
+    };
   }
   return found;
 }
@@ -159,12 +168,16 @@ export function DraftAutoCatalogRecognitionLab({
   };
 
   const slots=useMemo(()=>regions.filter(r=>r.kind==='pick-slot'),[regions]);
-  const results=useMemo(()=>slots.map(region=>({
-    region,
-    match:targets[region.id]
-      ?matchDraftCatalogPortrait(targets[region.id],references)
-      :null,
-  })),[slots,targets,references]);
+  const results=useMemo(()=>slots.map(region=>{
+    const target=targets[region.id];
+    const likelyEmpty=target?.emptyEvidence.status==='likely-empty';
+    return {
+      region,likelyEmpty,
+      match:target&&!likelyEmpty
+        ?matchDraftCatalogPortrait(target.portrait,references)
+        :null,
+    };
+  }),[slots,targets,references]);
 
   return <section className="mt-4 space-y-3 rounded-xl border border-cyan-600/40 bg-cyan-500/5 p-3">
     <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -179,7 +192,8 @@ export function DraftAutoCatalogRecognitionLab({
     <p className="text-xs text-amber-300">
       As imagens do catálogo podem ser diferentes das cartas do jogo, inclusive por skins.
       Um resultado parecido NÃO é uma escolha confirmada. Quando não houver evidência forte,
-      o sistema deve dizer que não sabe.
+      o sistema deve dizer que não sabe. A nova verificação de slot vazio é apenas
+      uma hipótese visual; não é confirmação.
     </p>
     <button type="button" disabled={phase==='loading'} onClick={()=>void loadCatalog()}
       className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-700 p-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-cyan-600">
@@ -196,10 +210,17 @@ export function DraftAutoCatalogRecognitionLab({
     {phase==='ready'&&<div className="space-y-2">
       <p className="text-xs font-bold text-zinc-200">Hipóteses visuais — segunda imagem</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {results.map(({region,match})=><div key={region.id}
+        {results.map(({region,match,likelyEmpty})=><div key={region.id}
           className="min-w-0 rounded-lg border border-zinc-700 bg-zinc-950/70 p-2 text-xs">
           <strong>{region.label}</strong>
-          {match?.status==='possible-match'
+          {likelyEmpty
+            ?<p className="mt-1 text-amber-200">
+              Provavelmente vazio
+              <span className="block text-[10px] text-zinc-400">
+                Indício pelo padrão roxo da carta. Não confirmado.
+              </span>
+            </p>
+            :match?.status==='possible-match'
             ?<p className="mt-1 break-words text-emerald-300">
               Possivelmente {match.name}
               <span className="block text-[10px] text-zinc-400">
@@ -207,17 +228,24 @@ export function DraftAutoCatalogRecognitionLab({
               </span>
             </p>
             :<p className="mt-1 text-zinc-400">Sem identificação segura</p>}
-          {match?.nearest?.[0]&&<p className="mt-2 break-words text-[10px] text-zinc-500">
-            Mais próximo para inspeção: {match.nearest[0].name}
-            {' '}({Math.round(match.nearest[0].similarity*100)}% de semelhança)
-          </p>}
+          {!likelyEmpty&&match?.status==='uncertain'&&match.nearest[0]&&
+            <details className="mt-2 text-[10px] text-zinc-500">
+              <summary className="cursor-pointer">Ver palpite fraco (diagnóstico)</summary>
+              <p className="mt-1 break-words">
+                Imagem mais parecida: {match.nearest[0].name}
+                {' '}({Math.round(match.nearest[0].similarity*100)}% de semelhança).
+                Pode ser outro brawler ou um slot vazio.
+              </p>
+            </details>}
         </div>)}
       </div>
     </div>}
     <p className="text-[11px] text-zinc-500">
-      As capturas continuam no navegador. São baixadas apenas imagens públicas de referência;
-      nenhuma informação é enviada ao coach ou salva no Supabase. A etapa ainda não reconhece
-      automaticamente todos os brawlers nem valida picks, bans ou jogadores.
+      Os slots marcados como provavelmente vazios não passam pelo comparador de personagens.
+      Palpites fracos ficam ocultos por padrão. As capturas continuam no navegador.
+      São baixadas apenas imagens públicas de referência; nenhuma informação é enviada
+      ao coach ou salva no Supabase. A etapa ainda não reconhece automaticamente
+      todos os brawlers nem valida picks, bans ou jogadores.
     </p>
   </section>;
 }
