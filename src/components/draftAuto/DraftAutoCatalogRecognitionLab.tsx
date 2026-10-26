@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
 import { inspectDraftEmptySlot, type DraftEmptySlotEvidence } from '../../lib/draftAutoEmptySlot';
+import { corroborateDraftEmptyCards } from '../../lib/draftAutoEmptyReference';
 import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout';
 import {
   parseDraftCatalog,matchDraftCatalogPortrait,
@@ -13,6 +14,7 @@ import {
 type SlotFingerprint={
   portrait:DraftPortraitFingerprint;
   emptyEvidence:DraftEmptySlotEvidence;
+  preview:string;
 };
 type SlotFingerprints=Record<string,SlotFingerprint>;
 type LoadingState='idle'|'loading'|'ready'|'failed';
@@ -41,6 +43,7 @@ function getSlotFingerprints(image:HTMLImageElement,regions:DraftHudRegion[]):Sl
     if(fp)found[region.id]={
       portrait:fp,
       emptyEvidence:inspectDraftEmptySlot(pixels),
+      preview:canvas.toDataURL('image/png'),
     };
   }
   return found;
@@ -168,16 +171,17 @@ export function DraftAutoCatalogRecognitionLab({
   };
 
   const slots=useMemo(()=>regions.filter(r=>r.kind==='pick-slot'),[regions]);
+  const emptyDecisions=useMemo(()=>corroborateDraftEmptyCards(targets),[targets]);
   const results=useMemo(()=>slots.map(region=>{
     const target=targets[region.id];
-    const likelyEmpty=target?.emptyEvidence.status==='likely-empty';
+    const emptyState=emptyDecisions[region.id]??'unknown';
     return {
-      region,likelyEmpty,
-      match:target&&!likelyEmpty
+      region,emptyState,
+      match:target&&emptyState==='unknown'
         ?matchDraftCatalogPortrait(target.portrait,references)
         :null,
     };
-  }),[slots,targets,references]);
+  }),[slots,targets,references,emptyDecisions]);
 
   return <section className="mt-4 space-y-3 rounded-xl border border-cyan-600/40 bg-cyan-500/5 p-3">
     <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -192,8 +196,8 @@ export function DraftAutoCatalogRecognitionLab({
     <p className="text-xs text-amber-300">
       As imagens do catálogo podem ser diferentes das cartas do jogo, inclusive por skins.
       Um resultado parecido NÃO é uma escolha confirmada. Quando não houver evidência forte,
-      o sistema deve dizer que não sabe. A nova verificação de slot vazio é apenas
-      uma hipótese visual; não é confirmação.
+      o sistema deve dizer que não sabe. Os slots vazios agora podem ser comparados com
+      dois exemplos encontrados na mesma imagem. Isso continua sendo uma hipótese visual.
     </p>
     <button type="button" disabled={phase==='loading'} onClick={()=>void loadCatalog()}
       className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-700 p-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-cyan-600">
@@ -210,14 +214,16 @@ export function DraftAutoCatalogRecognitionLab({
     {phase==='ready'&&<div className="space-y-2">
       <p className="text-xs font-bold text-zinc-200">Hipóteses visuais — segunda imagem</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {results.map(({region,match,likelyEmpty})=><div key={region.id}
+        {results.map(({region,match,emptyState})=><div key={region.id}
           className="min-w-0 rounded-lg border border-zinc-700 bg-zinc-950/70 p-2 text-xs">
           <strong>{region.label}</strong>
-          {likelyEmpty
+          {emptyState!=='unknown'
             ?<p className="mt-1 text-amber-200">
               Provavelmente vazio
               <span className="block text-[10px] text-zinc-400">
-                Indício pelo padrão roxo da carta. Não confirmado.
+                {emptyState==='similar-to-empty'
+                  ?'Semelhante a dois outros slots vazios desta imagem.'
+                  :'Indício pelo padrão roxo da carta.'} Não confirmado.
               </span>
             </p>
             :match?.status==='possible-match'
@@ -228,7 +234,7 @@ export function DraftAutoCatalogRecognitionLab({
               </span>
             </p>
             :<p className="mt-1 text-zinc-400">Sem identificação segura</p>}
-          {!likelyEmpty&&match?.status==='uncertain'&&match.nearest[0]&&
+          {emptyState==='unknown'&&match?.status==='uncertain'&&match.nearest[0]&&
             <details className="mt-2 text-[10px] text-zinc-500">
               <summary className="cursor-pointer">Ver palpite fraco (diagnóstico)</summary>
               <p className="mt-1 break-words">
@@ -239,6 +245,32 @@ export function DraftAutoCatalogRecognitionLab({
             </details>}
         </div>)}
       </div>
+      <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
+        <summary className="cursor-pointer font-medium">
+          Conferir os seis recortes e o motivo dos resultados
+        </summary>
+        <p className="mt-2 text-[11px] text-amber-300">
+          Se uma carta está vazia no jogo mas a miniatura não mostra o ponto de
+          interrogação inteiro, confira a posição das caixas no localizador acima.
+          Nomes de jogador e bordas não devem dominar o recorte.
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {slots.map(region=>{
+            const target=targets[region.id];
+            return <div key={region.id}
+              className="min-w-0 space-y-1 rounded-lg border border-zinc-700 p-1.5">
+              <p className="font-medium">{region.label}</p>
+              {target?.preview&&<img src={target.preview} alt={`Recorte local do slot ${region.label}`}
+                className="mx-auto h-24 w-20 object-contain" />}
+              <p className="text-[10px] text-zinc-400">
+                Padrão roxo: {target?Math.round(target.emptyEvidence.purpleShare*100):'–'}%
+                {' '}| Escuro: {target?Math.round(target.emptyEvidence.darkShare*100):'–'}%
+                {' '}| Variação: {target?Math.round(target.emptyEvidence.luminanceSpread):'–'}
+              </p>
+            </div>;
+          })}
+        </div>
+      </details>
     </div>}
     <p className="text-[11px] text-zinc-500">
       Os slots marcados como provavelmente vazios não passam pelo comparador de personagens.
