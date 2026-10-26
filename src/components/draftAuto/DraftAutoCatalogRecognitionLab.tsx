@@ -4,7 +4,7 @@ import { inspectDraftEmptySlot, type DraftEmptySlotEvidence } from '../../lib/dr
 import { corroborateDraftEmptyCards } from '../../lib/draftAutoEmptyReference';
 import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout';
 import {
-  parseDraftCatalog,matchDraftCatalogPortrait,
+  parseDraftCatalog,matchDraftCatalogPortrait,diagnoseDraftCatalogLabel,
   type DraftCatalogReference,
 } from '../../lib/draftAutoCatalogVisual';
 import {
@@ -99,6 +99,8 @@ export function DraftAutoCatalogRecognitionLab({
   const [processed,setProcessed]=useState(0);
   const [failedImages,setFailedImages]=useState(0);
   const [error,setError]=useState('');
+  const [diagnosticSlot,setDiagnosticSlot]=useState('blue-2');
+  const [diagnosticKnownId,setDiagnosticKnownId]=useState('');
   const controllerRef=useRef<AbortController|null>(null);
 
   useEffect(()=>()=>{
@@ -107,6 +109,7 @@ export function DraftAutoCatalogRecognitionLab({
 
   useEffect(()=>{
     let live=true;
+    setDiagnosticKnownId('');
     setTargets({});
     loadScreenshot(screenshotUrl).then(image=>{
       if(live)setTargets(getSlotFingerprints(image,regions));
@@ -182,6 +185,13 @@ export function DraftAutoCatalogRecognitionLab({
         :null,
     };
   }),[slots,targets,references,emptyDecisions]);
+  const diagnosedSlot=results.find(r=>r.region.id===diagnosticSlot);
+  const diagnosedTarget=targets[diagnosticSlot];
+  const humanDiagnostic=useMemo(()=>diagnosticKnownId&&diagnosedTarget
+    ?diagnoseDraftCatalogLabel(diagnosedTarget.portrait,references,Number(diagnosticKnownId))
+    :null,[diagnosticKnownId,diagnosedTarget,references]);
+  const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
+    a.name.localeCompare(b.name,'pt-BR')),[references]);
 
   return <section className="mt-4 space-y-3 rounded-xl border border-cyan-600/40 bg-cyan-500/5 p-3">
     <h4 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -245,6 +255,73 @@ export function DraftAutoCatalogRecognitionLab({
             </details>}
         </div>)}
       </div>
+      <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
+        <summary className="cursor-pointer font-medium">
+          Investigar um nome errado no catálogo (diagnóstico opcional)
+        </summary>
+        <p className="mt-2 text-[11px] text-amber-300">
+          O catálogo usa artes que podem não corresponder às skins do jogo. Uma
+          semelhança de 82% NÃO significa 82% de acerto. Informe manualmente
+          o personagem verdadeiro apenas para medir seu lugar no ranking;
+          isso não treina o detector nem altera o Draft.
+        </p>
+        <div className="mt-3 grid gap-2">
+          <label className="space-y-1">
+            <span className="block text-[11px] font-semibold">Slot da imagem</span>
+            <select value={diagnosticSlot} onChange={e=>{
+              setDiagnosticSlot(e.target.value);
+              setDiagnosticKnownId('');
+            }} className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-2">
+              {slots.map(region=><option key={region.id} value={region.id}>{region.label}</option>)}
+            </select>
+          </label>
+          <label className="space-y-1">
+            <span className="block text-[11px] font-semibold">
+              Nome verdadeiro (informado por você, não detectado)
+            </span>
+            <select value={diagnosticKnownId} onChange={e=>setDiagnosticKnownId(e.target.value)}
+              className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-2">
+              <option value="">Escolher brawler, se souber</option>
+              {alphabeticalReferences.map(ref=><option key={ref.id} value={String(ref.id)}>
+                {ref.name}
+              </option>)}
+            </select>
+          </label>
+        </div>
+        {humanDiagnostic&&<p className="mt-2 rounded-md border border-cyan-800 bg-cyan-950/30 p-2 text-[11px]">
+          O brawler informado ficou em <strong>{humanDiagnostic.rank}º de {humanDiagnostic.total}</strong>
+          {' '}retratos do catálogo, com {Math.round(humanDiagnostic.similarity*100)}% de semelhança RGB.
+          {' '}O primeiro colocado foi {humanDiagnostic.bestName}
+          {humanDiagnostic.scoreGap>0
+            ?` (${Math.round(humanDiagnostic.scoreGap*100)} pontos percentuais acima)`
+            :''}. Isso mede o comparador, não a chance de identificação correta.
+        </p>}
+        {diagnosticKnownId&&!humanDiagnostic&&<p className="mt-2 text-[11px] text-zinc-400">
+          Não foi possível comparar essa referência com a imagem atual.
+        </p>}
+        <p className="mt-3 text-[11px] font-semibold">
+          Três artes públicas mais parecidas com {diagnosedSlot?.region.label??'o slot'}
+        </p>
+        <div className="mt-1 grid grid-cols-3 gap-1.5">
+          {diagnosedSlot?.match?.nearest.map((candidate,index)=>{
+            const source=references.find(r=>r.id===candidate.gameId);
+            return <div key={candidate.gameId}
+              className="min-w-0 rounded-md border border-zinc-700 bg-zinc-950 p-1">
+              {source&&<img src={source.imageUrl} alt={`Arte do catálogo: ${candidate.name}`}
+                loading="lazy" className="mx-auto h-16 w-14 object-contain" />}
+              <p className="break-words text-[10px]">{index+1}º: {candidate.name}</p>
+              <p className="text-[10px] text-zinc-400">
+                {Math.round(candidate.similarity*100)}% semelhante
+              </p>
+            </div>;
+          })}
+        </div>
+        <p className="mt-2 text-[11px] text-zinc-500">
+          Estes são os retratos que o sistema está comparando, não três
+          identificações. A anotação manual é descartada ao trocar a imagem
+          ou sair desta tela. Nada é transmitido.
+        </p>
+      </details>
       <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
         <summary className="cursor-pointer font-medium">
           Conferir os seis recortes e o motivo dos resultados
