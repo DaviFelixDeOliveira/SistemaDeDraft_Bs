@@ -159,19 +159,20 @@ export function DraftAutoCaptureLab({session,onSessionExpired}: {session:GuestJo
 
   return (
     <section className="space-y-4 border-t border-zinc-800 pt-5 text-left">
-      <h3 className="font-bold text-sm flex gap-2 items-center"><Camera className="w-4 h-4 text-indigo-400" /> Captura de imagem — teste local</h3>
+      <h3 className="font-bold text-base flex gap-2 items-center"><Camera className="w-4 h-4 text-indigo-400" /> Analisar imagem do draft</h3>
       <p className="text-xs text-zinc-400">
-        Prepare uma captura real do Brawl Stars para os próximos testes. A versão experimental já consegue sugerir <strong>quem começa</strong> em algumas telas de anúncio.
-        <strong> Ainda não identifica mapa, picks ou bans, e não envia o arquivo da imagem ao coach.</strong>
+        Envie um print do Brawl Stars. Primeiro veremos o que foi reconhecido;
+        depois, se quiser, você poderá comparar duas capturas para examinar picks e bans.
+        <strong> Esta é uma análise de teste, sem preenchimento automático.</strong>
       </p>
       <div className="p-3 rounded-lg border border-emerald-600/30 bg-emerald-500/5 text-xs text-zinc-300 flex gap-2">
         <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0"/>
         A imagem e o recorte permanecem somente no seu navegador. Nenhuma captura é salva na conta ou enviada ao Supabase.
       </div>
-      <label className={label}>Escolher print do celular ou computador (PNG, JPEG, WebP; até 10 MB)</label>
+      <label className={label}>1. Escolha uma imagem do jogo (PNG, JPEG ou WebP, até 10 MB)</label>
       <label className="flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-dashed border-indigo-500/50 p-3 text-sm text-indigo-300 hover:bg-indigo-500/10">
         <ImagePlus className="w-4 h-4" />
-        Selecionar captura salva
+        Adicionar imagem
         <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp"
           onChange={event => {
             const file = event.currentTarget.files?.[0];
@@ -179,8 +180,10 @@ export function DraftAutoCaptureLab({session,onSessionExpired}: {session:GuestJo
             event.currentTarget.value = '';
           }}/>
       </label>
-      <div className="space-y-2">
-        <p className="text-xs text-zinc-500">No computador, você também pode compartilhar uma janela espelhada do jogo e capturar apenas um quadro. O navegador pedirá sua permissão.</p>
+      <details className="rounded-lg border border-zinc-800 p-3 text-xs text-zinc-400">
+        <summary className="cursor-pointer font-semibold">Outra forma de adicionar imagem: capturar janela no computador</summary>
+        <div className="mt-3 space-y-2">
+        <p className="text-xs text-zinc-500">Compartilhe uma janela do jogo espelhado. O navegador pedirá sua permissão; capturamos um único quadro.</p>
         <video ref={videoRef} muted playsInline autoPlay
           className={streaming ? 'w-full rounded-lg border border-zinc-700 bg-black' : 'hidden'}/>
         {!streaming ? <button type="button" onClick={() => void beginScreenShare()}
@@ -193,18 +196,30 @@ export function DraftAutoCaptureLab({session,onSessionExpired}: {session:GuestJo
           <button type="button" className="rounded-lg border border-zinc-700 px-3 py-2 text-sm flex items-center gap-1"
             onClick={stopSharing}><Square className="w-3 h-3"/> Parar</button>
         </div>}
-      </div>
+        </div>
+      </details>
       {error && <p role="alert" className="rounded-lg p-3 text-xs bg-red-500/10 text-red-400">{error}</p>}
       {status && <p role="status" className="rounded-lg p-3 text-xs bg-emerald-500/10 text-emerald-400">{status}</p>}
       {preview && metadata && <div className="space-y-3">
-        <div className="flex justify-between gap-2 text-xs text-zinc-400">
-          <span>{metadata.width} × {metadata.height}</span>
-          <span>{metadata.orientation} · {metadata.megapixels} MP</span>
-        </div>
-        <img src={preview} alt="Prévia local da imagem escolhida" className="rounded-lg w-full max-h-80 object-contain border border-zinc-800 bg-black"/>
+        <img src={preview} alt="Imagem enviada para análise local"
+          className="rounded-lg w-full max-h-52 object-contain border border-zinc-800 bg-black"/>
         <DraftAutoVisionPreview imageUrl={preview} session={session} onSessionExpired={onSessionExpired}/>
-        <DraftAutoSlotLocatorLab imageUrl={preview}/>
-        <label className={label}>Área para avaliar (recorte manual)</label>
+        <details className="rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-3">
+          <summary className="cursor-pointer text-sm font-bold text-indigo-300">
+            2. Examinar bans, picks e pré-seleções (experimental)
+          </summary>
+          <p className="mt-2 text-xs text-zinc-400">
+            Aqui você pode selecionar a fase da tela e comparar duas imagens
+            da mesma partida. O sistema ainda não distingue todos os estados
+            nem reconhece com segurança todos os brawlers.
+          </p>
+          <DraftAutoSlotLocatorLab imageUrl={preview}/>
+        </details>
+        <details className="rounded-lg border border-zinc-800 p-3">
+          <summary className="cursor-pointer text-xs font-semibold text-zinc-400">Outras ferramentas de teste (recorte manual e ícones)</summary>
+          <div className="mt-3 space-y-3">
+          <p className="text-xs text-zinc-500">{metadata.width} × {metadata.height} · {metadata.orientation} · {metadata.megapixels} MP</p>
+          <label className={label}>Área para avaliar (recorte manual)</label>
         <select className="w-full bg-zinc-950 rounded-lg border border-zinc-700 p-2 text-sm"
           value={area} onChange={event => {setArea(event.target.value as FrameArea);replaceUrl('crop', null);}}>
           <option value="completa">Imagem completa</option>
@@ -216,8 +231,10 @@ export function DraftAutoCaptureLab({session,onSessionExpired}: {session:GuestJo
           <Crop className="w-4 h-4"/> Preparar recorte
         </button>
         {cropPreview && <img src={cropPreview} alt="Recorte local para testes futuros" className="rounded-lg w-full max-h-64 object-contain border border-zinc-700 bg-black"/>}
+        <DraftAutoVisualMarkerLab />
+          </div>
+        </details>
       </div>}
-      <DraftAutoVisualMarkerLab />
     </section>
   );
 }
