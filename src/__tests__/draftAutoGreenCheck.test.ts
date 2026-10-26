@@ -6,13 +6,13 @@ import type {SlotPixelFrame} from '../lib/draftAutoVisualEvidence';
 import type {DraftHudRegion} from '../lib/draftAutoLayout';
 
 const width=120,height=96;
-const frame=(kind:'none'|'check'|'block'|'dots'):SlotPixelFrame=>{
+const frame=(kind:'none'|'check'|'block'|'dots',shiftX=0):SlotPixelFrame=>{
   const data=new Uint8ClampedArray(width*height*4);
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
     const i=(y*width+x)*4;
     const checkStroke=
-      (x>=66&&x<=90&&y>=39&&y<=72&&
-      (Math.abs(y-(x-25))<=4 || Math.abs(y-(117-x))<=4));
+      (x-shiftX>=66&&x-shiftX<=90&&y>=39&&y<=72&&
+      (Math.abs(y-((x-shiftX)-25))<=4 || Math.abs(y-(117-(x-shiftX)))<=4));
     const block=(x>=63&&x<95&&y>=41&&y<73);
     const dots=(x+y)%19===0;
     const green=kind==='check'?checkStroke:kind==='block'?block:kind==='dots'?dots:false;
@@ -40,6 +40,16 @@ describe('Check verde no lado externo do cartão (diagnóstico)',()=>{
   });
   it('não inventa confirmação se o check já estava presente',()=>{
     expect(inspectGreenCheckTransition(frame('check'),frame('check')).status)
+      .toBe('no-new-check');
+  });
+  it('não confunde check antigo deslocado dez pixels com confirmação nova',()=>{
+    // With pixel-only novelty this falsely exceeded 75% new green pixels.
+    // It is still the same marker on the same player's card.
+    expect(inspectGreenCheckTransition(frame('check'),frame('check',10)).status)
+      .toBe('no-new-check');
+  });
+  it('não confunde check antigo deslocado vinte pixels com confirmação nova',()=>{
+    expect(inspectGreenCheckTransition(frame('check'),frame('check',20)).status)
       .toBe('no-new-check');
   });
   it('uma mancha verde sólida não é um check',()=>{
