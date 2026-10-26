@@ -4,6 +4,7 @@ import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout
 import { compareDraftSlotCrops,type DraftSlotDifference } from '../../lib/draftAutoSlotChange';
 import { validateDraftFrame } from '../../lib/draftAutoFrame';
 import { DraftAutoPortraitReferenceLab } from './DraftAutoPortraitReferenceLab';
+import { DraftAutoCatalogRecognitionLab } from './DraftAutoCatalogRecognitionLab';
 import {
   greenCheckSearchRect,inspectGreenCheckTransition,type GreenCheckTransition,
 } from '../../lib/draftAutoGreenCheck';
@@ -200,7 +201,9 @@ export function DraftAutoSlotChangeLab({
         e nada será aplicado ao Draft.
       </p>
     </div>}
-    {secondUrl&&regions.length>=6&&
-      <DraftAutoPortraitReferenceLab firstUrl={imageUrl} secondUrl={secondUrl} regions={regions}/>}
+    {secondUrl&&regions.length>=6&&<>
+      <DraftAutoCatalogRecognitionLab screenshotUrl={secondUrl} regions={regions}/>
+      <DraftAutoPortraitReferenceLab firstUrl={imageUrl} secondUrl={secondUrl} regions={regions}/>
+    </>}
   </section>;
 }
