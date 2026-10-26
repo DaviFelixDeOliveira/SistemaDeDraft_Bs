@@ -2,6 +2,7 @@ import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
 import { inspectDraftEmptySlot, type DraftEmptySlotEvidence } from '../../lib/draftAutoEmptySlot';
 import { corroborateDraftEmptyCards } from '../../lib/draftAutoEmptyReference';
+import { diagnoseDraftStructureLabel } from '../../lib/draftAutoCatalogStructure';
 import { draftHudPixelRect,type DraftHudRegion } from '../../lib/draftAutoLayout';
 import {
   parseDraftCatalog,matchDraftCatalogPortrait,diagnoseDraftCatalogLabel,
@@ -190,6 +191,9 @@ export function DraftAutoCatalogRecognitionLab({
   const humanDiagnostic=useMemo(()=>diagnosticKnownId&&diagnosedTarget
     ?diagnoseDraftCatalogLabel(diagnosedTarget.portrait,references,Number(diagnosticKnownId))
     :null,[diagnosticKnownId,diagnosedTarget,references]);
+  const structuralDiagnostic=useMemo(()=>diagnosticKnownId&&diagnosedTarget
+    ?diagnoseDraftStructureLabel(diagnosedTarget.portrait,references,Number(diagnosticKnownId))
+    :null,[diagnosticKnownId,diagnosedTarget,references]);
   const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
     a.name.localeCompare(b.name,'pt-BR')),[references]);
 
@@ -296,6 +300,29 @@ export function DraftAutoCatalogRecognitionLab({
             ?` (${Math.round(humanDiagnostic.scoreGap*100)} pontos percentuais acima)`
             :''}. Isso mede o comparador, não a chance de identificação correta.
         </p>}
+        {structuralDiagnostic&&<div className="mt-2 rounded-md border border-violet-800/70 bg-violet-950/20 p-2 text-[11px]">
+          <p className="font-semibold text-violet-200">
+            Comparação experimental — formas e contraste (sem usar cores RGB diretas)
+          </p>
+          <p className="mt-1">
+            Brawler informado: <strong>{structuralDiagnostic.rank}º de {structuralDiagnostic.total}</strong>.
+            {' '}Primeiro colocado por esse método: {structuralDiagnostic.bestName}.
+            {' '}Semelhança estrutural: {Math.round(structuralDiagnostic.similarity*100)}%.
+          </p>
+          <p className="mt-1 text-zinc-300">
+            Três mais próximos: {structuralDiagnostic.topThree.map((candidate,index)=>
+              `${index+1}º ${candidate.name}`).join(' · ')}.
+          </p>
+          {humanDiagnostic&&<p className="mt-1 text-zinc-400">
+            Método atual por cores: {humanDiagnostic.rank}º lugar.
+            {' '}Método novo por estrutura: {structuralDiagnostic.rank}º lugar.
+            {' '}Mesmo que melhore, ainda não comprova reconhecimento confiável.
+          </p>}
+          <p className="mt-1 text-amber-300">
+            Experimento comparativo: não altera as sugestões do Draft,
+            não aprende automaticamente e não envia dados.
+          </p>
+        </div>}
         {diagnosticKnownId&&!humanDiagnostic&&<p className="mt-2 text-[11px] text-zinc-400">
           Não foi possível comparar essa referência com a imagem atual.
         </p>}
