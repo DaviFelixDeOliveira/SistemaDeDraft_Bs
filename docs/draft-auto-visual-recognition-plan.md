@@ -205,3 +205,23 @@ Objetivo: avançar do **detectar que um retrato mudou** para **comparar sua apar
 **Cautela essencial:** as imagens públicas de catálogo (ícones padrão) **podem ser visualmente muito diferentes dos retratos do draft e de skins**; o algoritmo RGB é apenas um experimento e provavelmente poderá retornar "Sem identificação segura" para muitos ou todos os slots. Isso não prova que o brawler não existe. Ainda NÃO é classificador validado de todos os personagens, não estima confiança estatística e não preenche eventos. Próximos passos: uma coleção de imagens comparáveis ao draft (com fontes/autorização adequadas), testes independentes com skins/idiomas/resoluções; detector de slots vazios; distinção de estado/semana/partida; identidade de cada jogador e vínculo ao UUID do banco.
 
 **Como validar:** Atualizar `feat/draft-auto-foundation`, abrir link vigente do jogador com sala aprovada, carregar duas imagens da mesma partida/fase, rolar abaixo de `Comparar duas capturas` para `Identificação pelo catálogo — sem cadastrar nomes`, clicar `Carregar catálogo visual` e observar contagem de referências utilizáveis e resultados Azul/Vermelho. Enviar print com quantas imagens foram carregadas e quais brawlers foram identificados/abstidos. Se 0 imagens por CORS, documentar erro e não improvisar proxy com privilégios.
+
+
+## Avaliação do catálogo + slots vazios com duas capturas de stream (26/10/2026)
+
+Observação reportada pelo usuário após importar duas capturas do mesmo draft, **sem necessidade de reunir seis jogadores**:
+- Metadados públicos BrawlAPI: 106 retratos disponíveis e 2 inacessíveis.
+- Azul 1 (Lumi) e Azul 2 (Meg): nomes apareceram como **palpites fracos** corretos no caso testado, não como reconhecimento seguro nem classificação de picks.
+- Azul 3: vazio no frame posterior, porém detector cromático devolveu `unknown` (falso negativo).
+- Vermelho 1 e 2: placeholders vazios encontrados corretamente.
+- Vermelho 3: retrato presente; o vizinho Moe foi incorreto, mas o sistema o mostrou somente como diagnóstico, sem aceitar identificação.
+- Comparador de frames: mudança relevante em Azul 3, corretamente; **zero novos checks verdes** neste par. Não converter mudança de retrato em pick.
+
+**Resposta técnica nesta branch:**
+- `src/lib/draftAutoEmptyReference.ts`: diagnóstico adicional que utiliza pelo menos dois slots vazios distintos e visualmente próximos no mesmo frame como âncoras, compara a assinatura 8x8 das demais cartas e exige evidência própria de pixels escuros/roxos. Sem duas âncoras compatíveis ou com evidência conflitante, mantém `unknown`. Não é classificador de estado confirmado.
+- `DraftAutoCatalogRecognitionLab`: exibe `Provavelmente vazio` com justificativa quando há correspondência com duas âncoras; novo painel expansível **Conferir os seis recortes e o motivo dos resultados** mostra a miniatura realmente analisada e três métricas por slot (padrão roxo, escuro, variação). Isso permite distinguir erro de posicionamento da região de erro de heurística sem imprimir informações privadas ou guardar screenshots.
+- `src/__tests__/draftAutoEmptyReference.test.ts`: cinco cenários sintéticos para reforço, ausência de âncoras suficientes e proteção contra retratos escuros.
+
+**Critério de validação real (pendente):** atualizar a branch e recarregar as duas mesmas capturas na página de jogador. Verificar as seis cartas e, sobretudo, se Azul 3 passa a ser `Provavelmente vazio`. Se não passar, abrir **Conferir os seis recortes** e anotar as métricas/miniatura de Azul 3 e dos Vermelhos 1–2. Não afrouxar globalmente limiares com base em um único caso. Sem imagens novas, continuar com os frames de usuário e screenshots públicos de outras partidas obtidos legalmente, não commitando material protegido sem licença.
+
+**Reconhecimento de identidade continua incompleto:** imagens públicas de catálogo não equivalem a retratos de skins ou cartão de jogo. 'Mais próximo' pode estar errado (Moe no slot Vermelho 3). Necessária base de retratos dentro do draft, avaliação independente por skins/idiomas/resoluções e melhor localização de cartas. Nenhum evento é transmitido ao coach nessa etapa.
