@@ -237,3 +237,24 @@ Nesta etapa:
 - O teste dos slots vazios e de check verde continua separado desse ranking; sem envio automático de qualquer dado.
 
 **Próxima validação manual:** na mesma tela do jogador e nas mesmas duas capturas, expandir o diagnóstico, selecionar `Azul 2` e o brawler `Meg`, e reportar sua posição e os três nomes mais próximos. Isso mede somente esta captura, não um indicador geral de qualidade. Se o modelo de referência público seguir falhando em personagens presentes, é preciso coletar uma galeria lícita e rotulada de **retratos de cartas dentro do draft e skins reais**, com conjunto independente de validação. Evitar prometer reconhecimento universal de brawlers.
+
+## UI do laboratório reorganizada para foco em eventos reais — 26/10/2026
+
+Pedido: uma única entrada de imagem e respostas objetivas para (i) primeiro/último pick, (ii) mapa, (iii) bans, (iv) picks confirmados e (v) pré-seleções. Evitar multiplicar formulários e blocos de estatísticas no fluxo normal.
+
+Implementado na branch `feat/draft-auto-foundation`:
+- Tela de jogador aprovado mostra primeiro `Analisar imagem do draft`, botão `Adicionar imagem`, `Resultado da imagem` e bloco compacto com **Mapa / Quem começa / Primeiro pick / Último pick / Bans confirmados / Picks confirmados / Pré-seleções**. Valor ausente não é inventado.
+- Quando a imagem contém faixa reconhecível `Blue/Red Team Starts`, a pessoa indica sua cor. Primeiro pick da sua equipe ou do inimigo resulta da combinação entre banner e lado humano; último pick é **calculado por snake order**, não detectado visualmente (não confundir com reconhecimento da fase do último pick).
+- A análise de seis slots está em `2. Examinar bans, picks e pré-seleções (experimental)`, com fase padrão `selection` e calibração opcional em `Ajustar posição das caixas`. A comparação por catálogo foi movida para a **primeira captura**, para permitir teste com só uma imagem, sem obrigar fornecer uma segunda. O comparador temporal de duas capturas fica opcional e inclui alerta de possíveis checks verdes; referência manual está em submenu técnico.
+- Diagnósticos de catalogação (nomes conhecidos e cortes) continuam disponíveis sob expansores. Novo terceiro comparador RGB+estrutura (`draftAutoCatalogCombined.ts`) é apenas **diagnóstico**, não gera eventos e não foi calibrado em corpus de skins.
+- O simulador manual de enviar evento para coach agora está recolhido separadamente e não compete com o fluxo principal.
+- Todas as capturas locais continuam locais. Não houve alteração de banco, migrações, permissões ou rotas do coach.
+
+**Limitações ainda abertas:**
+1. Mapa: não há OCR/classificador de localização adaptado a telas distintas.
+2. Ban confirmado vs. pré-selecionado, pick confirmado vs. pré-selecionado: os indicadores atuais são **somente indícios visuais**, sem ligação robusta entre brawler, slot, equipe, fase e frame temporal. Não promover a confirmação com um simples indício de cor/check.
+3. Brawler: 106 imagens públicas, arte por skin pode diferir muito. Na captura que continha Meg, RGB colocou a verdade em 11º, formas em 1º; na que continha Lumi, RGB 1º, formas 3º. Isso não estabelece taxa de acerto real. Ranking misto precisa ser avaliado no mesmo conjunto com rótulos verdadeiros **antes** de virar predição.
+4. Distinguir fisicamente o sexto pick/ordem temporal requer acompanhamento da partida; a ordem esperada por snake é conhecida se o first-pick for confiável e lado confirmado.
+5. Android/iOS, captura em segundo plano, streaming entre jogadores/coach e envio de observações visuais confirmadas ainda não implementados.
+
+**Validação do usuário:** efetuar `git switch feat/draft-auto-foundation`, `git pull --ff-only origin feat/draft-auto-foundation`, `npm run lint`, `npm test`, `npm run build`; na sessão aprovada do jogador, enviar uma imagem, verificar status e abrir análise experimental da seleção. Para exemplo com Lumi e Meg, carregar a segunda imagem como imagem principal, abrir o catálogo e (opcionalmente) inspecionar método combinado no teste técnico. Sem salvamento de partida falsa na equipe.
