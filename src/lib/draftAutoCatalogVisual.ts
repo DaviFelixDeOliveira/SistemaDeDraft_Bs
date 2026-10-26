@@ -77,3 +77,33 @@ export function matchDraftCatalogPortrait(
   return {status:'possible-match',name:best.name,gameId:best.gameId,
     similarity:best.similarity,margin,nearest};
 }
+
+/**
+ * Diagnostic of a HUMAN-labelled screenshot slot relative to this catalog.
+ * Rank measures which public artwork fingerprint is visually closest, not
+ * recognition accuracy. This function does not identify a brawler.
+ */
+export type DraftCatalogLabelDiagnostic = {
+  rank:number;
+  total:number;
+  similarity:number;
+  bestName:string;
+  scoreGap:number;
+};
+export function diagnoseDraftCatalogLabel(
+  target:DraftPortraitFingerprint,
+  references:DraftCatalogReference[],
+  humanSelectedId:number,
+):DraftCatalogLabelDiagnostic|null {
+  const ranked=references.flatMap(ref=>{
+    const similarity=portraitSimilarity(target,ref.fingerprint);
+    return similarity===null?[]:[{id:ref.id,name:ref.name,similarity}];
+  }).sort((a,b)=>b.similarity-a.similarity||a.id-b.id);
+  const index=ranked.findIndex(r=>r.id===humanSelectedId);
+  if(index<0)return null;
+  return {
+    rank:index+1,total:ranked.length,similarity:ranked[index].similarity,
+    bestName:ranked[0].name,
+    scoreGap:Math.round((ranked[0].similarity-ranked[index].similarity)*1000)/1000,
+  };
+}
