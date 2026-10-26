@@ -78,7 +78,7 @@ Deno.serve(async (req: Request) => {
 
       const raw = encode(crypto.getRandomValues(new Uint8Array(32)));
       const hash = await sha256(raw);
-      const expires = new Date(Math.min(Date.now() + 30 * 60_000, Date.parse(room.expires_at))).toISOString();
+      const expires = new Date(Math.min(Date.now() + 12 * 60 * 60_000, Date.parse(room.expires_at))).toISOString();
       const { data: item, error } = await db.from("draft_auto_join_requests")
         .insert({ room_id: room.id, display_name: name, token_hash: hash, expires_at: expires })
         .select("id,expires_at").single();
