@@ -24,7 +24,7 @@ type ViewportChoice = 'auto' | 'manual';
  * boxes. Neither phase nor card identity is inferred from image content.
  */
 export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
-  const [phase,setPhase]=useState<DraftScreenPhase>('final-preparation');
+  const [phase,setPhase]=useState<DraftScreenPhase>('selection');
   const [viewportChoice,setViewportChoice]=useState<ViewportChoice>('auto');
   const [manualWidth,setManualWidth]=useState(100);
   const [manualShift,setManualShift]=useState(0);
@@ -119,23 +119,24 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
   const selected=samples.find(s=>s.region.id===active);
   return <section className="space-y-3 rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3">
     <h4 className="flex items-center gap-2 text-sm font-bold">
-      <LayoutGrid className="h-4 w-4 text-cyan-400"/> Localizador de slots — tela completa (experimental)
+      <LayoutGrid className="h-4 w-4 text-cyan-400"/> Escolhas no jogo — localizar os seis jogadores
     </h4>
     <p className="text-xs text-zinc-400">
-      Agora diferenciamos a <strong>seleção</strong> da <strong>preparação final</strong>.
-      O sistema tenta localizar a área colorida do jogo entre bordas de vídeo; os slots continuam sendo
-      <strong> estimativas ajustáveis</strong>, não cartas encontradas por inteligência artificial.
-      Nenhum dado é enviado ao coach.
+      Escolha se o print é da tela de seleção ou da preparação final.
+      As caixas precisam cobrir os retratos corretamente antes da comparação.
+      <strong> Isso não confirma picks ou bans.</strong>
     </p>
     <label className="block space-y-1 text-xs font-semibold text-zinc-300">
-      Tipo de tela (escolha manual para este teste)
+      Qual tela aparece na imagem?
       <select className="w-full rounded-lg border border-zinc-700 bg-zinc-950 p-2 text-sm"
         value={phase} onChange={e=>{setPhase(e.target.value as DraftScreenPhase);setVerticalShift(0);}}>
         <option value="selection">Durante bans e picks (slots na parte inferior)</option>
         <option value="final-preparation">Preparação final (seis picks no centro)</option>
       </select>
     </label>
-    <label className="block space-y-1 text-xs text-zinc-300">
+    <details className="rounded-lg border border-zinc-700/70 p-2 text-xs text-zinc-300">
+      <summary className="cursor-pointer font-semibold">Ajustar posição das caixas (se necessário)</summary>
+      <label className="mt-2 block space-y-1 text-xs text-zinc-300">
       Localização da área do jogo
       <select className="w-full rounded-lg border border-zinc-700 bg-zinc-950 p-2 text-sm"
         value={viewportChoice} onChange={e=>setViewportChoice(e.target.value as ViewportChoice)}>
@@ -167,13 +168,14 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
         value={verticalShift} onChange={e=>setVerticalShift(Number(e.target.value))}/>
     </label>
     <button type="button" onClick={()=>{
-      setPhase('final-preparation');setViewportChoice('auto');setVerticalShift(0);setManualWidth(100);setManualShift(0);
+      setPhase('selection');setViewportChoice('auto');setVerticalShift(0);setManualWidth(100);setManualShift(0);
     }} className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300">Restaurar posições</button>
     <p className="text-xs text-zinc-400">
       {divider
         ? `Divisão azul/vermelha sugerida pelos pixels da imagem: ${Math.round(divider.split*100)}% da área do jogo. Apenas referência de alinhamento.`
         : 'Não foi possível reconhecer uma divisão azul/vermelha confiável. As caixas continuam aproximadas.'}
     </p>
+    </details>
     <div className="relative overflow-hidden rounded-lg border border-zinc-700 bg-black">
       <img src={imageUrl} alt="Captura com regiões aproximadas das cartas" className="block h-auto w-full"/>
       {regions.map(region=><button key={region.id} type="button"
