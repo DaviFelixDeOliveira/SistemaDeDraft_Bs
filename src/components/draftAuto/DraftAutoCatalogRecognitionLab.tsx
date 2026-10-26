@@ -20,6 +20,11 @@ type SlotFingerprint={
 };
 type SlotFingerprints=Record<string,SlotFingerprint>;
 type LoadingState='idle'|'loading'|'ready'|'failed';
+export type DraftAutoCatalogSlotGuess = {
+  regionId: string;
+  status: 'possible' | 'empty' | 'unknown';
+  name?: string;
+};
 
 function loadScreenshot(src:string):Promise<HTMLImageElement>{
   return new Promise((resolve,reject)=>{
@@ -92,8 +97,9 @@ function imageFingerprint(image:HTMLImageElement):DraftPortraitFingerprint|null{
  * Does not require manually typing names in each training session.
  */
 export function DraftAutoCatalogRecognitionLab({
-  screenshotUrl,regions,
-}:{screenshotUrl:string;regions:DraftHudRegion[]}) {
+  screenshotUrl,regions,compact=false,onResults,
+}:{screenshotUrl:string;regions:DraftHudRegion[];compact?:boolean;
+  onResults?:(result:DraftAutoCatalogSlotGuess[]|null)=>void}) {
   const [targets,setTargets]=useState<SlotFingerprints>({});
   const [references,setReferences]=useState<DraftCatalogReference[]>([]);
   const [phase,setPhase]=useState<LoadingState>('idle');
@@ -200,6 +206,32 @@ export function DraftAutoCatalogRecognitionLab({
     :null,[diagnosticKnownId,diagnosedTarget,references]);
   const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
     a.name.localeCompare(b.name,'pt-BR')),[references]);
+  useEffect(()=>{
+    if(!onResults)return;
+    if(phase!=='ready'){onResults(null);return;}
+    onResults(results.map(({region,match,emptyState})=>({
+      regionId:region.id,
+      status:emptyState!=='unknown'?'empty':match?.status==='possible-match'?'possible':'unknown',
+      name:emptyState==='unknown' && match?.status==='possible-match'?match.name:undefined,
+    })));
+  },[phase,results,onResults]);
+
+  if(compact) return <section className="mt-3 space-y-2 rounded-lg border border-cyan-700/40 p-3">
+    <p className="text-xs font-semibold text-zinc-200">Palpites de brawler na segunda imagem</p>
+    <p className="text-xs text-zinc-400">Opcional. Só compara com artes públicas; skins podem confundir. Não confirma escolhas.</p>
+    <button type="button" disabled={phase==='loading'} onClick={()=>void loadCatalog()}
+      className="w-full rounded-lg bg-cyan-700 p-2 text-sm font-semibold text-white disabled:opacity-50">
+      {phase==='loading'?'Analisando catálogo…':'Analisar brawlers da segunda imagem'}
+    </button>
+    {phase==='loading'&&<p role="status" className="text-xs text-zinc-400">
+      Imagens lidas: {processed} de {total||'…'}.
+    </p>}
+    {phase==='ready'&&<p className="text-xs text-emerald-300">
+      {references.length} referências disponíveis. Veja os palpites junto ao estado de cada slot acima.
+    </p>}
+    {error&&<p role="alert" className="text-xs text-red-400">{error}</p>}
+  </section>;
+
 
   return <section className="mt-4 space-y-3 rounded-xl border border-cyan-600/40 bg-cyan-500/5 p-3">
     <h4 className="flex items-center gap-2 text-sm font-bold text-white">
