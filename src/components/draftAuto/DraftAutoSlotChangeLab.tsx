@@ -9,6 +9,8 @@ import {
   greenCheckSearchRect,inspectGreenCheckTransition,type GreenCheckTransition,
 } from '../../lib/draftAutoGreenCheck';
 import { inspectSlotMarker } from '../../lib/draftAutoVisualEvidence';
+import { DraftAutoCatalogRecognitionLab,type DraftAutoCatalogSlotGuess } from './DraftAutoCatalogRecognitionLab';
+import { reviewDraftAutoSlot } from '../../lib/draftAutoSlotReview';
 import {
   describeDraftSlotTemporalEvidence, draftTemporalHintLabel,
   type DraftSlotTemporalEvidence,
@@ -47,6 +49,7 @@ export function DraftAutoSlotChangeLab({
   const [secondUrl,setSecondUrl]=useState<string|null>(null);
   const secondRef=useRef<string|null>(null);
   const [summary,setSummary]=useState<ComparisonSummary|null>(null);
+  const [catalogGuesses,setCatalogGuesses]=useState<DraftAutoCatalogSlotGuess[]|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
 
@@ -59,6 +62,7 @@ export function DraftAutoSlotChangeLab({
     secondRef.current=null;
     setSecondUrl(null);
     setSummary(null);
+    setCatalogGuesses(null);
     setError('');
   },[imageUrl]);
 
@@ -70,6 +74,7 @@ export function DraftAutoSlotChangeLab({
     secondRef.current=url;
     setSecondUrl(url);
     setSummary(null);
+    setCatalogGuesses(null);
     setError('');
   }
 
@@ -178,20 +183,24 @@ export function DraftAutoSlotChangeLab({
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {summary.results.map(({region,diff,temporal,externalCheck})=>{
           const interpretation=interpretDraftSlotSignals(diff,temporal,externalCheck);
+          const guess=catalogGuesses?.find(item=>item.regionId===region.id)??null;
+          const combined=reviewDraftAutoSlot(interpretation,guess);
           const highlighted=interpretation.state==="possible-pick" || interpretation.state==="possible-ban";
           const warning=interpretation.state==="portrait-changed" || interpretation.state==="review";
           return <div key={region.id} className={`rounded-lg border p-2 text-xs ${highlighted?
             "border-emerald-500/50 bg-emerald-500/10":warning?
             "border-amber-500/50 bg-amber-500/10":"border-zinc-700 bg-zinc-900/60"}`}>
             <strong className="text-zinc-100">{region.label}</strong>
-            <p className={`mt-1 font-semibold ${highlighted?
-              "text-emerald-300":warning?"text-amber-300":"text-zinc-300"}`}>{interpretation.label}</p>
+            <p className={`mt-1 font-semibold ${combined.conflict||warning?
+              "text-amber-300":highlighted?"text-emerald-300":"text-zinc-300"}`}>{combined.stateLabel}</p>
             {interpretation.state!=="no-new-signal"&&
               <p className="mt-1 text-zinc-400">{interpretation.detail}</p>}
+            <p className="mt-2 text-cyan-200">{combined.brawlerLabel}</p>
           </div>;
         })}
       </div>
       {summary.warning&&<p className="text-xs text-amber-300">{summary.warning}</p>}
+      <p className="text-xs text-zinc-400">Estados e nomes são hipóteses independentes. Confirme no jogo antes de registrar.</p>
       <p className="text-xs text-zinc-400">
         Uma pré-seleção pode mudar sem confirmação. Um check verde pode aparecer sem trocar o retrato.
         Os sinais podem falhar com animações ou recortes diferentes.
@@ -212,6 +221,9 @@ export function DraftAutoSlotChangeLab({
         </ul>
       </details>
     </div>}
+    {summary&&secondUrl&&
+      <DraftAutoCatalogRecognitionLab
+        screenshotUrl={secondUrl} regions={regions} compact onResults={setCatalogGuesses}/>}
     {secondUrl&&regions.length>=6&&<details className="rounded-lg border border-zinc-700 p-2">
       <summary className="cursor-pointer text-xs text-zinc-400">
         Comparar retratos com referências manuais (teste técnico)
