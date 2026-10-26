@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {parseDraftCatalog,matchDraftCatalogPortrait} from '../lib/draftAutoCatalogVisual';
+import {parseDraftCatalog,matchDraftCatalogPortrait,diagnoseDraftCatalogLabel} from '../lib/draftAutoCatalogVisual';
 import type {DraftCatalogReference} from '../lib/draftAutoCatalogVisual';
 import type {DraftPortraitFingerprint} from '../lib/draftAutoPortraitIdentity';
 
@@ -54,6 +54,26 @@ describe('Catálogo visual público: validação e abstenção',()=>{
     ]);
     expect(result.status).toBe('possible-match');
     expect(result).toMatchObject({name:'Shelly',gameId:16000001});
+  });
+  it('mostra em qual posição ficou uma resposta humana correta, mesmo fora do top-3',()=>{
+    const references=[
+      ref(16000001,'Charlie',150),
+      ref(16000002,'Lola',152),
+      ref(16000003,'Jessie',153),
+      ref(16000004,'Meg',160),
+      ref(16000005,'Max',165),
+    ];
+    const result=diagnoseDraftCatalogLabel(solid(150),references,16000004);
+    expect(result).toEqual({
+      rank:4,total:5,similarity:0.961,bestName:'Charlie',scoreGap:0.039,
+    });
+    // Diagnostic must not override the cautious match result.
+    expect(matchDraftCatalogPortrait(solid(150),references).name).toBeNull();
+  });
+  it('recusa diagnóstico quando o brawler não está no catálogo disponível',()=>{
+    expect(diagnoseDraftCatalogLabel(solid(100),[
+      ref(16000001,'Shelly',101),ref(16000002,'Colt',105),
+    ],16000004)).toBeNull();
   });
   it('recusa catálogo insuficiente',()=>{
     expect(matchDraftCatalogPortrait(solid(110),[ref(16000001,'Shelly',110)])
