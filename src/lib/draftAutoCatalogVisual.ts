@@ -37,7 +37,7 @@ export function parseDraftCatalog(payload: unknown): DraftCatalogPortrait[] {
     if(!raw||typeof raw!=='object')continue;
     const obj=raw as Record<string,unknown>;
     const id=obj.id;
-    if(!Number.isInteger(id)||typeof id!=='number'||id<16000000||id>16099999||
+    if(typeof id!=='number'||!Number.isInteger(id)||id<16000000||id>16099999||
       obj.released===false||typeof obj.name!=='string'||obj.name.trim().length<2)continue;
     const name=obj.name.trim().slice(0,60);
     const urls=[obj.imageUrl2,obj.imageUrl];
