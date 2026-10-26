@@ -44,6 +44,51 @@ function greenAt(frame:SlotPixelFrame,index:number):boolean {
  * Other green portrait parts, effects and stream overlays can resemble checks:
  * even a positive result still needs confirmation by a person.
  */
+
+type CheckShape = { cx:number;cy:number;novelFraction:number };
+
+/**
+ * Detect the silhouette of a check independently of pixel-to-pixel novelty.
+ * Slight movement or scaling between screenshots can make an OLD check look
+ * entirely new at pixel level; its approximate geometry must also be compared.
+ */
+function findCheckShapes(
+  mask:Uint8Array, previous:Uint8Array, width:number, height:number,
+): CheckShape[] {
+  const size=width*height,visited=new Uint8Array(size);
+  const minDim=Math.min(width,height),stack:number[]=[];
+  const shapes:CheckShape[]=[];
+  for(let i=0;i<size;i++){
+    if(!mask[i]||visited[i])continue;
+    visited[i]=1;stack.push(i);
+    let area=0,novel=0,minX=width,maxX=0,minY=height,maxY=0;
+    while(stack.length){
+      const at=stack.pop()!,x=at%width,y=Math.floor(at/width);
+      area++;if(!previous[at])novel++;
+      minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+      minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        if(!dx&&!dy)continue;
+        const nx=x+dx,ny=y+dy;
+        if(nx<0||ny<0||nx>=width||ny>=height)continue;
+        const next=ny*width+nx;
+        if(mask[next]&&!visited[next]){visited[next]=1;stack.push(next);}
+      }
+    }
+    const bw=maxX-minX+1,bh=maxY-minY+1;
+    const aspect=bw/bh,density=area/(bw*bh);
+    const cx=(minX+maxX)/(2*width),cy=(minY+maxY)/(2*height);
+    if(area>=size*.018&&area<=size*.25&&
+       bw>=minDim*.14&&bh>=minDim*.14&&
+       bw<=minDim*.78&&bh<=minDim*.78&&
+       aspect>=.55&&aspect<=1.8&&density>=.17&&density<=.73&&
+       cx>=.2&&cx<=.95&&cy>=.12&&cy<=.90) {
+      shapes.push({cx,cy,novelFraction:novel/area});
+    }
+  }
+  return shapes;
+}
+
 export function inspectGreenCheckTransition(
   before:SlotPixelFrame,
   after:SlotPixelFrame,
@@ -65,36 +110,14 @@ export function inspectGreenCheckTransition(
   const share=Math.round(newCount/size*1000)/1000;
   const noNew={status:'no-new-check' as const,newGreenShare:share};
   if(share<.018)return noNew;
-  const visited=new Uint8Array(size);
-  const minDim=Math.min(width,height);
-  const stack:number[]=[];
-  for(let i=0;i<size;i++){
-    if(!latest[i]||visited[i])continue;
-    visited[i]=1;stack.push(i);
-    let area=0,novel=0,minX=width,maxX=0,minY=height,maxY=0;
-    while(stack.length){
-      const at=stack.pop()!,x=at%width,y=Math.floor(at/width);
-      area++;if(!earlier[at])novel++;
-      minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-      minY=Math.min(minY,y);maxY=Math.max(maxY,y);
-      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
-        if(!dx&&!dy)continue;
-        const nx=x+dx,ny=y+dy;
-        if(nx<0||ny<0||nx>=width||ny>=height)continue;
-        const next=ny*width+nx;
-        if(latest[next]&&!visited[next]){visited[next]=1;stack.push(next);}
-      }
-    }
-    const bw=maxX-minX+1,bh=maxY-minY+1;
-    const aspect=bw/bh,density=area/(bw*bh);
-    const cx=(minX+maxX)/(2*width),cy=(minY+maxY)/(2*height);
-    if(area>=size*.018&&area<=size*.25&&novel/area>=.75&&
-       bw>=minDim*.14&&bh>=minDim*.14&&
-       bw<=minDim*.78&&bh<=minDim*.78&&
-       aspect>=.55&&aspect<=1.8&&density>=.17&&density<=.73&&
-       cx>=.2&&cx<=.95&&cy>=.12&&cy<=.90) {
-      return {status:'possible-check-appeared',newGreenShare:share};
-    }
-  }
+  const existingChecks=findCheckShapes(earlier,earlier,width,height);
+  const afterChecks=findCheckShapes(latest,earlier,width,height);
+  const genuinelyNew=afterChecks.some(candidate=>
+    candidate.novelFraction>=.75 &&
+    !existingChecks.some(previous=>
+      Math.hypot(previous.cx-candidate.cx,previous.cy-candidate.cy)<=.25
+    )
+  );
+  if(genuinelyNew)return {status:'possible-check-appeared',newGreenShare:share};
   return noNew;
 }
