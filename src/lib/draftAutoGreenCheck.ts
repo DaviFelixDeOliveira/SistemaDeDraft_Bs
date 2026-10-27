@@ -8,7 +8,7 @@ import type { SlotPixelFrame } from './draftAutoVisualEvidence';
  * diagnostic indications, never a verified pick or permission to send an event.
  */
 export type GreenCheckTransition = {
-  status: 'possible-check-appeared' | 'no-new-check' | 'unavailable';
+  status: 'possible-check-appeared' | 'check-disappeared' | 'ambiguous-check-change' | 'no-new-check' | 'unavailable';
   newGreenShare: number;
 };
 
@@ -109,15 +109,27 @@ export function inspectGreenCheckTransition(
   }
   const share=Math.round(newCount/size*1000)/1000;
   const noNew={status:'no-new-check' as const,newGreenShare:share};
-  if(share<.018)return noNew;
   const existingChecks=findCheckShapes(earlier,earlier,width,height);
   const afterChecks=findCheckShapes(latest,earlier,width,height);
-  const genuinelyNew=afterChecks.some(candidate=>
+  // A check that merely persists in another capture must never produce a
+  // second "confirmed" indication. Larger movements may be camera shifts.
+  const matches=(a:CheckShape,b:CheckShape)=>
+    Math.hypot(a.cx-b.cx,a.cy-b.cy)<=.25;
+  const newShape=afterChecks.some(candidate=>
     candidate.novelFraction>=.75 &&
-    !existingChecks.some(previous=>
-      Math.hypot(previous.cx-candidate.cx,previous.cy-candidate.cy)<=.25
-    )
+    !existingChecks.some(previous=>matches(previous,candidate))
   );
-  if(genuinelyNew)return {status:'possible-check-appeared',newGreenShare:share};
+  const disappeared=existingChecks.some(previous=>
+    !afterChecks.some(candidate=>matches(previous,candidate))
+  );
+  if(newShape&&existingChecks.length>0){
+    return {status:'ambiguous-check-change',newGreenShare:share};
+  }
+  if(newShape&&share>=.018){
+    return {status:'possible-check-appeared',newGreenShare:share};
+  }
+  if(disappeared){
+    return {status:'check-disappeared',newGreenShare:share};
+  }
   return noNew;
 }
