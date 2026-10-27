@@ -61,6 +61,9 @@ describe('Resumo simples dos sinais visuais (sem confirmar eventos)', () => {
     const result=interpretDraftSlotSignals(diff(true), evidence('portrait-change-only'), check());
     expect(result.state).toBe('portrait-changed');
     expect(result.label).toContain('pré-seleção');
+    const withWeakInternalGreen=interpretDraftSlotSignals(diff(true),
+      evidence('marker-appeared', null, 'pick'), check());
+    expect(withWeakInternalGreen.state).toBe('portrait-changed');
   });
   it('não transforma desaparecimento de marcador em pick removido confirmado', () => {
     expect(interpretDraftSlotSignals(diff(true), evidence('marker-disappeared', 'pick', null),
