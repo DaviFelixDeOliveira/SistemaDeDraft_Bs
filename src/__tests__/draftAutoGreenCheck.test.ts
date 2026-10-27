@@ -60,8 +60,15 @@ describe('Check verde no lado externo do cartão (diagnóstico)',()=>{
     expect(inspectGreenCheckTransition(frame('none'),frame('dots')).status)
       .toBe('no-new-check');
   });
-  it('não gera indicação quando o check desaparece (cancelamento ou correção)',()=>{
+  it('separa desaparecimento do check de uma nova confirmação',()=>{
     expect(inspectGreenCheckTransition(frame('check'),frame('none')).status)
+      .toBe('check-disappeared');
+  });
+  it('não repete a indicação em uma terceira captura com check persistente',()=>{
+    const first=frame('none'),second=frame('check'),third=frame('check');
+    expect(inspectGreenCheckTransition(first,second).status)
+      .toBe('possible-check-appeared');
+    expect(inspectGreenCheckTransition(second,third).status)
       .toBe('no-new-check');
   });
   it('recusa dados inconsistentes sem disparar evento',()=>{
