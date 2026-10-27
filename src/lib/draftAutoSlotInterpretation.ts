@@ -62,15 +62,15 @@ export function interpretDraftSlotSignals(
     return describe('possible-ban', 'Possível ban confirmado',
       'Surgiu um possível símbolo vermelho de bloqueio. Confira no jogo antes de registrar.');
   }
+  if (difference.visualChangeCandidate) {
+    return describe('portrait-changed', 'Retrato mudou — possível pré-seleção',
+      'Pode ser troca ou remoção de pré-seleção, animação ou mudança de enquadramento. Não é pick confirmado.');
+  }
   // Green portrait pixels, gadgets, or animations can make the weak internal
   // marker detector say "pick". Do not promote that evidence alone.
   if (possibleNewPickMarker) {
     return describe('review', 'Sinal verde no cartão — revisar',
       'O detector interno encontrou verde, mas não foi identificado um novo check externo confiável.');
-  }
-  if (difference.visualChangeCandidate) {
-    return describe('portrait-changed', 'Retrato mudou — possível pré-seleção',
-      'Pode ser troca ou remoção de pré-seleção, animação ou mudança de enquadramento. Não é pick confirmado.');
   }
   if (temporal.hint === 'unavailable' &&
       externalCheck.status === 'unavailable') {
