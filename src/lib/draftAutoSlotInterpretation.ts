@@ -42,21 +42,35 @@ export function interpretDraftSlotSignals(
     temporal.markerBefore !== 'ban';
   const possibleNewCheck = externalCheck.status === 'possible-check-appeared';
 
+  if (externalCheck.status === 'check-disappeared') {
+    return describe('review', 'Check verde desapareceu — revisar',
+      'O sinal anterior sumiu. Pode ser mudança de fase, captura desalinhada ou correção; não é um novo pick.');
+  }
+  if (externalCheck.status === 'ambiguous-check-change') {
+    return describe('review', 'Check mudou de posição — revisar',
+      'Já havia um check na primeira imagem. Uma mudança de posição não comprova outra escolha.');
+  }
   if (possibleNewCheck && possibleNewBanMarker) {
     return describe('review', 'Sinais de pick e ban conflitantes',
       'Os marcadores visuais são ambíguos. Confira as duas capturas.');
   }
-  if (possibleNewCheck || possibleNewPickMarker) {
+  if (possibleNewCheck) {
     return describe('possible-pick', 'Possível pick confirmado',
-      'Surgiu um possível check ou marcador de pick. Não confirma qual brawler foi escolhido.');
+      'Surgiu um possível check verde externo ao cartão. Confira se é o símbolo do jogo; ainda não é uma confirmação.');
   }
   if (possibleNewBanMarker) {
     return describe('possible-ban', 'Possível ban confirmado',
-      'Surgiu um possível marcador de bloqueio. Não confirma qual brawler foi banido.');
+      'Surgiu um possível símbolo vermelho de bloqueio. Confira no jogo antes de registrar.');
+  }
+  // Green portrait pixels, gadgets, or animations can make the weak internal
+  // marker detector say "pick". Do not promote that evidence alone.
+  if (possibleNewPickMarker) {
+    return describe('review', 'Sinal verde no cartão — revisar',
+      'O detector interno encontrou verde, mas não foi identificado um novo check externo confiável.');
   }
   if (difference.visualChangeCandidate) {
-    return describe('portrait-changed', 'Retrato mudou',
-      'Pode ser troca ou remoção de pré-seleção, animação ou mudança de enquadramento. Não é confirmação.');
+    return describe('portrait-changed', 'Retrato mudou — possível pré-seleção',
+      'Pode ser troca ou remoção de pré-seleção, animação ou mudança de enquadramento. Não é pick confirmado.');
   }
   if (temporal.hint === 'unavailable' &&
       externalCheck.status === 'unavailable') {
