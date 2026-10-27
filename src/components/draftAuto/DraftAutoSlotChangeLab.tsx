@@ -195,7 +195,7 @@ export function DraftAutoSlotChangeLab({
               "text-amber-300":highlighted?"text-emerald-300":"text-zinc-300"}`}>{combined.stateLabel}</p>
             {interpretation.state!=="no-new-signal"&&
               <p className="mt-1 text-zinc-400">{interpretation.detail}</p>}
-            <p className="mt-2 text-cyan-200">{combined.brawlerLabel}</p>
+            {guess&&<p className="mt-2 text-cyan-200">{combined.brawlerLabel}</p>}
           </div>;
         })}
       </div>
@@ -215,6 +215,8 @@ export function DraftAutoSlotChangeLab({
           {summary.results.map(({region,diff,temporal,externalCheck})=><li key={region.id}>
             <strong>{region.label}:</strong> {Math.round(diff.changedFraction*100)}% dos pixels do retrato mudaram;
             check externo: {externalCheck.status==="possible-check-appeared"?"possível novo":
+              externalCheck.status==="check-disappeared"?"desapareceu":
+              externalCheck.status==="ambiguous-check-change"?"mudou de posição (ambíguo)":
               externalCheck.status==="no-new-check"?"nenhum novo":"indisponível"};
             marcador: {draftTemporalHintLabel(temporal)}.
           </li>)}
