@@ -35,10 +35,10 @@ export const draftAutoRoomService = {
 
   create: async (): Promise<DraftAutoRoom> => {
     const teamId = await requireTeamId();
-    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
     for (let attempt = 0; attempt < 3; attempt++) {
       const { data, error } = await supabase.from('draft_auto_rooms')
-        .insert({ team_id: teamId, join_code: generateDraftAutoRoomCode(), status: 'active', expires_at: expiresAt })
+        // Use the DB-side 12h expiry default to avoid browser clock skew.
+        .insert({ team_id: teamId, join_code: generateDraftAutoRoomCode(), status: 'active' })
         .select(columns).single();
       if (!error && data) return data as DraftAutoRoom;
       if (error?.code === '23505') continue;
