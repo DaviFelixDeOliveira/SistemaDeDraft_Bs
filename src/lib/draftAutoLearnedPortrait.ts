@@ -55,8 +55,9 @@ export function addDraftLearnedPortrait(
 }
 
 export type DraftLearnedMatch = {
-  status: 'possible' | 'unknown';
+  status: 'possible' | 'unknown' | 'seen-example';
   name: string | null;
+  brawlerId: number | null;
   similarity: number;
   margin: number;
 };
@@ -66,14 +67,14 @@ export function matchDraftLearnedPortrait(
   target: DraftPortraitFingerprint, references: DraftLearnedPortrait[],
 ): DraftLearnedMatch {
   const blank = (similarity = 0, margin = 0): DraftLearnedMatch =>
-    ({ status: 'unknown', name: null, similarity, margin });
+    ({ status: 'unknown', name: null, brawlerId: null, similarity, margin });
   if (!validFingerprint(target)) return blank();
-  const byId = new Map<number, { name: string; score: number }>();
+  const byId = new Map<number, { id: number; name: string; score: number }>();
   for (const ref of parseDraftLearnedPortraits(references)) {
     const score = portraitSimilarity(target, ref.fingerprint);
     if (score === null) continue;
     if (score > (byId.get(ref.brawlerId)?.score ?? -1)) {
-      byId.set(ref.brawlerId, { name: ref.name, score });
+      byId.set(ref.brawlerId, { id: ref.brawlerId, name: ref.name, score });
     }
   }
   if (byId.size < 2) return blank();
@@ -81,5 +82,14 @@ export function matchDraftLearnedPortrait(
   const best = ranked[0], runnerUp = ranked[1];
   const margin = Math.round((best.score - runnerUp.score) * 1000) / 1000;
   if (best.score < .96 || margin < .04) return blank(best.score, margin);
-  return { status: 'possible', name: best.name, similarity: best.score, margin };
+  // An exact fingerprint is a remembered training example, not an
+  // independent recognition success on unseen game imagery.
+  if (best.score === 1) return {
+    status: 'seen-example', name: best.name, brawlerId: best.id,
+    similarity: best.score, margin,
+  };
+  return {
+    status: 'possible', name: best.name, brawlerId: best.id,
+    similarity: best.score, margin,
+  };
 }
