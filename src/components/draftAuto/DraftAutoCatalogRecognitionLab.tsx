@@ -530,7 +530,10 @@ export function DraftAutoCatalogRecognitionLab({
           <strong>Resultado do teste (não treinou nada)</strong>
           <p>Acertos: {holdoutReport.correct} · Erros: {holdoutReport.incorrect}
             {' '}· Sem resposta: {holdoutReport.abstained}</p>
-          <p>Cartas já vistas no treinamento: {holdoutReport.memorized} (fora da avaliação).</p>
+          <p>Brawlers com retratos já ensinados: {trainingCoverage.known} de {trainingCoverage.total}
+            {' '}selecionados nesta imagem. {trainingCoverage.unseen} ainda sem exemplos locais.</p>
+          <p>Assinaturas visuais idênticas às ensinadas: {holdoutReport.memorized}
+            {' '}(excluídas da avaliação).</p>
           <p>Acertos entre as {holdoutReport.evaluated} cartas novas rotuladas:
             {' '}{holdoutReport.accuracy===null?'Ainda não há teste independente':
               Math.round(holdoutReport.accuracy*100)+'%'}.
