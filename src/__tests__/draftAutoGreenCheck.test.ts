@@ -36,6 +36,23 @@ describe('Check verde visível em uma única imagem (sem confirmar pick)',()=>{
     expect(inspectGreenCheckPresence(frame('block')).status).toBe('not-detected');
     expect(inspectGreenCheckPresence(frame('dots')).status).toBe('not-detected');
   });
+  it('detecta check verde comprimido próximo à borda externa da carta',()=>{
+    // Some red-side cards leave only a narrow visible check in the search ROI.
+    const original=frame('check');
+    const narrow=frame('none');
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const from=(y*width+x)*4;
+      if(original.data[from+1]!==218)continue;
+      const toX=Math.round(72+(x-66)*.55);
+      const to=(y*width+toX)*4;
+      narrow.data[to]=42;narrow.data[to+1]=218;
+      narrow.data[to+2]=37;narrow.data[to+3]=255;
+    }
+    expect(inspectGreenCheckPresence(narrow).status).toBe('possible-check-visible');
+    // Do not broaden the much more sensitive "new pick" transition rules.
+    expect(inspectGreenCheckTransition(frame('none'),narrow).status)
+      .not.toBe('possible-check-appeared');
+  });
   it('recusa recorte inválido sem inventar que uma escolha foi confirmada',()=>{
     const broken={width:120,height:96,data:new Uint8ClampedArray(12)};
     expect(inspectGreenCheckPresence(broken).status).toBe('unavailable');
