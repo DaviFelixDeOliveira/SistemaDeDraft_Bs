@@ -1,5 +1,6 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
+import { evaluateDraftHoldout, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
 import {
   DRAFT_LOCAL_PORTRAITS_KEY, addDraftLearnedPortrait,
   matchDraftLearnedPortrait, parseDraftLearnedPortraits,
@@ -117,6 +118,8 @@ export function DraftAutoCatalogRecognitionLab({
   const [trainingSlot,setTrainingSlot]=useState('blue-1');
   const [trainingId,setTrainingId]=useState('');
   const [trainingMessage,setTrainingMessage]=useState('');
+  const [holdoutLabels,setHoldoutLabels]=useState<Record<string,string>>({});
+  const [holdoutReport,setHoldoutReport]=useState<DraftHoldoutReport|null>(null);
   const [diagnosticKnownId,setDiagnosticKnownId]=useState('');
   const controllerRef=useRef<AbortController|null>(null);
 
@@ -132,6 +135,8 @@ export function DraftAutoCatalogRecognitionLab({
   useEffect(()=>{
     let live=true;
     setDiagnosticKnownId('');
+    setHoldoutLabels({});
+    setHoldoutReport(null);
     setTargets({});
     loadScreenshot(screenshotUrl).then(image=>{
       if(live)setTargets(getSlotFingerprints(image,regions));
@@ -236,6 +241,22 @@ export function DraftAutoCatalogRecognitionLab({
     }
   }
 
+  function assessUnseenScreenshot() {
+    const observations=results.flatMap(({region,match,emptyState})=>{
+      const truth=holdoutLabels[region.id];
+      if(!truth)return [];
+      const actual=truth==='empty'?'empty' as const:Number(truth);
+      const learnedMatch=learnedMatches[region.id];
+      const memorized=learnedMatch?.status==='seen-example';
+      const predicted=emptyState!=='unknown'?'empty' as const:
+        memorized?null:
+        learnedMatch?.status==='possible'?learnedMatch.brawlerId:
+        match?.status==='possible-match'?match.gameId:null;
+      return [{actual,predicted,memorized}];
+    });
+    setHoldoutReport(evaluateDraftHoldout(observations));
+  }
+
   function addTrainingExample() {
     const target=targets[trainingSlot];
     const ref=references.find(item=>String(item.id)===trainingId);
@@ -255,7 +276,8 @@ export function DraftAutoCatalogRecognitionLab({
     if(phase!=='ready'){onResults(null);return;}
     onResults(results.map(({region,match,emptyState})=>{
       const local=learnedMatches[region.id];
-      const possible=local?.status==='possible'?local.name:
+      const possible=local?.status==='seen-example'?null:
+        local?.status==='possible'?local.name:
         match?.status==='possible-match'?match.name:null;
       return {
         regionId:region.id,
@@ -310,7 +332,14 @@ export function DraftAutoCatalogRecognitionLab({
         {results.map(({region,match,emptyState})=><div key={region.id}
           className="min-w-0 rounded-lg border border-zinc-700 bg-zinc-950/70 p-2 text-xs">
           <strong>{region.label}</strong>
-          {emptyState==='unknown'&&learnedMatches[region.id]?.status==='possible'
+          {emptyState==='unknown'&&learnedMatches[region.id]?.status==='seen-example'
+            ?<p className="mt-1 break-words text-amber-200">
+              Exemplo já ensinado: {learnedMatches[region.id]?.name}
+              <span className="block text-[10px] text-zinc-400">
+                Esta carta corresponde exatamente a um exemplo salvo. Isso não mede acerto em imagem nova.
+              </span>
+            </p>
+            :emptyState==='unknown'&&learnedMatches[region.id]?.status==='possible'
             ?<p className="mt-1 break-words text-emerald-300">
               Possivelmente {learnedMatches[region.id]?.name}
               <span className="block text-[10px] text-zinc-400">
@@ -334,7 +363,7 @@ export function DraftAutoCatalogRecognitionLab({
               </span>
             </p>
             :<p className="mt-1 text-zinc-400">Sem identificação segura</p>}
-          {emptyState==='unknown'&&match?.status==='uncertain'&&match.nearest[0]&&
+          {emptyState==='unknown'&&learnedMatches[region.id]?.status!=='seen-example'&&match?.status==='uncertain'&&match.nearest[0]&&
             <details className="mt-2 text-[10px] text-zinc-500">
               <summary className="cursor-pointer">Ver palpite fraco (diagnóstico)</summary>
               <p className="mt-1 break-words">
@@ -378,6 +407,10 @@ export function DraftAutoCatalogRecognitionLab({
           {learned.length} exemplos de {new Set(learned.map(item=>item.brawlerId)).size} brawlers salvos.
           {' '}O acerto deve ser avaliado em outra captura, não naquela usada para ensinar.
         </p>
+        <p className="text-amber-200">
+          Treinar seis cartas e reconhecer essas mesmas seis não significa 100% de precisão.
+          Para medir acertos, use um print de outra partida.
+        </p>
         {trainingMessage&&<p role="alert" className="text-amber-300">{trainingMessage}</p>}
         {learned.length>0&&<button type="button" className="text-red-300 underline"
           onClick={()=>{
@@ -386,6 +419,50 @@ export function DraftAutoCatalogRecognitionLab({
             }
           }}>Apagar exemplos salvos</button>}
       </div>
+      <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
+        <summary className="cursor-pointer font-semibold">
+          Avaliar precisão com um print NOVO (sem ensinar)
+        </summary>
+        <p className="mt-2 text-zinc-400">
+          Use uma captura diferente da usada para ensinar, preferencialmente de outra partida.
+          Informe quais brawlers realmente aparecem. O sistema compara as respostas sem
+          salvá-las nem treiná-las automaticamente.
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {results.map(({region})=><label key={region.id} className="min-w-0 space-y-1">
+            <span className="block font-semibold">{region.label}</span>
+            <select className="w-full min-w-0 rounded-md border border-zinc-700 bg-zinc-950 p-1.5 text-xs"
+              value={holdoutLabels[region.id]??''}
+              onChange={e=>{
+                setHoldoutLabels(previous=>({...previous,[region.id]:e.target.value}));
+                setHoldoutReport(null);
+              }}>
+              <option value="">Não avaliar</option>
+              <option value="empty">Carta vazia</option>
+              {alphabeticalReferences.map(ref=><option key={ref.id} value={String(ref.id)}>{ref.name}</option>)}
+            </select>
+          </label>)}
+        </div>
+        <button type="button" onClick={assessUnseenScreenshot}
+          disabled={!Object.values(holdoutLabels).some(Boolean)}
+          className="mt-3 w-full rounded-md bg-indigo-600 p-2 font-semibold text-white disabled:opacity-50">
+          Conferir acertos desta imagem
+        </button>
+        {holdoutReport&&<div className="mt-3 space-y-1 rounded-md border border-zinc-700 p-2">
+          <strong>Resultado do teste (não treinou nada)</strong>
+          <p>Acertos: {holdoutReport.correct} · Erros: {holdoutReport.incorrect}
+            {' '}· Sem resposta: {holdoutReport.abstained}</p>
+          <p>Cartas já vistas no treinamento: {holdoutReport.memorized} (fora da avaliação).</p>
+          <p>Acertos entre as {holdoutReport.evaluated} cartas novas rotuladas:
+            {' '}{holdoutReport.accuracy===null?'Ainda não há teste independente':
+              Math.round(holdoutReport.accuracy*100)+'%'}.
+          </p>
+          {holdoutReport.evaluated<20&&<p className="text-amber-200">
+            Amostra pequena: este resultado não representa a precisão real.
+            Continue avaliando capturas diferentes.
+          </p>}
+        </div>}
+      </details>
       <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
         <summary className="cursor-pointer font-medium">
           Testes técnicos dos métodos de reconhecimento (opcional)
