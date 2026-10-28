@@ -84,3 +84,28 @@ export function draftHudPixelRect(region:DraftHudRegion,width:number,height:numb
   const bottom=Math.max(y+1,Math.min(height,Math.round((region.y+region.height)*height)));
   return {x,y,width:right-x,height:bottom-y};
 }
+
+
+/** Single-slot calibration in normalized screenshot coordinates.
+ * These changes move or resize only the supplied region and never imply
+ * a confirmed pick, ban, or recognized brawler.
+ */
+export function editDraftHudRegion(
+  region:DraftHudRegion,
+  action:'move'|'resize',
+  deltaX:number,
+  deltaY:number,
+):DraftHudRegion {
+  if(!Number.isFinite(deltaX)||!Number.isFinite(deltaY))return region;
+  const clamp=(value:number,min:number,max:number)=>Math.min(max,Math.max(min,value));
+  if(action==='move')return {
+    ...region,
+    x:clamp(region.x+deltaX,0,1-region.width),
+    y:clamp(region.y+deltaY,0,1-region.height),
+  };
+  return {
+    ...region,
+    width:clamp(region.width+deltaX,.025,1-region.x),
+    height:clamp(region.height+deltaY,.045,1-region.y),
+  };
+}
