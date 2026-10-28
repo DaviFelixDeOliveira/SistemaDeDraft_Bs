@@ -56,7 +56,8 @@ describe('Exemplos de retratos reais (apenas no navegador)',()=>{
   });
   it('permite hipótese em nova imagem parecida, mas não idêntica',()=>{
     const target=face('red');
-    target.cells[1]=Math.max(0,target.cells[1]-9);
+    // Adjust several cells enough to differ after 3-decimal similarity rounding.
+    for(let i=0;i<24;i++)target.cells[i]=Math.max(0,target.cells[i]-9);
     const result=matchDraftLearnedPortrait(target,[
       entry(16000001,'Vermelho','red'),
       entry(16000002,'Azul','blue'),
