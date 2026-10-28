@@ -2,6 +2,10 @@ import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
 import { evaluateDraftHoldout, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
 import {
+  clearDraftAutoPortraitCrops,listDraftAutoPortraitCrops,makeDraftAutoPortraitCrop,
+  saveDraftAutoPortraitCrop,type DraftAutoPortraitCrop,
+} from '../../services/draftAutoPortraitCrops';
+import {
   DRAFT_LOCAL_PORTRAITS_KEY, addDraftLearnedPortrait,
   matchDraftLearnedPortrait, parseDraftLearnedPortraits,
   type DraftLearnedPortrait,
@@ -23,6 +27,7 @@ type SlotFingerprint={
   portrait:DraftPortraitFingerprint;
   emptyEvidence:DraftEmptySlotEvidence;
   preview:string;
+  facePreview:string;
 };
 type SlotFingerprints=Record<string,SlotFingerprint>;
 type LoadingState='idle'|'loading'|'ready'|'failed';
@@ -53,11 +58,21 @@ function getSlotFingerprints(image:HTMLImageElement,regions:DraftHudRegion[]):Sl
     ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,64,80);
     const pixels=ctx.getImageData(0,0,64,80);
     const fp=portraitFingerprint(pixels);
-    if(fp)found[region.id]={
-      portrait:fp,
-      emptyEvidence:inspectDraftEmptySlot(pixels),
-      preview:canvas.toDataURL('image/png'),
-    };
+    if(fp) {
+      const faceCanvas=document.createElement('canvas');
+      faceCanvas.width=64;faceCanvas.height=64;
+      const faceCtx=faceCanvas.getContext('2d');
+      if(!faceCtx)throw new Error('Recorte facial indisponível neste navegador.');
+      // Same central region as portraitFingerprint: no nick, gears, side badges
+      // or full screenshot is stored.
+      faceCtx.drawImage(canvas,11,16,39,42,0,0,64,64);
+      found[region.id]={
+        portrait:fp,
+        emptyEvidence:inspectDraftEmptySlot(pixels),
+        preview:canvas.toDataURL('image/png'),
+        facePreview:faceCanvas.toDataURL('image/png'),
+      };
+    }
   }
   return found;
 }
@@ -115,6 +130,7 @@ export function DraftAutoCatalogRecognitionLab({
   const [error,setError]=useState('');
   const [diagnosticSlot,setDiagnosticSlot]=useState('blue-2');
   const [learned,setLearned]=useState<DraftLearnedPortrait[]>([]);
+  const [savedCrops,setSavedCrops]=useState<DraftAutoPortraitCrop[]>([]);
   const [trainingSlot,setTrainingSlot]=useState('blue-1');
   const [trainingId,setTrainingId]=useState('');
   const [trainingMessage,setTrainingMessage]=useState('');
@@ -124,12 +140,21 @@ export function DraftAutoCatalogRecognitionLab({
   const controllerRef=useRef<AbortController|null>(null);
 
   useEffect(()=>{
+    let live=true;
+    void listDraftAutoPortraitCrops().then(items=>{
+      if(live)setSavedCrops(items);
+    }).catch(()=>{
+      // Old browsers / blocked IndexedDB can still use fingerprint-only mode.
+    });
     try {
       setLearned(parseDraftLearnedPortraits(
         JSON.parse(window.localStorage.getItem(DRAFT_LOCAL_PORTRAITS_KEY)??'[]'),
       ));
     } catch { setLearned([]); }
-    return ()=>controllerRef.current?.abort();
+    return ()=>{
+      live=false;
+      controllerRef.current?.abort();
+    };
   },[]);
 
   useEffect(()=>{
@@ -235,6 +260,7 @@ export function DraftAutoCatalogRecognitionLab({
     try {
       window.localStorage.setItem(DRAFT_LOCAL_PORTRAITS_KEY,JSON.stringify(next));
       setLearned(next);
+      setHoldoutReport(null);
       setTrainingMessage('');
     } catch {
       setTrainingMessage('Não foi possível salvar exemplos neste navegador.');
@@ -257,7 +283,7 @@ export function DraftAutoCatalogRecognitionLab({
     setHoldoutReport(evaluateDraftHoldout(observations));
   }
 
-  function addTrainingExample() {
+  async function addTrainingExample() {
     const target=targets[trainingSlot];
     const ref=references.find(item=>String(item.id)===trainingId);
     if(!target||!ref){setTrainingMessage('Escolha uma carta preenchida e o brawler correto.');return;}
@@ -269,6 +295,30 @@ export function DraftAutoCatalogRecognitionLab({
       brawlerId:ref.id,name:ref.name,fingerprint:target.portrait,
     });
     storeLearned(next);
+    const crop=makeDraftAutoPortraitCrop(
+      ref.id,ref.name,target.portrait,target.facePreview,
+    );
+    if(crop) {
+      try {
+        await saveDraftAutoPortraitCrop(crop);
+        setSavedCrops(await listDraftAutoPortraitCrops());
+      } catch {
+        setTrainingMessage('Assinatura visual salva, mas o recorte em imagem não pôde ser guardado.');
+      }
+    }
+  }
+
+  function exportFaceDataset() {
+    if(!savedCrops.length)return;
+    const payload={
+      version:1,format:'draft-face-crops',exportedAt:new Date().toISOString(),
+      examples:savedCrops,
+    };
+    const url=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));
+    const link=document.createElement('a');
+    link.href=url;link.download='biblioteca-retratos-draft.json';
+    document.body.appendChild(link);link.click();link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
   useEffect(()=>{
@@ -398,7 +448,7 @@ export function DraftAutoCatalogRecognitionLab({
             </option>)}
           </select>
         </label>
-        <button type="button" onClick={addTrainingExample}
+        <button type="button" onClick={()=>void addTrainingExample()}
           disabled={!targets[trainingSlot]||!trainingId}
           className="w-full rounded-md bg-cyan-700 p-2 font-semibold text-white disabled:opacity-50">
           Guardar este retrato como exemplo
@@ -411,11 +461,33 @@ export function DraftAutoCatalogRecognitionLab({
           Treinar seis cartas e reconhecer essas mesmas seis não significa 100% de precisão.
           Para medir acertos, use um print de outra partida.
         </p>
+        <details className="rounded border border-zinc-700 p-2">
+          <summary className="cursor-pointer">
+            Recortes reais salvos neste navegador ({savedCrops.length})
+          </summary>
+          <p className="mt-1 text-zinc-400">
+            Guardamos só a região central do rosto, sem nomes de jogadores.
+            As seis referências antigas podem conter apenas assinatura, sem imagem.
+          </p>
+          <div className="mt-2 flex max-h-52 flex-wrap gap-2 overflow-y-auto">
+            {savedCrops.slice(0,80).map(crop=><div key={crop.id}
+              className="w-16 rounded border border-zinc-700 p-1 text-center">
+              <img src={crop.faceDataUrl} alt={crop.name} className="mx-auto h-12 w-12 object-contain"/>
+              <span className="block truncate text-[10px]">{crop.name}</span>
+            </div>)}
+          </div>
+          {savedCrops.length>0&&<button type="button" onClick={exportFaceDataset}
+            className="mt-2 rounded bg-zinc-800 px-2 py-1 text-xs text-cyan-200">
+            Baixar biblioteca de recortes (backup JSON)
+          </button>}
+        </details>
         {trainingMessage&&<p role="alert" className="text-amber-300">{trainingMessage}</p>}
         {learned.length>0&&<button type="button" className="text-red-300 underline"
           onClick={()=>{
             if(window.confirm('Apagar todos os exemplos de retratos salvos neste navegador?')){
               storeLearned([]);
+              void clearDraftAutoPortraitCrops().then(()=>setSavedCrops([])).catch(()=>
+                setTrainingMessage('Não foi possível apagar os recortes em imagem.'));
             }
           }}>Apagar exemplos salvos</button>}
       </div>
