@@ -1,6 +1,6 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
-import { evaluateDraftHoldout, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
+import { evaluateDraftHoldout, summarizeDraftTrainingCoverage, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
 import {
   clearDraftAutoPortraitCrops,listDraftAutoPortraitCrops,makeDraftAutoPortraitCrop,
   saveDraftAutoPortraitCrop,type DraftAutoPortraitCrop,
