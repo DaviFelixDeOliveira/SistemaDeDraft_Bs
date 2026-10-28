@@ -82,10 +82,10 @@ function findCheckShapes(
     // Single screenshots can contain narrower, partially occluded checks
     // (especially on the red team's last cards). Apply wider shape bounds
     // ONLY when reporting diagnostic presence, never to new-pick transitions.
-    const minShare=relaxedSingleFrame?.01:.018;
-    const minWidth=relaxedSingleFrame?.11:.14;
-    const minAspect=relaxedSingleFrame?.38:.55;
-    const maxDensity=relaxedSingleFrame?.80:.73;
+    const minShare=relaxedSingleFrame ? 0.01 : 0.018;
+    const minWidth=relaxedSingleFrame ? 0.11 : 0.14;
+    const minAspect=relaxedSingleFrame ? 0.38 : 0.55;
+    const maxDensity=relaxedSingleFrame ? 0.80 : 0.73;
     if(area>=size*minShare&&area<=size*.25&&
        bw>=minDim*minWidth&&bh>=minDim*.14&&
        bw<=minDim*.78&&bh<=minDim*.78&&
