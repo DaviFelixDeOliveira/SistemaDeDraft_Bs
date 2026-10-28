@@ -11,6 +11,7 @@ export type DraftAutoPortraitCrop = {
   brawlerId: number;
   name: string;
   faceDataUrl: string;
+  fingerprint: DraftPortraitFingerprint;
   createdAt: number;
 };
 
@@ -40,7 +41,8 @@ export function makeDraftAutoPortraitCrop(
   }
   return {
     id: brawlerId + '-' + (hash >>> 0).toString(16),
-    brawlerId,name:name.trim(),faceDataUrl,createdAt,
+    brawlerId,name:name.trim(),faceDataUrl,
+    fingerprint:{cells:[...fingerprint.cells]},createdAt,
   };
 }
 
