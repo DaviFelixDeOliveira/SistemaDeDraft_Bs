@@ -7,6 +7,7 @@ import {
 } from '../../lib/draftAutoScene';
 import { inspectSlotMarker,type SlotMarkerEvidence } from '../../lib/draftAutoVisualEvidence';
 import { DraftAutoSlotChangeLab } from './DraftAutoSlotChangeLab';
+import { DraftAutoSingleCheckLab } from './DraftAutoSingleCheckLab';
 import { DraftAutoCatalogRecognitionLab } from './DraftAutoCatalogRecognitionLab';
 import {
   detectDraftTeamDivider,alignDraftRegionsToTeamDivider,type DraftTeamDivider,
@@ -190,6 +191,7 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
         </span>
       </button>)}
     </div>
+    <DraftAutoSingleCheckLab imageUrl={imageUrl} regions={regions}/>
     <p className="text-[11px] text-amber-300">
       {phase==='final-preparation'
         ? 'A preparação final mostra os seis personagens juntos, mas não revela o momento exato de cada pick.'
