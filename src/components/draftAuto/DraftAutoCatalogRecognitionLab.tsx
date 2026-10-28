@@ -1,6 +1,6 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
-import { evaluateDraftHoldout, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
+import { evaluateDraftHoldout, summarizeDraftTrainingCoverage, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
 import {
   clearDraftAutoPortraitCrops,listDraftAutoPortraitCrops,makeDraftAutoPortraitCrop,
   saveDraftAutoPortraitCrop,type DraftAutoPortraitCrop,
@@ -256,6 +256,12 @@ export function DraftAutoCatalogRecognitionLab({
     :null,[diagnosticKnownId,diagnosedTarget,references]);
   const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
     a.name.localeCompare(b.name,'pt-BR')),[references]);
+  const trainingCoverage=summarizeDraftTrainingCoverage(
+    Object.values(holdoutLabels).filter(Boolean).map(label=>
+      label==='empty'?'empty':Number(label)),
+    learned.map(example=>example.brawlerId),
+  );
+
   function storeLearned(next:DraftLearnedPortrait[]) {
     try {
       window.localStorage.setItem(DRAFT_LOCAL_PORTRAITS_KEY,JSON.stringify(next));
@@ -524,7 +530,10 @@ export function DraftAutoCatalogRecognitionLab({
           <strong>Resultado do teste (não treinou nada)</strong>
           <p>Acertos: {holdoutReport.correct} · Erros: {holdoutReport.incorrect}
             {' '}· Sem resposta: {holdoutReport.abstained}</p>
-          <p>Cartas já vistas no treinamento: {holdoutReport.memorized} (fora da avaliação).</p>
+          <p>Brawlers com retratos já ensinados: {trainingCoverage.known} de {trainingCoverage.total}
+            {' '}selecionados nesta imagem. {trainingCoverage.unseen} ainda sem exemplos locais.</p>
+          <p>Assinaturas visuais idênticas às ensinadas: {holdoutReport.memorized}
+            {' '}(excluídas da avaliação).</p>
           <p>Acertos entre as {holdoutReport.evaluated} cartas novas rotuladas:
             {' '}{holdoutReport.accuracy===null?'Ainda não há teste independente':
               Math.round(holdoutReport.accuracy*100)+'%'}.

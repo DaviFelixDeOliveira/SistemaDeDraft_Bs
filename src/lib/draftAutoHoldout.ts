@@ -9,6 +9,25 @@ export type DraftHoldoutObservation = {
   memorized: boolean;
 };
 
+/**
+ * How many human-labelled brawlers in a new screenshot have at least one
+ * previously taught in-game portrait? This is label coverage, NOT recognition
+ * success: a new skin or capture can still fail the appearance matcher.
+ */
+export function summarizeDraftTrainingCoverage(
+  labels: readonly (number | 'empty')[],
+  taughtBrawlerIds: readonly number[],
+): { known: number; unseen: number; total: number; empty: number } {
+  const taught = new Set(taughtBrawlerIds);
+  let known = 0, unseen = 0, empty = 0;
+  for (const label of labels) {
+    if (label === 'empty') empty++;
+    else if (taught.has(label)) known++;
+    else unseen++;
+  }
+  return { known, unseen, total: known + unseen, empty };
+}
+
 export type DraftHoldoutReport = {
   evaluated: number;
   correct: number;
