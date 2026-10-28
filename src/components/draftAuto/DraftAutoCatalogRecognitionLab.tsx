@@ -256,6 +256,12 @@ export function DraftAutoCatalogRecognitionLab({
     :null,[diagnosticKnownId,diagnosedTarget,references]);
   const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
     a.name.localeCompare(b.name,'pt-BR')),[references]);
+  const trainingCoverage=summarizeDraftTrainingCoverage(
+    Object.values(holdoutLabels).filter(Boolean).map(label=>
+      label==='empty'?'empty':Number(label)),
+    learned.map(example=>example.brawlerId),
+  );
+
   function storeLearned(next:DraftLearnedPortrait[]) {
     try {
       window.localStorage.setItem(DRAFT_LOCAL_PORTRAITS_KEY,JSON.stringify(next));
