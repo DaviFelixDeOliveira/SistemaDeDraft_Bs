@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { draftHudPixelRect, editDraftHudRegion, type DraftHudRegion } from '../../lib/draftAutoLayout';
 import {
@@ -138,7 +138,7 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
   const displayRegions=regions.map(region=>dragPreview?.id===region.id?dragPreview:region);
   const selected=samples.find(s=>s.region.id===active);
 
-  function beginDrag(event:React.PointerEvent<HTMLButtonElement>,region:DraftHudRegion){
+  function beginDrag(event:PointerEvent<HTMLButtonElement>,region:DraftHudRegion){
     if(event.pointerType==='mouse'&&event.button!==0)return;
     const action=(event.target as Element).closest('[data-resize]')?'resize':'move';
     dragRef.current={
@@ -150,7 +150,7 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
     event.currentTarget.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
-  function moveDrag(event:React.PointerEvent<HTMLButtonElement>){
+  function moveDrag(event:PointerEvent<HTMLButtonElement>){
     const drag=dragRef.current,box=overlayRef.current;
     if(!drag||drag.pointerId!==event.pointerId||!box)return;
     const bounds=box.getBoundingClientRect();
@@ -163,7 +163,7 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
     drag.latest=next;
     setDragPreview(next);
   }
-  function endDrag(event:React.PointerEvent<HTMLButtonElement>,cancelled=false){
+  function endDrag(event:PointerEvent<HTMLButtonElement>,cancelled=false){
     const drag=dragRef.current;
     if(!drag||drag.pointerId!==event.pointerId)return;
     if(!cancelled){
@@ -253,7 +253,7 @@ export function DraftAutoSlotLocatorLab({ imageUrl }: { imageUrl: string }) {
           onPointerUp={e=>endDrag(e)}
           onPointerCancel={e=>endDrag(e,true)}
           onKeyDown={e=>{
-            const step=e.shiftKey?.01:.0025;
+            const step=e.shiftKey ? 0.01 : 0.0025;
             const dx=e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0;
             const dy=e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0;
             if(dx||dy){
