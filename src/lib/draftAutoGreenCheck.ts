@@ -89,6 +89,35 @@ function findCheckShapes(
   return shapes;
 }
 
+/**
+ * A one-frame observation: checks that may ALREADY be visible next to a card.
+ * Unlike the transition detector, this CANNOT tell whether the mark is new,
+ * whether the same brawler was previously confirmed, or who played the pick.
+ * Only use it as a local diagnostic; never emit a draft event from this.
+ */
+export type GreenCheckPresence = {
+  status: 'possible-check-visible' | 'not-detected' | 'unavailable';
+};
+
+export function inspectGreenCheckPresence(frame:SlotPixelFrame):GreenCheckPresence {
+  if(!Number.isSafeInteger(frame?.width)||!Number.isSafeInteger(frame?.height)||
+    frame.width<32||frame.height<32||
+    frame.width*frame.height>180_000||
+    frame.data?.length!==frame.width*frame.height*4){
+    return {status:'unavailable'};
+  }
+  const {width,height}=frame;
+  const mask=new Uint8Array(width*height);
+  for(let pixel=0;pixel<mask.length;pixel++){
+    mask[pixel]=greenAt(frame,pixel*4)?1:0;
+  }
+  const candidates=findCheckShapes(mask,mask,width,height);
+  // A real check should extend beyond the right edge of a pick portrait.
+  // Keep lower-left accessory icons outside this one-frame diagnostic.
+  return {status:candidates.some(shape=>shape.cx>=.45)
+    ?'possible-check-visible':'not-detected'};
+}
+
 export function inspectGreenCheckTransition(
   before:SlotPixelFrame,
   after:SlotPixelFrame,
