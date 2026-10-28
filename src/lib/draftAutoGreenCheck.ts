@@ -8,7 +8,7 @@ import type { SlotPixelFrame } from './draftAutoVisualEvidence';
  * diagnostic indications, never a verified pick or permission to send an event.
  */
 export type GreenCheckTransition = {
-  status: 'possible-check-appeared' | 'no-new-check' | 'unavailable';
+  status: 'possible-check-appeared' | 'check-disappeared' | 'ambiguous-check-change' | 'no-new-check' | 'unavailable';
   newGreenShare: number;
 };
 
@@ -54,6 +54,7 @@ type CheckShape = { cx:number;cy:number;novelFraction:number };
  */
 function findCheckShapes(
   mask:Uint8Array, previous:Uint8Array, width:number, height:number,
+  relaxedSingleFrame=false,
 ): CheckShape[] {
   const size=width*height,visited=new Uint8Array(size);
   const minDim=Math.min(width,height),stack:number[]=[];
@@ -78,15 +79,51 @@ function findCheckShapes(
     const bw=maxX-minX+1,bh=maxY-minY+1;
     const aspect=bw/bh,density=area/(bw*bh);
     const cx=(minX+maxX)/(2*width),cy=(minY+maxY)/(2*height);
-    if(area>=size*.018&&area<=size*.25&&
-       bw>=minDim*.14&&bh>=minDim*.14&&
+    // Single screenshots can contain narrower, partially occluded checks
+    // (especially on the red team's last cards). Apply wider shape bounds
+    // ONLY when reporting diagnostic presence, never to new-pick transitions.
+    const minShare=relaxedSingleFrame ? 0.01 : 0.018;
+    const minWidth=relaxedSingleFrame ? 0.11 : 0.14;
+    const minAspect=relaxedSingleFrame ? 0.38 : 0.55;
+    const maxDensity=relaxedSingleFrame ? 0.80 : 0.73;
+    if(area>=size*minShare&&area<=size*.25&&
+       bw>=minDim*minWidth&&bh>=minDim*.14&&
        bw<=minDim*.78&&bh<=minDim*.78&&
-       aspect>=.55&&aspect<=1.8&&density>=.17&&density<=.73&&
+       aspect>=minAspect&&aspect<=1.8&&density>=.17&&density<=maxDensity&&
        cx>=.2&&cx<=.95&&cy>=.12&&cy<=.90) {
       shapes.push({cx,cy,novelFraction:novel/area});
     }
   }
   return shapes;
+}
+
+/**
+ * A one-frame observation: checks that may ALREADY be visible next to a card.
+ * Unlike the transition detector, this CANNOT tell whether the mark is new,
+ * whether the same brawler was previously confirmed, or who played the pick.
+ * Only use it as a local diagnostic; never emit a draft event from this.
+ */
+export type GreenCheckPresence = {
+  status: 'possible-check-visible' | 'not-detected' | 'unavailable';
+};
+
+export function inspectGreenCheckPresence(frame:SlotPixelFrame):GreenCheckPresence {
+  if(!Number.isSafeInteger(frame?.width)||!Number.isSafeInteger(frame?.height)||
+    frame.width<32||frame.height<32||
+    frame.width*frame.height>180_000||
+    frame.data?.length!==frame.width*frame.height*4){
+    return {status:'unavailable'};
+  }
+  const {width,height}=frame;
+  const mask=new Uint8Array(width*height);
+  for(let pixel=0;pixel<mask.length;pixel++){
+    mask[pixel]=greenAt(frame,pixel*4)?1:0;
+  }
+  const candidates=findCheckShapes(mask,mask,width,height,true);
+  // A real check should extend beyond the right edge of a pick portrait.
+  // Keep lower-left accessory icons outside this one-frame diagnostic.
+  return {status:candidates.some(shape=>shape.cx>=.45)
+    ?'possible-check-visible':'not-detected'};
 }
 
 export function inspectGreenCheckTransition(
@@ -109,15 +146,27 @@ export function inspectGreenCheckTransition(
   }
   const share=Math.round(newCount/size*1000)/1000;
   const noNew={status:'no-new-check' as const,newGreenShare:share};
-  if(share<.018)return noNew;
   const existingChecks=findCheckShapes(earlier,earlier,width,height);
   const afterChecks=findCheckShapes(latest,earlier,width,height);
-  const genuinelyNew=afterChecks.some(candidate=>
+  // A check that merely persists in another capture must never produce a
+  // second "confirmed" indication. Larger movements may be camera shifts.
+  const matches=(a:CheckShape,b:CheckShape)=>
+    Math.hypot(a.cx-b.cx,a.cy-b.cy)<=.25;
+  const newShape=afterChecks.some(candidate=>
     candidate.novelFraction>=.75 &&
-    !existingChecks.some(previous=>
-      Math.hypot(previous.cx-candidate.cx,previous.cy-candidate.cy)<=.25
-    )
+    !existingChecks.some(previous=>matches(previous,candidate))
   );
-  if(genuinelyNew)return {status:'possible-check-appeared',newGreenShare:share};
+  const disappeared=existingChecks.some(previous=>
+    !afterChecks.some(candidate=>matches(previous,candidate))
+  );
+  if(newShape&&existingChecks.length>0){
+    return {status:'ambiguous-check-change',newGreenShare:share};
+  }
+  if(newShape&&share>=.018){
+    return {status:'possible-check-appeared',newGreenShare:share};
+  }
+  if(disappeared){
+    return {status:'check-disappeared',newGreenShare:share};
+  }
   return noNew;
 }

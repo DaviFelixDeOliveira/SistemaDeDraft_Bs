@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {
-  greenCheckSearchRect,inspectGreenCheckTransition,
+  greenCheckSearchRect,inspectGreenCheckTransition,inspectGreenCheckPresence,
 } from '../lib/draftAutoGreenCheck';
 import type {SlotPixelFrame} from '../lib/draftAutoVisualEvidence';
 import type {DraftHudRegion} from '../lib/draftAutoLayout';
@@ -26,6 +26,42 @@ const card:DraftHudRegion={
  id:'blue-1',label:'Azul 1',kind:'pick-slot',side:'blue',physicalSlot:0,
  x:.20,y:.70,width:.09,height:.20,
 };
+
+describe('Check verde visível em uma única imagem (sem confirmar pick)',()=>{
+  it('detecta o desenho aproximado de check, mesmo sem captura anterior',()=>{
+    expect(inspectGreenCheckPresence(frame('check')).status).toBe('possible-check-visible');
+  });
+  it('não interpreta mancha, pontos ou ausência de verde como pick',()=>{
+    expect(inspectGreenCheckPresence(frame('none')).status).toBe('not-detected');
+    expect(inspectGreenCheckPresence(frame('block')).status).toBe('not-detected');
+    expect(inspectGreenCheckPresence(frame('dots')).status).toBe('not-detected');
+  });
+  it('detecta check verde comprimido próximo à borda externa da carta',()=>{
+    // Some red-side cards leave only a narrow visible check in the search ROI.
+    const original=frame('check');
+    const narrow=frame('none');
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const from=(y*width+x)*4;
+      if(original.data[from+1]!==218)continue;
+      const toX=Math.round(72+(x-66)*.55);
+      const to=(y*width+toX)*4;
+      narrow.data[to]=42;narrow.data[to+1]=218;
+      narrow.data[to+2]=37;narrow.data[to+3]=255;
+    }
+    expect(inspectGreenCheckPresence(narrow).status).toBe('possible-check-visible');
+    // Do not broaden the much more sensitive "new pick" transition rules.
+    expect(inspectGreenCheckTransition(frame('none'),narrow).status)
+      .not.toBe('possible-check-appeared');
+  });
+  it('recusa recorte inválido sem inventar que uma escolha foi confirmada',()=>{
+    const broken={width:120,height:96,data:new Uint8ClampedArray(12)};
+    expect(inspectGreenCheckPresence(broken).status).toBe('unavailable');
+  });
+  it('um check que persiste só indica presença; não um novo pick',()=>{
+    expect(inspectGreenCheckPresence(frame('check')).status).toBe('possible-check-visible');
+    expect(inspectGreenCheckTransition(frame('check'),frame('check')).status).toBe('no-new-check');
+  });
+});
 
 describe('Check verde no lado externo do cartão (diagnóstico)',()=>{
   it('inclui pixels à direita da carta, onde o check aparece no jogo',()=>{
@@ -60,8 +96,15 @@ describe('Check verde no lado externo do cartão (diagnóstico)',()=>{
     expect(inspectGreenCheckTransition(frame('none'),frame('dots')).status)
       .toBe('no-new-check');
   });
-  it('não gera indicação quando o check desaparece (cancelamento ou correção)',()=>{
+  it('separa desaparecimento do check de uma nova confirmação',()=>{
     expect(inspectGreenCheckTransition(frame('check'),frame('none')).status)
+      .toBe('check-disappeared');
+  });
+  it('não repete a indicação em uma terceira captura com check persistente',()=>{
+    const first=frame('none'),second=frame('check'),third=frame('check');
+    expect(inspectGreenCheckTransition(first,second).status)
+      .toBe('possible-check-appeared');
+    expect(inspectGreenCheckTransition(second,third).status)
       .toBe('no-new-check');
   });
   it('recusa dados inconsistentes sem disparar evento',()=>{

@@ -1,5 +1,15 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
+import { evaluateDraftHoldout, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
+import {
+  clearDraftAutoPortraitCrops,listDraftAutoPortraitCrops,makeDraftAutoPortraitCrop,
+  saveDraftAutoPortraitCrop,type DraftAutoPortraitCrop,
+} from '../../services/draftAutoPortraitCrops';
+import {
+  DRAFT_LOCAL_PORTRAITS_KEY, addDraftLearnedPortrait,
+  matchDraftLearnedPortrait, parseDraftLearnedPortraits,
+  type DraftLearnedPortrait,
+} from '../../lib/draftAutoLearnedPortrait';
 import { inspectDraftEmptySlot, type DraftEmptySlotEvidence } from '../../lib/draftAutoEmptySlot';
 import { corroborateDraftEmptyCards } from '../../lib/draftAutoEmptyReference';
 import { diagnoseDraftStructureLabel } from '../../lib/draftAutoCatalogStructure';
@@ -17,6 +27,7 @@ type SlotFingerprint={
   portrait:DraftPortraitFingerprint;
   emptyEvidence:DraftEmptySlotEvidence;
   preview:string;
+  facePreview:string;
 };
 type SlotFingerprints=Record<string,SlotFingerprint>;
 type LoadingState='idle'|'loading'|'ready'|'failed';
@@ -47,11 +58,21 @@ function getSlotFingerprints(image:HTMLImageElement,regions:DraftHudRegion[]):Sl
     ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,64,80);
     const pixels=ctx.getImageData(0,0,64,80);
     const fp=portraitFingerprint(pixels);
-    if(fp)found[region.id]={
-      portrait:fp,
-      emptyEvidence:inspectDraftEmptySlot(pixels),
-      preview:canvas.toDataURL('image/png'),
-    };
+    if(fp) {
+      const faceCanvas=document.createElement('canvas');
+      faceCanvas.width=64;faceCanvas.height=64;
+      const faceCtx=faceCanvas.getContext('2d');
+      if(!faceCtx)throw new Error('Recorte facial indisponível neste navegador.');
+      // Same central region as portraitFingerprint: no nick, gears, side badges
+      // or full screenshot is stored.
+      faceCtx.drawImage(canvas,11,16,39,42,0,0,64,64);
+      found[region.id]={
+        portrait:fp,
+        emptyEvidence:inspectDraftEmptySlot(pixels),
+        preview:canvas.toDataURL('image/png'),
+        facePreview:faceCanvas.toDataURL('image/png'),
+      };
+    }
   }
   return found;
 }
@@ -108,16 +129,39 @@ export function DraftAutoCatalogRecognitionLab({
   const [failedImages,setFailedImages]=useState(0);
   const [error,setError]=useState('');
   const [diagnosticSlot,setDiagnosticSlot]=useState('blue-2');
+  const [learned,setLearned]=useState<DraftLearnedPortrait[]>([]);
+  const [savedCrops,setSavedCrops]=useState<DraftAutoPortraitCrop[]>([]);
+  const [trainingSlot,setTrainingSlot]=useState('blue-1');
+  const [trainingId,setTrainingId]=useState('');
+  const [trainingMessage,setTrainingMessage]=useState('');
+  const [holdoutLabels,setHoldoutLabels]=useState<Record<string,string>>({});
+  const [holdoutReport,setHoldoutReport]=useState<DraftHoldoutReport|null>(null);
   const [diagnosticKnownId,setDiagnosticKnownId]=useState('');
   const controllerRef=useRef<AbortController|null>(null);
 
-  useEffect(()=>()=>{
-    controllerRef.current?.abort();
+  useEffect(()=>{
+    let live=true;
+    void listDraftAutoPortraitCrops().then(items=>{
+      if(live)setSavedCrops(items);
+    }).catch(()=>{
+      // Old browsers / blocked IndexedDB can still use fingerprint-only mode.
+    });
+    try {
+      setLearned(parseDraftLearnedPortraits(
+        JSON.parse(window.localStorage.getItem(DRAFT_LOCAL_PORTRAITS_KEY)??'[]'),
+      ));
+    } catch { setLearned([]); }
+    return ()=>{
+      live=false;
+      controllerRef.current?.abort();
+    };
   },[]);
 
   useEffect(()=>{
     let live=true;
     setDiagnosticKnownId('');
+    setHoldoutLabels({});
+    setHoldoutReport(null);
     setTargets({});
     loadScreenshot(screenshotUrl).then(image=>{
       if(live)setTargets(getSlotFingerprints(image,regions));
@@ -193,6 +237,12 @@ export function DraftAutoCatalogRecognitionLab({
         :null,
     };
   }),[slots,targets,references,emptyDecisions]);
+  const learnedMatches=useMemo(()=>Object.fromEntries(
+    slots.map(region=>[region.id, targets[region.id]
+      ?matchDraftLearnedPortrait(targets[region.id].portrait,learned)
+      :null]),
+  ) as Record<string,ReturnType<typeof matchDraftLearnedPortrait>|null>,
+    [slots,targets,learned]);
   const diagnosedSlot=results.find(r=>r.region.id===diagnosticSlot);
   const diagnosedTarget=targets[diagnosticSlot];
   const humanDiagnostic=useMemo(()=>diagnosticKnownId&&diagnosedTarget
@@ -206,15 +256,86 @@ export function DraftAutoCatalogRecognitionLab({
     :null,[diagnosticKnownId,diagnosedTarget,references]);
   const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
     a.name.localeCompare(b.name,'pt-BR')),[references]);
+  function storeLearned(next:DraftLearnedPortrait[]) {
+    try {
+      window.localStorage.setItem(DRAFT_LOCAL_PORTRAITS_KEY,JSON.stringify(next));
+      setLearned(next);
+      setHoldoutReport(null);
+      setTrainingMessage('');
+    } catch {
+      setTrainingMessage('Não foi possível salvar exemplos neste navegador.');
+    }
+  }
+
+  function assessUnseenScreenshot() {
+    const observations=results.flatMap(({region,match,emptyState})=>{
+      const truth=holdoutLabels[region.id];
+      if(!truth)return [];
+      const actual=truth==='empty'?'empty' as const:Number(truth);
+      const learnedMatch=learnedMatches[region.id];
+      const memorized=learnedMatch?.status==='seen-example';
+      const predicted=emptyState!=='unknown'?'empty' as const:
+        memorized?null:
+        learnedMatch?.status==='possible'?learnedMatch.brawlerId:
+        match?.status==='possible-match'?match.gameId:null;
+      return [{actual,predicted,memorized}];
+    });
+    setHoldoutReport(evaluateDraftHoldout(observations));
+  }
+
+  async function addTrainingExample() {
+    const target=targets[trainingSlot];
+    const ref=references.find(item=>String(item.id)===trainingId);
+    if(!target||!ref){setTrainingMessage('Escolha uma carta preenchida e o brawler correto.');return;}
+    if(emptyDecisions[trainingSlot]!=='unknown'){
+      setTrainingMessage('Esse slot parece vazio. Verifique o recorte antes de ensinar.');
+      return;
+    }
+    const next=addDraftLearnedPortrait(learned,{
+      brawlerId:ref.id,name:ref.name,fingerprint:target.portrait,
+    });
+    storeLearned(next);
+    const crop=makeDraftAutoPortraitCrop(
+      ref.id,ref.name,target.portrait,target.facePreview,
+    );
+    if(crop) {
+      try {
+        await saveDraftAutoPortraitCrop(crop);
+        setSavedCrops(await listDraftAutoPortraitCrops());
+      } catch {
+        setTrainingMessage('Assinatura visual salva, mas o recorte em imagem não pôde ser guardado.');
+      }
+    }
+  }
+
+  function exportFaceDataset() {
+    if(!savedCrops.length)return;
+    const payload={
+      version:1,format:'draft-face-crops',exportedAt:new Date().toISOString(),
+      examples:savedCrops,
+    };
+    const url=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));
+    const link=document.createElement('a');
+    link.href=url;link.download='biblioteca-retratos-draft.json';
+    document.body.appendChild(link);link.click();link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
   useEffect(()=>{
     if(!onResults)return;
     if(phase!=='ready'){onResults(null);return;}
-    onResults(results.map(({region,match,emptyState})=>({
-      regionId:region.id,
-      status:emptyState!=='unknown'?'empty':match?.status==='possible-match'?'possible':'unknown',
-      name:emptyState==='unknown' && match?.status==='possible-match'?match.name:undefined,
-    })));
-  },[phase,results,onResults]);
+    onResults(results.map(({region,match,emptyState})=>{
+      const local=learnedMatches[region.id];
+      const possible=local?.status==='seen-example'?null:
+        local?.status==='possible'?local.name:
+        match?.status==='possible-match'?match.name:null;
+      return {
+        regionId:region.id,
+        status:emptyState!=='unknown'?'empty':possible?'possible':'unknown',
+        name:emptyState==='unknown'?possible??undefined:undefined,
+      };
+    }));
+  },[phase,results,onResults,learnedMatches]);
 
   if(compact) return <section className="mt-3 space-y-2 rounded-lg border border-cyan-700/40 p-3">
     <p className="text-xs font-semibold text-zinc-200">Palpites de brawler na segunda imagem</p>
@@ -261,7 +382,21 @@ export function DraftAutoCatalogRecognitionLab({
         {results.map(({region,match,emptyState})=><div key={region.id}
           className="min-w-0 rounded-lg border border-zinc-700 bg-zinc-950/70 p-2 text-xs">
           <strong>{region.label}</strong>
-          {emptyState!=='unknown'
+          {emptyState==='unknown'&&learnedMatches[region.id]?.status==='seen-example'
+            ?<p className="mt-1 break-words text-amber-200">
+              Exemplo já ensinado: {learnedMatches[region.id]?.name}
+              <span className="block text-[10px] text-zinc-400">
+                Esta carta corresponde exatamente a um exemplo salvo. Isso não mede acerto em imagem nova.
+              </span>
+            </p>
+            :emptyState==='unknown'&&learnedMatches[region.id]?.status==='possible'
+            ?<p className="mt-1 break-words text-emerald-300">
+              Possivelmente {learnedMatches[region.id]?.name}
+              <span className="block text-[10px] text-zinc-400">
+                Parecido com retrato real salvo neste navegador. Não confirma pick.
+              </span>
+            </p>
+            :emptyState!=='unknown'
             ?<p className="mt-1 text-amber-200">
               Provavelmente vazio
               <span className="block text-[10px] text-zinc-400">
@@ -278,7 +413,7 @@ export function DraftAutoCatalogRecognitionLab({
               </span>
             </p>
             :<p className="mt-1 text-zinc-400">Sem identificação segura</p>}
-          {emptyState==='unknown'&&match?.status==='uncertain'&&match.nearest[0]&&
+          {emptyState==='unknown'&&learnedMatches[region.id]?.status!=='seen-example'&&match?.status==='uncertain'&&match.nearest[0]&&
             <details className="mt-2 text-[10px] text-zinc-500">
               <summary className="cursor-pointer">Ver palpite fraco (diagnóstico)</summary>
               <p className="mt-1 break-words">
@@ -289,6 +424,117 @@ export function DraftAutoCatalogRecognitionLab({
             </details>}
         </div>)}
       </div>
+      <div className="space-y-2 rounded-lg border border-cyan-700/50 bg-cyan-950/20 p-2 text-xs">
+        <strong className="text-cyan-200">Ensinar retratos reais do jogo (opcional)</strong>
+        <p className="text-zinc-300">
+          As artes do catálogo não são iguais às cartas do jogo. Se souber quem aparece no
+          print, salve o retrato uma vez. Os exemplos ficam só neste navegador,
+          sem guardar a foto. Precisamos de pelo menos dois brawlers diferentes.
+        </p>
+        <label className="block space-y-1">
+          <span className="text-zinc-300">Carta no print</span>
+          <select className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-2"
+            value={trainingSlot} onChange={e=>setTrainingSlot(e.target.value)}>
+            {slots.map(region=><option key={region.id} value={region.id}>{region.label}</option>)}
+          </select>
+        </label>
+        <label className="block space-y-1">
+          <span className="text-zinc-300">Brawler verdadeiro (escolha você)</span>
+          <select className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-2"
+            value={trainingId} onChange={e=>setTrainingId(e.target.value)}>
+            <option value="">Selecione...</option>
+            {alphabeticalReferences.map(ref=><option key={ref.id} value={String(ref.id)}>
+              {ref.name}
+            </option>)}
+          </select>
+        </label>
+        <button type="button" onClick={()=>void addTrainingExample()}
+          disabled={!targets[trainingSlot]||!trainingId}
+          className="w-full rounded-md bg-cyan-700 p-2 font-semibold text-white disabled:opacity-50">
+          Guardar este retrato como exemplo
+        </button>
+        <p className="text-zinc-400">
+          {learned.length} exemplos de {new Set(learned.map(item=>item.brawlerId)).size} brawlers salvos.
+          {' '}O acerto deve ser avaliado em outra captura, não naquela usada para ensinar.
+        </p>
+        <p className="text-amber-200">
+          Treinar seis cartas e reconhecer essas mesmas seis não significa 100% de precisão.
+          Para medir acertos, use um print de outra partida.
+        </p>
+        <details className="rounded border border-zinc-700 p-2">
+          <summary className="cursor-pointer">
+            Recortes reais salvos neste navegador ({savedCrops.length})
+          </summary>
+          <p className="mt-1 text-zinc-400">
+            Guardamos só a região central do rosto, sem nomes de jogadores.
+            As seis referências antigas podem conter apenas assinatura, sem imagem.
+          </p>
+          <div className="mt-2 flex max-h-52 flex-wrap gap-2 overflow-y-auto">
+            {savedCrops.slice(0,80).map(crop=><div key={crop.id}
+              className="w-16 rounded border border-zinc-700 p-1 text-center">
+              <img src={crop.faceDataUrl} alt={crop.name} className="mx-auto h-12 w-12 object-contain"/>
+              <span className="block truncate text-[10px]">{crop.name}</span>
+            </div>)}
+          </div>
+          {savedCrops.length>0&&<button type="button" onClick={exportFaceDataset}
+            className="mt-2 rounded bg-zinc-800 px-2 py-1 text-xs text-cyan-200">
+            Baixar biblioteca de recortes (backup JSON)
+          </button>}
+        </details>
+        {trainingMessage&&<p role="alert" className="text-amber-300">{trainingMessage}</p>}
+        {learned.length>0&&<button type="button" className="text-red-300 underline"
+          onClick={()=>{
+            if(window.confirm('Apagar todos os exemplos de retratos salvos neste navegador?')){
+              storeLearned([]);
+              void clearDraftAutoPortraitCrops().then(()=>setSavedCrops([])).catch(()=>
+                setTrainingMessage('Não foi possível apagar os recortes em imagem.'));
+            }
+          }}>Apagar exemplos salvos</button>}
+      </div>
+      <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
+        <summary className="cursor-pointer font-semibold">
+          Avaliar precisão com um print NOVO (sem ensinar)
+        </summary>
+        <p className="mt-2 text-zinc-400">
+          Use uma captura diferente da usada para ensinar, preferencialmente de outra partida.
+          Informe quais brawlers realmente aparecem. O sistema compara as respostas sem
+          salvá-las nem treiná-las automaticamente.
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {results.map(({region})=><label key={region.id} className="min-w-0 space-y-1">
+            <span className="block font-semibold">{region.label}</span>
+            <select className="w-full min-w-0 rounded-md border border-zinc-700 bg-zinc-950 p-1.5 text-xs"
+              value={holdoutLabels[region.id]??''}
+              onChange={e=>{
+                setHoldoutLabels(previous=>({...previous,[region.id]:e.target.value}));
+                setHoldoutReport(null);
+              }}>
+              <option value="">Não avaliar</option>
+              <option value="empty">Carta vazia</option>
+              {alphabeticalReferences.map(ref=><option key={ref.id} value={String(ref.id)}>{ref.name}</option>)}
+            </select>
+          </label>)}
+        </div>
+        <button type="button" onClick={assessUnseenScreenshot}
+          disabled={!Object.values(holdoutLabels).some(Boolean)}
+          className="mt-3 w-full rounded-md bg-indigo-600 p-2 font-semibold text-white disabled:opacity-50">
+          Conferir acertos desta imagem
+        </button>
+        {holdoutReport&&<div className="mt-3 space-y-1 rounded-md border border-zinc-700 p-2">
+          <strong>Resultado do teste (não treinou nada)</strong>
+          <p>Acertos: {holdoutReport.correct} · Erros: {holdoutReport.incorrect}
+            {' '}· Sem resposta: {holdoutReport.abstained}</p>
+          <p>Cartas já vistas no treinamento: {holdoutReport.memorized} (fora da avaliação).</p>
+          <p>Acertos entre as {holdoutReport.evaluated} cartas novas rotuladas:
+            {' '}{holdoutReport.accuracy===null?'Ainda não há teste independente':
+              Math.round(holdoutReport.accuracy*100)+'%'}.
+          </p>
+          {holdoutReport.evaluated<20&&<p className="text-amber-200">
+            Amostra pequena: este resultado não representa a precisão real.
+            Continue avaliando capturas diferentes.
+          </p>}
+        </div>}
+      </details>
       <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
         <summary className="cursor-pointer font-medium">
           Testes técnicos dos métodos de reconhecimento (opcional)

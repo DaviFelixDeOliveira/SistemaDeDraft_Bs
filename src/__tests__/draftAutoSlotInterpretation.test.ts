@@ -34,11 +34,14 @@ describe('Resumo simples dos sinais visuais (sem confirmar eventos)', () => {
   it('não inventa escolhas nos outros quatro slots', () => {
     expect(interpretDraftSlotSignals(diff(), evidence(), check()).state).toBe('no-new-signal');
   });
-  it('diferencia possível marcador de ban de possível marcador de pick', () => {
+  it('mantém ban plausível separado do verde interno sem check externo', () => {
     expect(interpretDraftSlotSignals(diff(), evidence('marker-appeared', null, 'ban'), check()).state)
       .toBe('possible-ban');
-    expect(interpretDraftSlotSignals(diff(), evidence('marker-appeared', null, 'pick'), check()).state)
-      .toBe('possible-pick');
+    const internalOnly=interpretDraftSlotSignals(diff(), evidence('marker-appeared', null, 'pick'), check());
+    expect(internalOnly.state).toBe('review');
+    expect(internalOnly.label).toContain('revisar');
+    expect(interpretDraftSlotSignals(diff(), evidence('marker-appeared', null, 'pick'),
+      check('possible-check-appeared')).state).toBe('possible-pick');
   });
   it('não repete uma confirmação quando o marcador já estava presente', () => {
     expect(interpretDraftSlotSignals(diff(), evidence('no-visual-change', 'pick', 'pick'), check()).state)
@@ -47,6 +50,20 @@ describe('Resumo simples dos sinais visuais (sem confirmar eventos)', () => {
   it('exige revisão se os sinais de pick e ban se contradizem', () => {
     expect(interpretDraftSlotSignals(diff(), evidence('marker-appeared', null, 'ban'),
       check('possible-check-appeared')).state).toBe('review');
+  });
+  it('não repete pick quando check externo desaparece ou muda de posição', () => {
+    expect(interpretDraftSlotSignals(diff(), evidence(), check('check-disappeared')).state)
+      .toBe('review');
+    expect(interpretDraftSlotSignals(diff(), evidence(), check('ambiguous-check-change')).state)
+      .toBe('review');
+  });
+  it('distingue pré-seleção alterada de pick confirmado', () => {
+    const result=interpretDraftSlotSignals(diff(true), evidence('portrait-change-only'), check());
+    expect(result.state).toBe('portrait-changed');
+    expect(result.label).toContain('pré-seleção');
+    const withWeakInternalGreen=interpretDraftSlotSignals(diff(true),
+      evidence('marker-appeared', null, 'pick'), check());
+    expect(withWeakInternalGreen.state).toBe('portrait-changed');
   });
   it('não transforma desaparecimento de marcador em pick removido confirmado', () => {
     expect(interpretDraftSlotSignals(diff(true), evidence('marker-disappeared', 'pick', null),
