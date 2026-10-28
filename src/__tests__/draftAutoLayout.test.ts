@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {draftHudRegions,draftHudPixelRect,DEFAULT_DRAFT_HUD_CALIBRATION} from '../lib/draftAutoLayout';
+import {draftHudRegions,draftHudPixelRect,editDraftHudRegion,DEFAULT_DRAFT_HUD_CALIBRATION} from '../lib/draftAutoLayout';
 
 describe('Regiões experimentais do HUD completo',()=>{
   it('propõe seis cartões de picks e duas áreas laterais de bans',()=>{
@@ -31,6 +31,31 @@ describe('Regiões experimentais do HUD completo',()=>{
     expect(custom[0].x).toBeGreaterThan(base[0].x);
     expect(custom[0].y).toBe(.7);
     expect(custom[0].side).toBe('blue');
+  });
+  it('move um slot independentemente dos outros e limita à captura',()=>{
+    const regions=draftHudRegions(1920,1080);
+    const first=regions[0];
+    const adjusted=editDraftHudRegion(first,'move',.13,-.045);
+    expect(adjusted.x).toBeCloseTo(first.x+.13);
+    expect(adjusted.y).toBeCloseTo(first.y-.045);
+    expect(regions[1].x).toBe(regions[1].x);
+    expect(regions[0]).toEqual(first);
+    const clipped=editDraftHudRegion(first,'move',10,-10);
+    expect(clipped.x+clipped.width).toBeCloseTo(1);
+    expect(clipped.y).toBe(0);
+  });
+  it('redimensiona a caixa selecionada sem ultrapassar limites',()=>{
+    const first=draftHudRegions(1920,1080)[0];
+    const larger=editDraftHudRegion(first,'resize',.04,.035);
+    expect(larger.width).toBeCloseTo(first.width+.04);
+    expect(larger.height).toBeCloseTo(first.height+.035);
+    const small=editDraftHudRegion(first,'resize',-20,-20);
+    expect(small.width).toBe(.025);
+    expect(small.height).toBe(.045);
+    const clipped=editDraftHudRegion(first,'resize',20,20);
+    expect(clipped.x+clipped.width).toBeCloseTo(1);
+    expect(clipped.y+clipped.height).toBeCloseTo(1);
+    expect(editDraftHudRegion(first,'move',NaN,0)).toEqual(first);
   });
   it('não produz regiões para parâmetros fora de faixa',()=>{
     expect(draftHudRegions(0,0)).toEqual([]);
