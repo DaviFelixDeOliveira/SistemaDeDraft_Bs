@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {evaluateDraftHoldout} from '../lib/draftAutoHoldout';
+import {evaluateDraftHoldout,summarizeDraftTrainingCoverage} from '../lib/draftAutoHoldout';
 
 describe('Validação independente das capturas do draft',()=>{
   it('não conta o mesmo exemplo ensinado como acerto',()=>{
