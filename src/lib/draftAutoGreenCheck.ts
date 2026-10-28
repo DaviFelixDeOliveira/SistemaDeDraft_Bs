@@ -54,6 +54,7 @@ type CheckShape = { cx:number;cy:number;novelFraction:number };
  */
 function findCheckShapes(
   mask:Uint8Array, previous:Uint8Array, width:number, height:number,
+  relaxedSingleFrame=false,
 ): CheckShape[] {
   const size=width*height,visited=new Uint8Array(size);
   const minDim=Math.min(width,height),stack:number[]=[];
@@ -78,10 +79,17 @@ function findCheckShapes(
     const bw=maxX-minX+1,bh=maxY-minY+1;
     const aspect=bw/bh,density=area/(bw*bh);
     const cx=(minX+maxX)/(2*width),cy=(minY+maxY)/(2*height);
-    if(area>=size*.018&&area<=size*.25&&
-       bw>=minDim*.14&&bh>=minDim*.14&&
+    // Single screenshots can contain narrower, partially occluded checks
+    // (especially on the red team's last cards). Apply wider shape bounds
+    // ONLY when reporting diagnostic presence, never to new-pick transitions.
+    const minShare=relaxedSingleFrame?.01:.018;
+    const minWidth=relaxedSingleFrame?.11:.14;
+    const minAspect=relaxedSingleFrame?.38:.55;
+    const maxDensity=relaxedSingleFrame?.80:.73;
+    if(area>=size*minShare&&area<=size*.25&&
+       bw>=minDim*minWidth&&bh>=minDim*.14&&
        bw<=minDim*.78&&bh<=minDim*.78&&
-       aspect>=.55&&aspect<=1.8&&density>=.17&&density<=.73&&
+       aspect>=minAspect&&aspect<=1.8&&density>=.17&&density<=maxDensity&&
        cx>=.2&&cx<=.95&&cy>=.12&&cy<=.90) {
       shapes.push({cx,cy,novelFraction:novel/area});
     }
@@ -111,7 +119,7 @@ export function inspectGreenCheckPresence(frame:SlotPixelFrame):GreenCheckPresen
   for(let pixel=0;pixel<mask.length;pixel++){
     mask[pixel]=greenAt(frame,pixel*4)?1:0;
   }
-  const candidates=findCheckShapes(mask,mask,width,height);
+  const candidates=findCheckShapes(mask,mask,width,height,true);
   // A real check should extend beyond the right edge of a pick portrait.
   // Keep lower-left accessory icons outside this one-frame diagnostic.
   return {status:candidates.some(shape=>shape.cx>=.45)
