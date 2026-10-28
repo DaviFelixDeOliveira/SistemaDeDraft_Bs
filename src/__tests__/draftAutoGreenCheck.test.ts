@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {
-  greenCheckSearchRect,inspectGreenCheckTransition,
+  greenCheckSearchRect,inspectGreenCheckTransition,inspectGreenCheckPresence,
 } from '../lib/draftAutoGreenCheck';
 import type {SlotPixelFrame} from '../lib/draftAutoVisualEvidence';
 import type {DraftHudRegion} from '../lib/draftAutoLayout';
@@ -26,6 +26,25 @@ const card:DraftHudRegion={
  id:'blue-1',label:'Azul 1',kind:'pick-slot',side:'blue',physicalSlot:0,
  x:.20,y:.70,width:.09,height:.20,
 };
+
+describe('Check verde visível em uma única imagem (sem confirmar pick)',()=>{
+  it('detecta o desenho aproximado de check, mesmo sem captura anterior',()=>{
+    expect(inspectGreenCheckPresence(frame('check')).status).toBe('possible-check-visible');
+  });
+  it('não interpreta mancha, pontos ou ausência de verde como pick',()=>{
+    expect(inspectGreenCheckPresence(frame('none')).status).toBe('not-detected');
+    expect(inspectGreenCheckPresence(frame('block')).status).toBe('not-detected');
+    expect(inspectGreenCheckPresence(frame('dots')).status).toBe('not-detected');
+  });
+  it('recusa recorte inválido sem inventar que uma escolha foi confirmada',()=>{
+    const broken={width:120,height:96,data:new Uint8ClampedArray(12)};
+    expect(inspectGreenCheckPresence(broken).status).toBe('unavailable');
+  });
+  it('um check que persiste só indica presença; não um novo pick',()=>{
+    expect(inspectGreenCheckPresence(frame('check')).status).toBe('possible-check-visible');
+    expect(inspectGreenCheckTransition(frame('check'),frame('check')).status).toBe('no-new-check');
+  });
+});
 
 describe('Check verde no lado externo do cartão (diagnóstico)',()=>{
   it('inclui pixels à direita da carta, onde o check aparece no jogo',()=>{
