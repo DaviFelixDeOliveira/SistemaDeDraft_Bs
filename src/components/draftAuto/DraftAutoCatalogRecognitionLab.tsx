@@ -1,5 +1,10 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
+import {
+  DRAFT_LOCAL_PORTRAITS_KEY, addDraftLearnedPortrait,
+  matchDraftLearnedPortrait, parseDraftLearnedPortraits,
+  type DraftLearnedPortrait,
+} from '../../lib/draftAutoLearnedPortrait';
 import { inspectDraftEmptySlot, type DraftEmptySlotEvidence } from '../../lib/draftAutoEmptySlot';
 import { corroborateDraftEmptyCards } from '../../lib/draftAutoEmptyReference';
 import { diagnoseDraftStructureLabel } from '../../lib/draftAutoCatalogStructure';
@@ -108,11 +113,20 @@ export function DraftAutoCatalogRecognitionLab({
   const [failedImages,setFailedImages]=useState(0);
   const [error,setError]=useState('');
   const [diagnosticSlot,setDiagnosticSlot]=useState('blue-2');
+  const [learned,setLearned]=useState<DraftLearnedPortrait[]>([]);
+  const [trainingSlot,setTrainingSlot]=useState('blue-1');
+  const [trainingId,setTrainingId]=useState('');
+  const [trainingMessage,setTrainingMessage]=useState('');
   const [diagnosticKnownId,setDiagnosticKnownId]=useState('');
   const controllerRef=useRef<AbortController|null>(null);
 
-  useEffect(()=>()=>{
-    controllerRef.current?.abort();
+  useEffect(()=>{
+    try {
+      setLearned(parseDraftLearnedPortraits(
+        JSON.parse(window.localStorage.getItem(DRAFT_LOCAL_PORTRAITS_KEY)??'[]'),
+      ));
+    } catch { setLearned([]); }
+    return ()=>controllerRef.current?.abort();
   },[]);
 
   useEffect(()=>{
@@ -193,6 +207,12 @@ export function DraftAutoCatalogRecognitionLab({
         :null,
     };
   }),[slots,targets,references,emptyDecisions]);
+  const learnedMatches=useMemo(()=>Object.fromEntries(
+    slots.map(region=>[region.id, targets[region.id]
+      ?matchDraftLearnedPortrait(targets[region.id].portrait,learned)
+      :null]),
+  ) as Record<string,ReturnType<typeof matchDraftLearnedPortrait>|null>,
+    [slots,targets,learned]);
   const diagnosedSlot=results.find(r=>r.region.id===diagnosticSlot);
   const diagnosedTarget=targets[diagnosticSlot];
   const humanDiagnostic=useMemo(()=>diagnosticKnownId&&diagnosedTarget
@@ -206,15 +226,44 @@ export function DraftAutoCatalogRecognitionLab({
     :null,[diagnosticKnownId,diagnosedTarget,references]);
   const alphabeticalReferences=useMemo(()=>[...references].sort((a,b)=>
     a.name.localeCompare(b.name,'pt-BR')),[references]);
+  function storeLearned(next:DraftLearnedPortrait[]) {
+    try {
+      window.localStorage.setItem(DRAFT_LOCAL_PORTRAITS_KEY,JSON.stringify(next));
+      setLearned(next);
+      setTrainingMessage('');
+    } catch {
+      setTrainingMessage('Não foi possível salvar exemplos neste navegador.');
+    }
+  }
+
+  function addTrainingExample() {
+    const target=targets[trainingSlot];
+    const ref=references.find(item=>String(item.id)===trainingId);
+    if(!target||!ref){setTrainingMessage('Escolha uma carta preenchida e o brawler correto.');return;}
+    if(emptyDecisions[trainingSlot]!=='unknown'){
+      setTrainingMessage('Esse slot parece vazio. Verifique o recorte antes de ensinar.');
+      return;
+    }
+    const next=addDraftLearnedPortrait(learned,{
+      brawlerId:ref.id,name:ref.name,fingerprint:target.portrait,
+    });
+    storeLearned(next);
+  }
+
   useEffect(()=>{
     if(!onResults)return;
     if(phase!=='ready'){onResults(null);return;}
-    onResults(results.map(({region,match,emptyState})=>({
-      regionId:region.id,
-      status:emptyState!=='unknown'?'empty':match?.status==='possible-match'?'possible':'unknown',
-      name:emptyState==='unknown' && match?.status==='possible-match'?match.name:undefined,
-    })));
-  },[phase,results,onResults]);
+    onResults(results.map(({region,match,emptyState})=>{
+      const local=learnedMatches[region.id];
+      const possible=local?.status==='possible'?local.name:
+        match?.status==='possible-match'?match.name:null;
+      return {
+        regionId:region.id,
+        status:emptyState!=='unknown'?'empty':possible?'possible':'unknown',
+        name:emptyState==='unknown'?possible??undefined:undefined,
+      };
+    }));
+  },[phase,results,onResults,learnedMatches]);
 
   if(compact) return <section className="mt-3 space-y-2 rounded-lg border border-cyan-700/40 p-3">
     <p className="text-xs font-semibold text-zinc-200">Palpites de brawler na segunda imagem</p>
@@ -261,7 +310,14 @@ export function DraftAutoCatalogRecognitionLab({
         {results.map(({region,match,emptyState})=><div key={region.id}
           className="min-w-0 rounded-lg border border-zinc-700 bg-zinc-950/70 p-2 text-xs">
           <strong>{region.label}</strong>
-          {emptyState!=='unknown'
+          {emptyState==='unknown'&&learnedMatches[region.id]?.status==='possible'
+            ?<p className="mt-1 break-words text-emerald-300">
+              Possivelmente {learnedMatches[region.id]?.name}
+              <span className="block text-[10px] text-zinc-400">
+                Parecido com retrato real salvo neste navegador. Não confirma pick.
+              </span>
+            </p>
+            :emptyState!=='unknown'
             ?<p className="mt-1 text-amber-200">
               Provavelmente vazio
               <span className="block text-[10px] text-zinc-400">
@@ -288,6 +344,47 @@ export function DraftAutoCatalogRecognitionLab({
               </p>
             </details>}
         </div>)}
+      </div>
+      <div className="space-y-2 rounded-lg border border-cyan-700/50 bg-cyan-950/20 p-2 text-xs">
+        <strong className="text-cyan-200">Ensinar retratos reais do jogo (opcional)</strong>
+        <p className="text-zinc-300">
+          As artes do catálogo não são iguais às cartas do jogo. Se souber quem aparece no
+          print, salve o retrato uma vez. Os exemplos ficam só neste navegador,
+          sem guardar a foto. Precisamos de pelo menos dois brawlers diferentes.
+        </p>
+        <label className="block space-y-1">
+          <span className="text-zinc-300">Carta no print</span>
+          <select className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-2"
+            value={trainingSlot} onChange={e=>setTrainingSlot(e.target.value)}>
+            {slots.map(region=><option key={region.id} value={region.id}>{region.label}</option>)}
+          </select>
+        </label>
+        <label className="block space-y-1">
+          <span className="text-zinc-300">Brawler verdadeiro (escolha você)</span>
+          <select className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-2"
+            value={trainingId} onChange={e=>setTrainingId(e.target.value)}>
+            <option value="">Selecione...</option>
+            {alphabeticalReferences.map(ref=><option key={ref.id} value={String(ref.id)}>
+              {ref.name}
+            </option>)}
+          </select>
+        </label>
+        <button type="button" onClick={addTrainingExample}
+          disabled={!targets[trainingSlot]||!trainingId}
+          className="w-full rounded-md bg-cyan-700 p-2 font-semibold text-white disabled:opacity-50">
+          Guardar este retrato como exemplo
+        </button>
+        <p className="text-zinc-400">
+          {learned.length} exemplos de {new Set(learned.map(item=>item.brawlerId)).size} brawlers salvos.
+          {' '}O acerto deve ser avaliado em outra captura, não naquela usada para ensinar.
+        </p>
+        {trainingMessage&&<p role="alert" className="text-amber-300">{trainingMessage}</p>}
+        {learned.length>0&&<button type="button" className="text-red-300 underline"
+          onClick={()=>{
+            if(window.confirm('Apagar todos os exemplos de retratos salvos neste navegador?')){
+              storeLearned([]);
+            }
+          }}>Apagar exemplos salvos</button>}
       </div>
       <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
         <summary className="cursor-pointer font-medium">
