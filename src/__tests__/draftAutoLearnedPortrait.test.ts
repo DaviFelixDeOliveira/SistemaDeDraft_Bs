@@ -98,6 +98,24 @@ describe('Exemplos de retratos reais (apenas no navegador)',()=>{
     ]);
     expect(result).toMatchObject({status:'unknown',name:null,margin:0});
   });
+  it('mostra candidato mais próximo apenas como diagnóstico quando os limiares falham',()=>{
+    const target=face('red');
+    for(let i=0;i<24;i++)target.cells[i]=0;
+    const result=matchDraftLearnedPortrait(target,[
+      entry(16000001,'Vermelho','red'),
+      entry(16000002,'Azul','blue'),
+    ]);
+    expect(result).toMatchObject({status:'unknown',name:null,brawlerId:null,
+      closestName:'Vermelho'});
+    expect(result.similarity).toBeLessThan(.96);
+    expect(result.similarity).toBeGreaterThan(0);
+  });
+  it('não divulga nome diagnosticado se falta comparação mínima entre rótulos',()=>{
+    const result=matchDraftLearnedPortrait(face('red'),[
+      entry(16000001,'Vermelho','red'),
+    ]);
+    expect(result).toMatchObject({status:'unknown',closestName:null});
+  });
   it('rejeita alvo inválido, sem inventar nomes',()=>{
     expect(matchDraftLearnedPortrait({cells:[]},[
       entry(16000001,'Vermelho','red'),
