@@ -64,14 +64,16 @@ export type DraftLearnedMatch = {
   brawlerId: number | null;
   similarity: number;
   margin: number;
+  /** Diagnostic-only nearest neighbor, even when thresholds reject a prediction. */
+  closestName: string | null;
 };
 
 /** Cautious nearest example: at least two distinct labels and a clear winner. */
 export function matchDraftLearnedPortrait(
   target: DraftPortraitFingerprint, references: DraftLearnedPortrait[],
 ): DraftLearnedMatch {
-  const blank = (similarity = 0, margin = 0): DraftLearnedMatch =>
-    ({ status: 'unknown', name: null, brawlerId: null, similarity, margin });
+  const blank = (similarity = 0, margin = 0, closestName: string | null = null): DraftLearnedMatch =>
+    ({ status: 'unknown', name: null, brawlerId: null, similarity, margin, closestName });
   if (!validFingerprint(target)) return blank();
   const byId = new Map<number, { id: number; name: string; score: number }>();
   for (const ref of parseDraftLearnedPortraits(references)) {
@@ -85,15 +87,15 @@ export function matchDraftLearnedPortrait(
   const ranked = [...byId.values()].sort((a, b) => b.score - a.score);
   const best = ranked[0], runnerUp = ranked[1];
   const margin = Math.round((best.score - runnerUp.score) * 1000) / 1000;
-  if (best.score < .96 || margin < .04) return blank(best.score, margin);
+  if (best.score < .96 || margin < .04) return blank(best.score, margin, best.name);
   // An exact fingerprint is a remembered training example, not an
   // independent recognition success on unseen game imagery.
   if (best.score === 1) return {
     status: 'seen-example', name: best.name, brawlerId: best.id,
-    similarity: best.score, margin,
+    similarity: best.score, margin, closestName: best.name,
   };
   return {
     status: 'possible', name: best.name, brawlerId: best.id,
-    similarity: best.score, margin,
+    similarity: best.score, margin, closestName: best.name,
   };
 }
