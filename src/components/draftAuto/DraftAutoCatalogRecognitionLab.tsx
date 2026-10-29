@@ -435,6 +435,27 @@ export function DraftAutoCatalogRecognitionLab({
             </details>}
         </div>)}
       </div>
+      <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
+        <summary className="cursor-pointer font-semibold">
+          Por que o sistema não reconheceu? (comparação local)
+        </summary>
+        <p className="mt-2 text-zinc-400">
+          Semelhança visual não é probabilidade de acerto. A biblioteca só sugere
+          quando a semelhança é pelo menos 96% e a vantagem sobre outro
+          personagem é de pelo menos 4 pontos percentuais.
+        </p>
+        <div className="mt-2 space-y-1">
+          {results.map(({region,emptyState})=>{
+            const candidate=learnedMatches[region.id];
+            return <p key={region.id}>
+              <strong>{region.label}:</strong>{' '}
+              {emptyState!=='unknown'?'Possível slot vazio.':
+                !candidate?.closestName?'Biblioteca local sem comparação suficiente.':
+                `${candidate.closestName} — ${Math.round(candidate.similarity*100)}% de semelhança; vantagem de ${Math.round(candidate.margin*100)} pontos percentuais. ${candidate.status==='unknown'?'Não atingiu os requisitos.':'Hipótese visual, não confirmada.'}`}
+            </p>;
+          })}
+        </div>
+      </details>
       <div className="space-y-2 rounded-lg border border-cyan-700/50 bg-cyan-950/20 p-2 text-xs">
         <strong className="text-cyan-200">Ensinar retratos reais do jogo (opcional)</strong>
         <p className="text-zinc-300">
