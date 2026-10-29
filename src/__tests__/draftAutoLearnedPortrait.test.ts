@@ -34,11 +34,37 @@ describe('Exemplos de retratos reais (apenas no navegador)',()=>{
     let refs=[first];
     for(let i=0;i<8;i++){
       const sample=entry(16000001,'Vermelho','red');
-      sample.fingerprint.cells[i]=i+1;
+      // Change enough pixels to represent different real appearances,
+      // rather than tiny variations in a near-identical capture.
+      for(let j=0;j<24;j++)sample.fingerprint.cells[j]=20+i*20;
       refs=addDraftLearnedPortrait(refs,sample);
     }
     expect(refs).toHaveLength(6);
     expect(refs.every(item=>item.brawlerId===16000001)).toBe(true);
+  });
+  it('não ocupa a biblioteca com capturas quase idênticas do retrato padrão',()=>{
+    const original=entry(16000001,'Colt','red');
+    const nearCopy=entry(16000001,'Colt','red');
+    for(let i=0;i<18;i++)nearCopy.fingerprint.cells[i]=
+      Math.max(0,nearCopy.fingerprint.cells[i]-1);
+    const refs=addDraftLearnedPortrait([original],nearCopy);
+    expect(refs).toHaveLength(1);
+    expect(refs[0].fingerprint).toEqual(original.fingerprint);
+  });
+  it('preserva retrato alternativo do Colt sob o mesmo ID, sem inventar um novo brawler',()=>{
+    const standard=entry(16000002,'Colt','red');
+    const alternate=entry(16000002,'Colt','blue');
+    const shelly=entry(16000001,'Shelly','dark');
+    const refs=addDraftLearnedPortrait(
+      addDraftLearnedPortrait([standard,shelly],alternate),
+      entry(16000002,'Colt','blue'),
+    );
+    expect(refs.filter(ref=>ref.brawlerId===16000002)).toHaveLength(2);
+    expect(new Set(refs.map(ref=>ref.brawlerId)).size).toBe(2);
+    expect(matchDraftLearnedPortrait(face('red'),refs))
+      .toMatchObject({status:'seen-example',name:'Colt',brawlerId:16000002});
+    expect(matchDraftLearnedPortrait(face('blue'),refs))
+      .toMatchObject({status:'seen-example',name:'Colt',brawlerId:16000002});
   });
   it('exige dois nomes diferentes e não promete identificação com um exemplo',()=>{
     const target=face('red');
