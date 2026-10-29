@@ -20,7 +20,7 @@ import {
   type DraftCatalogReference,
 } from '../../lib/draftAutoCatalogVisual';
 import {
-  portraitFingerprint,type DraftPortraitFingerprint,
+  portraitFingerprint,portraitSimilarity,type DraftPortraitFingerprint,
 } from '../../lib/draftAutoPortraitIdentity';
 
 type SlotFingerprint={
@@ -297,6 +297,11 @@ export function DraftAutoCatalogRecognitionLab({
       setTrainingMessage('Esse slot parece vazio. Verifique o recorte antes de ensinar.');
       return;
     }
+    if(learned.some(item=>item.brawlerId===ref.id &&
+      (portraitSimilarity(item.fingerprint,target.portrait)??0)>=.995)){
+      setTrainingMessage('Este brawler já tem um retrato praticamente igual salvo. Só ensine novamente se a aparência no draft for diferente.');
+      return;
+    }
     const next=addDraftLearnedPortrait(learned,{
       brawlerId:ref.id,name:ref.name,fingerprint:target.portrait,
     });
@@ -433,9 +438,10 @@ export function DraftAutoCatalogRecognitionLab({
       <div className="space-y-2 rounded-lg border border-cyan-700/50 bg-cyan-950/20 p-2 text-xs">
         <strong className="text-cyan-200">Ensinar retratos reais do jogo (opcional)</strong>
         <p className="text-zinc-300">
-          As artes do catálogo não são iguais às cartas do jogo. Se souber quem aparece no
-          print, salve o retrato uma vez. Os exemplos ficam só neste navegador,
-          sem guardar a foto. Precisamos de pelo menos dois brawlers diferentes.
+          Em geral, o draft usa o retrato padrão mesmo quando há skin. Alguns personagens
+          podem ter retratos alternativos: cadastre-os com o mesmo nome do brawler.
+          Use somente cartas da tela do draft, não imagens de outros menus.
+          Os recortes do rosto ficam apenas neste navegador.
         </p>
         <label className="block space-y-1">
           <span className="text-zinc-300">Carta no print</span>
