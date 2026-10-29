@@ -1,5 +1,6 @@
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { BookImage,RefreshCw } from 'lucide-react';
+import { buildDraftHoldoutEvidence, type DraftHoldoutExportSample } from '../../lib/draftAutoHoldoutExport';
 import { evaluateDraftHoldout, summarizeDraftTrainingCoverage, type DraftHoldoutReport } from '../../lib/draftAutoHoldout';
 import {
   clearDraftAutoPortraitCrops,listDraftAutoPortraitCrops,makeDraftAutoPortraitCrop,
@@ -319,6 +320,42 @@ export function DraftAutoCatalogRecognitionLab({
     }
   }
 
+  function exportHoldoutEvidence() {
+    if (!holdoutReport) return;
+    const samples: DraftHoldoutExportSample[] = results.flatMap(({region,match,emptyState})=>{
+      const label = holdoutLabels[region.id];
+      const target = targets[region.id];
+      if (!label || !target) return [];
+      const local = learnedMatches[region.id];
+      return [{
+        slot: region.id,
+        actual: label === 'empty' ? 'empty' as const : Number(label),
+        portrait: target.portrait,
+        faceDataUrl: target.facePreview,
+        localMatch: local,
+        catalogMatch: match ? {
+          name: match.name, gameId: match.gameId, similarity: match.similarity,
+          margin: match.margin, status: match.status,
+        } : null,
+        emptyState,
+      }];
+    });
+    if (!samples.length) return;
+    const payload = buildDraftHoldoutEvidence(
+      samples, learned, holdoutReport, new Date().toISOString(),
+    );
+    const url = URL.createObjectURL(new Blob(
+      [JSON.stringify(payload)], { type: 'application/json' },
+    ));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'diagnostico-draft-imagem-nova.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
   function exportFaceDataset() {
     if(!savedCrops.length)return;
     const payload={
@@ -569,6 +606,16 @@ export function DraftAutoCatalogRecognitionLab({
             Amostra pequena: este resultado não representa a precisão real.
             Continue avaliando capturas diferentes.
           </p>}
+          <button type="button" onClick={exportHoldoutEvidence}
+            className="mt-2 w-full rounded border border-cyan-700 px-2 py-2 text-xs font-semibold text-cyan-200">
+            Baixar diagnóstico deste teste (JSON)
+          </button>
+          <p className="text-[11px] text-zinc-400">
+            Exporta os seis recortes faciais rotulados e assinaturas de exemplos
+            para análise técnica. Não inclui a captura inteira, mas pode conter
+            pequenos fragmentos da interface se o ajuste estiver incorreto.
+            O arquivo permanece no seu computador até você decidir compartilhá-lo.
+          </p>
         </div>}
       </details>
       <details className="rounded-lg border border-zinc-700/80 p-2 text-xs text-zinc-300">
