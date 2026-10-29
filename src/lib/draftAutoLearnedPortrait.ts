@@ -42,8 +42,12 @@ export function addDraftLearnedPortrait(
 ): DraftLearnedPortrait[] {
   if (!validExample(example)) return parseDraftLearnedPortraits(previous);
   const clean = parseDraftLearnedPortraits(previous);
+  // Two nearly identical captures of the same default portrait should not
+  // consume separate reference slots. Keep visually distinct variants (e.g.
+  // an occasional alternate Colt portrait) under the same brawler ID.
+  // Similarity is rounded to 0.001; this is deduplication, NOT confidence.
   const duplicate = clean.some(item => item.brawlerId === example.brawlerId &&
-    item.fingerprint.cells.every((value, index) => value === example.fingerprint.cells[index]));
+    (portraitSimilarity(item.fingerprint, example.fingerprint) ?? 0) >= .995);
   if (duplicate) return clean;
   const otherExamples = clean.filter(item => item.brawlerId !== example.brawlerId);
   const sameBrawler = clean.filter(item => item.brawlerId === example.brawlerId).slice(-5);
