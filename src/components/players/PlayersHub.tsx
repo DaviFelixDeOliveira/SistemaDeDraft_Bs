@@ -140,7 +140,7 @@ export function PlayersHub() {
     setConfirmConfig({
       isOpen: true,
       title: 'Excluir Jogador',
-      message: `Tem certeza que deseja excluir o jogador ${nickname}? Esta ação não pode ser desfeita.`,
+      message: `Tem certeza que deseja excluir o jogador ${nickname}? Esta ação não pode ser desfeita. Partidas, resultados e picks anteriores serão mantidos, mas deixarão de estar associados a este jogador.`,
       processingText: 'Excluindo...',
       successText: '✅ Excluído com sucesso!',
       action: async () => {
