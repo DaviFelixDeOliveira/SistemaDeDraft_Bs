@@ -7,6 +7,9 @@ const db = vi.hoisted(() => ({
   upsert: vi.fn(),
   select: vi.fn(),
   single: vi.fn(),
+  delete: vi.fn(),
+  eq: vi.fn(),
+  maybeSingle: vi.fn(),
 }));
 
 vi.mock('../lib/supabase', () => ({ supabase: { from: db.from } }));
@@ -69,5 +72,46 @@ describe('playerService.savePlayer', () => {
     db.single.mockResolvedValueOnce({ data: null, error: { message: 'Acesso negado' } });
     await expect(playerService.savePlayer(buildPlayer()))
       .rejects.toThrow('Acesso negado');
+  });
+});
+
+describe('playerService.deletePlayer', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.from.mockReturnValue({ delete: db.delete });
+    db.delete.mockReturnValue({ eq: db.eq });
+    db.eq.mockReturnValue({ select: db.select });
+    db.select.mockReturnValue({ maybeSingle: db.maybeSingle });
+    db.maybeSingle.mockResolvedValue({ data: { id: 'player-1' }, error: null });
+  });
+
+  it('exclui apenas o perfil solicitado e exige confirmação de linha removida', async () => {
+    await expect(playerService.deletePlayer('player-1')).resolves.toBeUndefined();
+    expect(db.from).toHaveBeenCalledWith('players');
+    expect(db.delete).toHaveBeenCalledOnce();
+    expect(db.eq).toHaveBeenCalledWith('id', 'player-1');
+    expect(db.select).toHaveBeenCalledWith('id');
+    expect(db.maybeSingle).toHaveBeenCalledOnce();
+  });
+
+  it('não informa sucesso quando RLS ou ID inexistente retornam zero linhas', async () => {
+    db.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    await expect(playerService.deletePlayer('inexistente')).rejects.toThrow('não encontrado ou sem permissão');
+  });
+
+  it('explica caso a migração das FKs ainda não tenha sido aplicada', async () => {
+    db.maybeSingle.mockResolvedValueOnce({
+      data: null,
+      error: { code: '23503', message: 'foreign key constraint violation' },
+    });
+    await expect(playerService.deletePlayer('player-1')).rejects.toThrow('atualização necessária do banco');
+  });
+
+  it('preserva e informa erros inesperados sem remover o perfil localmente', async () => {
+    db.maybeSingle.mockResolvedValueOnce({
+      data: null,
+      error: { code: '42501', message: 'Acesso negado' },
+    });
+    await expect(playerService.deletePlayer('player-1')).rejects.toThrow('Acesso negado');
   });
 });
