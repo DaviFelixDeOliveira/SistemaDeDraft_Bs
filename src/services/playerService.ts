@@ -73,7 +73,21 @@ export const playerService = {
   },
 
   deletePlayer: async (id: string): Promise<void> => {
-    const { error } = await supabase.from('players').delete().eq('id', id);
-    if (error) throw error;
+    // As FKs de match_picks usam ON DELETE SET NULL: a partida e seus picks
+    // permanecem no histórico, apenas a associação com o jogador é removida.
+    // Retornar o ID evita tratar uma exclusão de 0 linhas (RLS/inexistente) como sucesso.
+    const { data, error } = await supabase.from('players')
+      .delete()
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      if (error.code === '23503') {
+        throw new Error('O jogador ainda está vinculado a partidas. A atualização necessária do banco de dados não foi aplicada.');
+      }
+      throw new Error(`Não foi possível excluir o jogador: ${error.message}`);
+    }
+    if (!data) throw new Error('Jogador não encontrado ou sem permissão para excluí-lo.');
   }
 };
