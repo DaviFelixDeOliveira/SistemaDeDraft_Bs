@@ -259,7 +259,7 @@ Criar uma landing page de apresentação do projeto, com informações sobre o p
 
   **Relação com o Draft Automático:** O visualizador 3D é uma melhoria de apresentação.
   **Não resolve diretamente** a identificação dos retratos 2D, picks, bans ou estados de
-  pré-seleção/confirmacão capturados na tela do Brawl Stars. São frentes independentes.
+  pré-seleção/confirmação capturados na tela do Brawl Stars. São frentes independentes.
 
   **Próximo passo quando retomarmos esta ideia:** validar permissões e capacidades do
   BrawlMenu; comparar as três alternativas; propor escopo, impacto, custo de manutenção e
