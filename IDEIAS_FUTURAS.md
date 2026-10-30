@@ -201,4 +201,67 @@ Backlog de melhorias ordenado da **mais necessária** para a **menos necessária
 - [ ] **22. Criar uma landing page de apresentação do projeto"**
 
 Criar uma landing page de apresentação do projeto, com informações sobre o projeto, como funciona, como usar, etc. Algo bem bonito e chamativo, com prints das telas, explicações do algoritmos, das funções do sistema e etc, para quando o sistema estiver pronto e disponível para venda, ou até mesmo para divulgar o projeto.
-  
+
+- [ ] **32. Visualizador 3D de Brawlers (BrawlMenu API Lite)**
+  **Status:** Ideia registrada para avaliação futura; **não implementada**.
+  **Prioridade:** Baixa (aprimoramento opcional do catálogo, sem interferir nas prioridades do Draft Automático).
+  **Referência externa:** https://brawlmenu-api-lite.netlify.app/src/html/view3d#16000000
+  **Data de registro:** 29/10/2026.
+
+  **Objetivo:** Investigar a viabilidade de adicionar ao Sistema de Draft uma visualização
+  interativa em 3D dos brawlers, inicialmente na **Central de Brawlers**, como recurso
+  informativo e visual complementar às imagens 2D já utilizadas.
+
+  **Experiência desejada (caso se confirme a viabilidade):**
+  - Incluir uma ação opcional **"Ver em 3D"** na página/modal de detalhes de um brawler.
+  - Mostrar seu modelo tridimensional com rotação e zoom **se essas funções forem suportadas**
+    pelo visualizador ou pelos arquivos/modelos disponíveis legalmente.
+  - Eventualmente permitir alternar entre aparências/skins **somente se a fonte disponibilizar
+    variantes utilizáveis e houver autorização para esse uso**.
+  - Manter imagem 2D, nome, tier, estatísticas, comfort picks e demais dados como experiência
+    principal; o recurso 3D não deve substituir os retratos usados em seleções rápidas de
+    bans/picks, especialmente no mobile.
+
+  **Alternativas técnicas a comparar:**
+  1. **Link externo:** abrir o visualizador original em nova guia. Menor esforço e menor
+     dependência técnica, mas o usuário deixa momentaneamente o Sistema de Draft.
+  2. **Incorporação com iframe:** abrir o visualizador dentro de modal, **apenas se**
+     as políticas do site permitirem incorporação (ex.: CSP / X-Frame-Options) e o uso for
+     autorizado. Incluir carregamento sob demanda e alternativa de abrir o link externo.
+  3. **Renderização própria no frontend React:** usar Three.js / React Three Fiber ou outra
+     tecnologia adequada **somente se** houver modelos em formatos compatíveis, direitos de
+     uso/distribuição e documentação suficientes. Pode exigir mais trabalho de manutenção.
+
+  **Verificações obrigatórias antes de aprovar a implementação:**
+  - Confirmar o que a URL realmente oferece: visualização de modelo, controles, estabilidade,
+    funcionamento em desktop e celular e dependência de serviços terceiros.
+  - Identificar se há API pública/documentada ou esquema oficial de links por brawler.
+    O trecho `#16000000` **parece um identificador**, mas seu significado e a possibilidade
+    de mapear IDs dos nossos brawlers **ainda não foram confirmados**. Não construir links
+    automaticamente alterando o fragmento até existir teste/documentação que os valide.
+  - Verificar termos de uso, direitos dos modelos, autorização de incorporação e política de
+    conteúdo de fãs da Supercell, sobretudo por existir intenção de comercialização do sistema.
+    **Site acessível publicamente não significa licença de reutilização de assets.**
+  - Avaliar desempenho (download de modelos, GPU, dispositivos simples), UX, responsividade,
+    acessibilidade, estados de erro e fallback para imagem 2D ou link externo.
+  - Evitar dependência obrigatória de um serviço externo para o funcionamento do catálogo ou
+    do Draft Wizard.
+
+  **Critérios de aceite para um eventual MVP aprovado:**
+  - Recurso opcional disponível apenas nos detalhes do brawler, sem alterar o fluxo rápido do draft.
+  - Abrir e fechar de forma intuitiva, inclusive ao clicar fora do modal, seguindo `AGENTS.md`.
+  - Respeitar responsividade e suportar indisponibilidade/falha sem quebrar a página.
+  - Não carregar modelos 3D enquanto a visualização não for solicitada.
+  - Só abrir um modelo associado ao brawler correto, com mapeamento verificado; na falta desse
+    mapeamento, não exibir um modelo incorreto.
+  - Não adicionar dependências, copiar assets ou publicar integração antes da verificação
+    técnica/jurídica e da aprovação expressa do usuário.
+
+  **Relação com o Draft Automático:** O visualizador 3D é uma melhoria de apresentação.
+  **Não resolve diretamente** a identificação dos retratos 2D, picks, bans ou estados de
+  pré-seleção/confirmacão capturados na tela do Brawl Stars. São frentes independentes.
+
+  **Próximo passo quando retomarmos esta ideia:** validar permissões e capacidades do
+  BrawlMenu; comparar as três alternativas; propor escopo, impacto, custo de manutenção e
+  plano de testes. **Debater e obter aprovação antes de implementar**, conforme a regra
+  geral deste backlog.
